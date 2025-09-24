@@ -44,18 +44,6 @@ html {
   background-color: var(--primary-400);
 }
 
-/* Animated gradient background - mimicking dashboard style */
-@keyframes gradient-bg {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animated-gradient-bg {
-  background: linear-gradient(135deg, var(--primary-700), var(--secondary-700), var(--primary-600));
-  background-size: 400% 400%;
-  animation: gradient-bg 15s ease infinite;
-}
 
 .bg-primary-dark {
   background-color: var(--primary-600);
@@ -90,7 +78,7 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, var(--primary-500) 95%, var(--secondary-500) 5%);
+  background: linear-gradient(135deg, rgba(31, 49, 30, 0.9), rgba(21, 35, 21, 0.9));
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
