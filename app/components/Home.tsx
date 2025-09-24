@@ -89,7 +89,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden font-size-reduced">
       <AnimatedBackground />
       {/* Content Sections */}
       <section className="relative z-10 min-h-screen flex items-center justify-center px-4">
@@ -100,7 +100,7 @@ export default function Home() {
             transition={{ duration: 1, ease: "easeOut" }}
             className="mb-8"
           >
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               <span 
                 className="font-extrabold text-white drop-shadow-lg"
                 style={{
@@ -132,7 +132,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="mb-8"
           >
-            <div className="text-2xl md:text-3xl text-foreground-secondary h-20">
+            <div className="text-xl md:text-2xl text-foreground-secondary h-20">
               <TypeAnimation
                 sequence={[
                   'منصة تعليمية شاملة لتعلم نظم المعلومات الجغرافية',
@@ -211,7 +211,7 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
                 شاهد درساً
               </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-primary-400 to-secondary-400 mx-auto rounded-full"></div>
@@ -260,7 +260,7 @@ export default function Home() {
         <ParallaxSection className="py-20 px-4" offset={-50}>
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 أو اقرأ مقالة
               </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-cyan-400 to-blue-400 mx-auto rounded-full"></div>
@@ -312,7 +312,7 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-secondary-400 to-primary-400 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-secondary-400 to-primary-400 bg-clip-text text-transparent">
                 ما الذي تقدمه البوابة؟
               </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-secondary-400 to-primary-400 mx-auto rounded-full"></div>
@@ -329,7 +329,7 @@ export default function Home() {
                     >
                       <BookOpen className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-3xl font-bold text-white">الدروس التقنية</h3>
+                    <h3 className="text-2xl font-bold text-white">الدروس التقنية</h3>
                   </div>
                   <p className="text-white/90 text-lg leading-relaxed">
                     توفر البوابة باقة واسعة من الدروس التقنية مصحوبة بالبيانات الجغرافية والكتيبات
@@ -348,7 +348,7 @@ export default function Home() {
                     >
                       <Zap className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-3xl font-bold text-white">التطبيقات</h3>
+                    <h3 className="text-2xl font-bold text-white">التطبيقات</h3>
                   </div>
                   <p className="text-white/90 text-lg leading-relaxed">
                     منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية متعدد المهام يسمح للمستخدمين
@@ -364,7 +364,7 @@ export default function Home() {
         <ParallaxSection className="py-20 px-4" offset={30}>
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
                 تطبيقات البوابة
               </h2>
               <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-blue-400 mx-auto rounded-full"></div>
@@ -375,7 +375,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                   <div>
                     <motion.h3 
-                      className="text-4xl font-bold text-white mb-6 flex items-center gap-4"
+                      className="text-3xl font-bold text-white mb-6 flex items-center gap-4"
                       whileHover={{ scale: 1.05 }}
                     >
                       <motion.span
@@ -421,7 +421,7 @@ export default function Home() {
                             opacity: [0.7, 1, 0.7]
                           }}
                           transition={{ duration: 3, repeat: Infinity }}
-                          className="text-6xl"
+                          className="text-5xl"
                         >
                           🗺️
                         </motion.div>

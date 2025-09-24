@@ -32,7 +32,7 @@ const config: Config = {
           muted: '#B8C2B8',
         },
         surface: {
-          DEFAULT: '#1A1F1A',
+          DEFAULT: '#1A1F1A', 
           elevated: '#242A24',
           hover: '#2E332E',
         },
@@ -43,7 +43,7 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-noto-sans-arabic)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-kufi)', 'system-ui', 'sans-serif'],
       },
     },
   },

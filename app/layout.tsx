@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import Header from "./components/Header";
 
 const notoSansArabic = Noto_Sans_Arabic({
   variable: "--font-noto-sans-arabic",
   subsets: ["arabic"],
   weight: ["400", "700"],
+});
+
+const kufi = localFont({
+  src: "../fonts/kufi.ttf",
+  variable: "--font-kufi",
 });
 
 export const metadata: Metadata = {
@@ -21,8 +28,9 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body
-        className={`${notoSansArabic.variable} font-sans antialiased`}
+        className={`${kufi.variable} font-sans antialiased`}
       >
+        <Header />
         {children}
       </body>
     </html>

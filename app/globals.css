@@ -27,6 +27,8 @@
   --border: #293F28;
   --border-hover: #3A5339;
   --border-focus: #ADD900;
+  
+  --font-kufi: 'Kufi', Arial, Helvetica, sans-serif;
 }
 
 /* Base app styling with color system */
@@ -92,6 +94,11 @@ html {
 body {
   background: linear-gradient(135deg, var(--primary-700) 95%, var(--secondary-500) 5%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-kufi);
   min-height: 100vh;
+}
+
+/* Reduce font size by 20% for home page */
+.font-size-reduced {
+  font-size: 80%;
 }
