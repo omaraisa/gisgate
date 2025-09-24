@@ -23,12 +23,12 @@ export default function Header() {
               بوابة نظم المعلومات الجغرافية
             </h1>
             </div>
-          <nav className="hidden md:flex space-x-8 space-x-reverse">
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200">الرئيسية</a>
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200">فيديوهات</a>
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200">مقالات</a>
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200">دورات تدريبية</a>
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200">من نحن</a>
+          <nav className="hidden md:flex gap-8">
+            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">الرئيسية</a>
+            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">فيديوهات</a>
+            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">مقالات</a>
+            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">دورات تدريبية</a>
+            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">من نحن</a>
           </nav>
         </div>
       </div>

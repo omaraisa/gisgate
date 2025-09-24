@@ -95,9 +95,9 @@ export default function Home() {
       <section className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-6xl mx-auto relative">
           <motion.div
-            initial={{ opacity: 0, scale: 0.5, rotateY: 180 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
@@ -348,11 +348,10 @@ export default function Home() {
                     >
                       <Zap className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-2xl font-bold text-white">التطبيقات</h3>
+                    <h3 className="text-2xl font-bold text-white">الحلول الجيومكانية</h3>
                   </div>
                   <p className="text-white/90 text-lg leading-relaxed">
-                    منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية متعدد المهام يسمح للمستخدمين
-                    بإضافة ورفع مختلف أنواع البيانات وإجراء العمليات المتقدمة عليها
+                    تشرف البوابة على تنفيذ وتطوير مختلف أنواع الحلول الجيومكانية من الإضافات على برنامج أرك برو، الأدوات التحليلية المعقدة وحتى المنصات الجيومكانية
                   </p>
                 </FloatingCard>
               </MotionCard>
