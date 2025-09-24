@@ -1,103 +1,112 @@
-import Image from "next/image";
+import Header from './components/Header';
+import Footer from './components/Footer';
+import PostCard from './components/PostCard';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const videoPosts = [
+    { title: 'تصميم الخرائط والتطبيقات على ArcGIS Online', link: '#' },
+    { title: 'تبويب المعرض، المجموعات والمحتويات في ArcGIS Online', link: '#' },
+    { title: 'تصميم خريطة ألغاز', link: '#' },
+    { title: 'إنشاء المشاهد ثلاثية الأبعاد في ArcGIS Online', link: '#' },
+    { title: 'كيف تستعمل الترميز الكمي والنوعي بطريقة خاطئة!', link: '#' },
+    { title: 'مقدمة في ArcGIS Online', link: '#' },
+  ];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const articlePosts = [
+    { title: 'الذكاء المكاني Location Intelligence', link: '#' },
+    { title: 'تكامل GIS مع الطائرات بدون طيار (الدرونز)', link: '#' },
+    { title: 'ألوان الخرائط', link: '#' },
+    { title: 'التوأم الرقمي Digital Twin', link: '#' },
+    { title: 'إضافات ازري الجديدة للمطورين', link: '#' },
+    { title: 'خريطتك كما يراها أصحاب عمى الألوان', link: '#' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Hero Section */}
+        <section className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">بوابة نظم المعلومات الجغرافية</h2>
+          <p className="text-xl text-gray-600">منصة تعليمية شاملة لتعلم نظم المعلومات الجغرافية</p>
+        </section>
+
+        {/* Watch a Lesson Section */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">شاهد درساً</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {videoPosts.map((post, index) => (
+              <PostCard key={index} title={post.title} link={post.link} />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <a href="#" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">
+              تصفح المزيد &gt;&gt;
+            </a>
+          </div>
+        </section>
+
+        {/* Read an Article Section */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">أو اقرأ مقالة</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {articlePosts.map((post, index) => (
+              <PostCard key={index} title={post.title} link={post.link} />
+            ))}
+          </div>
+        </section>
+
+        {/* What the Portal Offers */}
+        <section className="mb-16 bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">ما الذي تقدمه البوابة؟</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">الدروس التقنية</h3>
+              <p className="text-gray-600">
+                توفر البوابة باقة واسعة من الدروس التقنية مصحوبة بالبيانات الجغرافية والكتيبات
+                الإرشادية وشتى المعينات التدريبية
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">التطبيقات</h3>
+              <p className="text-gray-600">
+                منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية GeoApp متعدد المهام تم تطويره
+                ليسمح للمستخدمين بإضافة ورفع مختلف أنواع البيانات
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Applications Section */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">تطبيقات البوابة</h2>
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="flex flex-col md:flex-row items-center">
+              <div className="md:w-1/2 mb-6 md:mb-0">
+                <h3 className="text-2xl font-semibold text-gray-800 mb-4">جي بورتال</h3>
+                <p className="text-gray-600">
+                  منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية GeoApp متعدد المهام تم تطويره
+                  ليسمح للمستخدمين بإضافة ورفع مختلف أنواع البيانات مثل الشيبفايل وملفات الاكسل
+                  ومن ثم إجراء مختلف العمليات عليها كالاستكشاف، التحرير، الاستعلام، التحليل، الترميز
+                  ومن ثم تصدير النتائج وطباعة الخرائط. تم تطوير هذه المنصة لتكون برنامجاً خدمياً
+                  SaaS يمكن الوصول إليه من أي مكان وعبر مختلف أنواع الأجهزة ونظم التشغيل.
+                </p>
+                <a href="https://rebrand.ly/gportal" className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">
+                  جرب الآن
+                </a>
+              </div>
+              <div className="md:w-1/2 md:ml-8">
+                <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500">صورة التطبيق</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <Footer />
     </div>
   );
 }
