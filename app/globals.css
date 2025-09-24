@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
+/* Custom color variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-400: #3A5339;
+  --primary-500: #293F28;
+  --primary-600: #1F311E;
+  --primary-700: #152315;
+  
+  --secondary-400: #D4FF33;
+  --secondary-500: #ADD900;
+  --secondary-600: #8BB500;
+  --secondary-700: #699100;
+  
+  --background: #0F1310;
+  --background-secondary: #1A1F1A;
+  --background-tertiary: #242A24;
+  
+  --foreground: #F5F7F5;
+  --foreground-secondary: #E8EAE8;
+  --foreground-muted: #B8C2B8;
+  
+  --surface: #1A1F1A;
+  --surface-elevated: #242A24;
+  --surface-hover: #2E332E;
+  
+  --border: #293F28;
+  --border-hover: #3A5339;
+  --border-focus: #ADD900;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Base app styling with color system */
+html {
+  background-color: transparent;
+  color: var(--foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Custom utility classes */
+.bg-primary {
+  background-color: var(--primary-500);
+}
+
+.bg-primary-light {
+  background-color: var(--primary-400);
+}
+
+/* Animated gradient background - mimicking dashboard style */
+@keyframes gradient-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient-bg {
+  background: linear-gradient(135deg, var(--primary-700), var(--secondary-700), var(--primary-600));
+  background-size: 400% 400%;
+  animation: gradient-bg 15s ease infinite;
+}
+
+.bg-primary-dark {
+  background-color: var(--primary-600);
+}
+
+.bg-secondary {
+  background-color: var(--secondary-500);
+}
+
+.bg-secondary-light {
+  background-color: var(--secondary-400);
+}
+
+.bg-secondary-dark {
+  background-color: var(--secondary-600);
+}
+
+.text-primary {
+  color: var(--primary-500);
+}
+
+.text-secondary {
+  color: var(--secondary-500);
+}
+
+.border-primary {
+  border-color: var(--primary-500);
+}
+
+.border-secondary {
+  border-color: var(--secondary-500);
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, var(--primary-500) 95%, var(--secondary-500) 5%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
 }

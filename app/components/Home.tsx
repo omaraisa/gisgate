@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, ReactNode } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Globe, Zap, Users, BookOpen, Sparkles, ArrowRight, Play, FileText } from 'lucide-react';
+import Footer from './Footer';
 
 interface MotionCardProps {
   children: ReactNode;
@@ -87,29 +88,39 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-cyan-600/10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900/40 to-slate-900"></div>
-      </div>
-
-
-
-      {/* Hero Section */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Content Sections */}
       <section className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        <div className="text-center max-w-6xl mx-auto">
+        <div className="text-center max-w-6xl mx-auto relative">
+          {/* Text background overlay */}
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-3xl -z-10" />
           <motion.div
             initial={{ opacity: 0, scale: 0.5, rotateY: 180 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
             className="mb-8"
           >
-            <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+            <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+              <span 
+                className="font-extrabold text-white drop-shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #ADD900 0%, #8BB500 50%, #699100 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: '0 0 30px rgba(173, 217, 0, 0.5)'
+                }}
+              >
                 بوابة نظم
               </span>
               <br />
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <span 
+                className="font-extrabold text-white drop-shadow-lg"
+                style={{
+                  color: '#FFFFFF',
+                  textShadow: '0 0 20px rgba(41, 63, 40, 0.8), 0 4px 8px rgba(0,0,0,0.3)'
+                }}
+              >
                 المعلومات الجغرافية
               </span>
             </h1>
@@ -121,7 +132,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="mb-8"
           >
-            <div className="text-2xl md:text-3xl text-gray-300 h-20">
+            <div className="text-2xl md:text-3xl text-foreground-secondary h-20">
               <TypeAnimation
                 sequence={[
                   'منصة تعليمية شاملة لتعلم نظم المعلومات الجغرافية',
@@ -147,9 +158,9 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05, rotateX: 10 }}
               whileTap={{ scale: 0.95 }}
-              className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full text-lg shadow-2xl overflow-hidden"
+              className="group relative px-8 py-4 bg-gradient-to-r from-secondary-600 to-secondary-500 text-primary-700 font-bold rounded-full text-lg shadow-2xl overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-secondary-700 to-secondary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <span className="relative flex items-center gap-2">
                 ابدأ التعلم الآن
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -159,7 +170,7 @@ export default function Home() {
             <motion.button
               whileHover={{ scale: 1.05, rotateX: -10 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 border-2 border-white text-white font-bold rounded-full text-lg backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+              className="px-8 py-4 border-2 border-foreground text-foreground font-bold rounded-full text-lg backdrop-blur-sm hover:bg-foreground/10 transition-all duration-300"
             >
               تصفح المحتوى
             </motion.button>
@@ -177,7 +188,7 @@ export default function Home() {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute top-20 left-20 w-16 h-16 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-20 blur-xl"
+          className="absolute top-20 left-20 w-16 h-16 bg-gradient-to-r from-secondary-400 to-secondary-500 rounded-full opacity-20 blur-xl"
         />
         <motion.div
           animate={{ 
@@ -190,7 +201,7 @@ export default function Home() {
             ease: "easeInOut",
             delay: 1
           }}
-          className="absolute bottom-40 right-20 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 blur-xl"
+          className="absolute bottom-40 right-20 w-24 h-24 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full opacity-20 blur-xl"
         />
       </section>
 
@@ -200,33 +211,33 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
                 شاهد درساً
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-400 mx-auto rounded-full"></div>
+              <div className="w-24 h-1 bg-gradient-to-r from-primary-400 to-secondary-400 mx-auto rounded-full"></div>
             </MotionCard>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {videoPosts.map((post, index) => (
                 <MotionCard key={index} delay={index * 0.1}>
-                  <FloatingCard className="group bg-gradient-to-br from-slate-800/80 to-purple-900/80 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-6 h-full cursor-pointer">
+                  <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
                     <div className="flex items-center gap-4 mb-4">
                       <motion.div
                         whileHover={{ rotate: 360 }}
                         transition={{ duration: 0.6 }}
-                        className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white"
+                        className="p-3 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl text-white"
                       >
                         {post.icon}
                       </motion.div>
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-secondary-400 rounded-full animate-pulse"></div>
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-blue-300 transition-colors">
+                    <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-secondary-300 transition-colors">
                       {post.title}
                     </h3>
                     <motion.div
                       initial={{ width: 0 }}
                       whileHover={{ width: "100%" }}
-                      className="h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+                      className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
                     />
                   </FloatingCard>
                 </MotionCard>
@@ -237,7 +248,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
+                className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300"
               >
                 تصفح المزيد &gt;&gt;
               </motion.button>
@@ -258,7 +269,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {articlePosts.map((post, index) => (
                 <MotionCard key={index} delay={index * 0.1}>
-                  <FloatingCard className="group bg-gradient-to-br from-slate-800/80 to-cyan-900/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-6 h-full cursor-pointer">
+                  <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
                     <a href={post.link}>
                       <div className="flex items-center gap-4 mb-4">
                         <motion.div
@@ -268,15 +279,15 @@ export default function Home() {
                         >
                           {post.icon}
                         </motion.div>
-                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"></div>
                       </div>
-                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-cyan-300 transition-colors">
+                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-primary-300 transition-colors">
                         {post.title}
                       </h3>
                       <motion.div
                         initial={{ width: 0 }}
                         whileHover={{ width: "100%" }}
-                        className="h-1 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
+                        className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
                       />
                     </a>
                   </FloatingCard>
@@ -301,26 +312,26 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h2 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-secondary-400 to-primary-400 bg-clip-text text-transparent">
                 ما الذي تقدمه البوابة؟
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-purple-400 to-pink-400 mx-auto rounded-full"></div>
+              <div className="w-24 h-1 bg-gradient-to-r from-secondary-400 to-primary-400 mx-auto rounded-full"></div>
             </MotionCard>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <MotionCard delay={0.3}>
-                <FloatingCard className="bg-gradient-to-br from-slate-800/80 to-purple-900/80 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-8 h-full">
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
                     <motion.div
                       animate={{ rotate: [0, 360] }}
                       transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                      className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl"
+                      className="p-4 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-2xl"
                     >
                       <BookOpen className="w-8 h-8 text-white" />
                     </motion.div>
                     <h3 className="text-3xl font-bold text-white">الدروس التقنية</h3>
                   </div>
-                  <p className="text-gray-300 text-lg leading-relaxed">
+                  <p className="text-white/90 text-lg leading-relaxed">
                     توفر البوابة باقة واسعة من الدروس التقنية مصحوبة بالبيانات الجغرافية والكتيبات
                     الإرشادية وشتى المعينات التدريبية لضمان تجربة تعليمية متكاملة وفعالة
                   </p>
@@ -328,18 +339,18 @@ export default function Home() {
               </MotionCard>
 
               <MotionCard delay={0.5}>
-                <FloatingCard className="bg-gradient-to-br from-slate-800/80 to-blue-900/80 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-8 h-full">
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 3, repeat: Infinity }}
-                      className="p-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl"
+                      className="p-4 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl"
                     >
                       <Zap className="w-8 h-8 text-white" />
                     </motion.div>
                     <h3 className="text-3xl font-bold text-white">التطبيقات</h3>
                   </div>
-                  <p className="text-gray-300 text-lg leading-relaxed">
+                  <p className="text-white/90 text-lg leading-relaxed">
                     منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية متعدد المهام يسمح للمستخدمين
                     بإضافة ورفع مختلف أنواع البيانات وإجراء العمليات المتقدمة عليها
                   </p>
@@ -360,7 +371,7 @@ export default function Home() {
             </MotionCard>
 
             <MotionCard delay={0.3}>
-              <FloatingCard className="bg-gradient-to-br from-slate-800/90 to-green-900/90 backdrop-blur-xl border border-green-500/20 rounded-3xl p-12">
+              <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-12 shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                   <div>
                     <motion.h3 
@@ -375,7 +386,7 @@ export default function Home() {
                       </motion.span>
                       جي بورتال
                     </motion.h3>
-                    <p className="text-gray-300 text-lg leading-relaxed mb-8">
+                    <p className="text-white/90 text-lg leading-relaxed mb-8">
                       منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية متعدد المهام تم تطويره
                       ليسمح للمستخدمين بإضافة ورفع مختلف أنواع البيانات مثل الشيبفايل وملفات الإكسل
                       ومن ثم إجراء مختلف العمليات عليها كالاستكشاف، التحرير، الاستعلام، التحليل، الترميز
@@ -430,7 +441,7 @@ export default function Home() {
                           opacity: [0.5, 1, 0.5]
                         }}
                         transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                        className="absolute -bottom-4 -right-4 w-3 h-3 bg-blue-400 rounded-full"
+                        className="absolute -bottom-4 -right-4 w-3 h-3 bg-secondary-400 rounded-full"
                       />
                       <motion.div
                         animate={{ 
@@ -448,6 +459,9 @@ export default function Home() {
           </div>
         </ParallaxSection>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
