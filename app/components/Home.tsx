@@ -5,6 +5,7 @@ import { useRef, ReactNode } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Globe, Zap, Users, BookOpen, Sparkles, ArrowRight, Play, FileText } from 'lucide-react';
 import Footer from './Footer';
+import AnimatedBackground from './AnimatedBackground';
 
 interface MotionCardProps {
   children: ReactNode;
@@ -89,11 +90,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <AnimatedBackground />
       {/* Content Sections */}
       <section className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-6xl mx-auto relative">
-          {/* Text background overlay */}
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-3xl -z-10" />
           <motion.div
             initial={{ opacity: 0, scale: 0.5, rotateY: 180 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
@@ -206,7 +206,7 @@ export default function Home() {
       </section>
 
       {/* Content Sections */}
-      <div className="relative z-10 bg-gradient-to-b from-transparent to-slate-900/95">
+      <div className="relative z-10 bg-transparent">
         {/* Watch a Lesson Section */}
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">

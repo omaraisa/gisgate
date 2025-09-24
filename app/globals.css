@@ -90,7 +90,7 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, var(--primary-500) 95%, var(--secondary-500) 5%);
+  background: linear-gradient(135deg, var(--primary-700) 95%, var(--secondary-500) 5%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;

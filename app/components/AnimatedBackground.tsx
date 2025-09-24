@@ -43,16 +43,19 @@ const AnimatedBackground = () => {
       <motion.div 
         key="animated-bg"
         className="absolute inset-0" 
+        style={{
+          background: 'linear-gradient(to bottom, rgba(173, 217, 0, 0.1) 0%, rgba(139, 181, 0, 0.05) 50%, rgba(105, 145, 0, 0.1) 100%)',
+          backgroundSize: '200% 200%',
+          zIndex: -20
+        }}
         animate={{
-          background: [
-          ]
+          backgroundPosition: ['0% 0%', '100% 0%', '0% 0%']
         }}
         transition={{
-          duration: 15,
+          duration: 20,
           repeat: Infinity,
-          ease: 'easeInOut'
+          ease: 'linear'
         }}
-        style={{ zIndex: -20 }}
       />
 
       {/* Floating Particles */}
