@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Article {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String   // Rich HTML content
+  featuredImage String?
+  images      ArticleImage[]
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+  
+  // AI integration fields
+  aiGenerated     Boolean @default(false)
+  aiPrompt        String?
+  
+  // Analytics
+  viewCount       Int @default(0)
+  
+  // Categories and tags
+  category        String?
+  tags            String? // JSON string for tags array
+  
+  @@map("articles")
+}
+
+model ArticleImage {
+  id        String  @id @default(uuid())
+  url       String
+  alt       String?
+  caption   String?
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  @@map("article_images")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
