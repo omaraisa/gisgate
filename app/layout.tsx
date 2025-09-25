@@ -4,6 +4,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./components/Header";
+import Providers from "./components/Providers";
+import AuthButton from "./components/AuthButton";
 
 const notoSansArabic = Noto_Sans_Arabic({
   variable: "--font-noto-sans-arabic",
@@ -31,8 +33,13 @@ export default function RootLayout({
       <body
         className={`${kufi.variable} font-sans antialiased`}
       >
-        <Header />
-        {children}
+        <Providers>
+          <Header />
+          <div style={{ padding: '1rem', textAlign: 'left' }}>
+             <AuthButton />
+          </div>
+          {children}
+        </Providers>
       </body>
     </html>
   );
