@@ -57,3 +57,19 @@ enum ArticleStatus {
   PUBLISHED
   ARCHIVED
 }
+
+model Tutorial {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  videoUrl    String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  viewCount   Int      @default(0)
+  category    String?
+  tags        String? // JSON string for tags array
+
+  @@map("tutorials")
+}
