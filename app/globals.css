@@ -93,7 +93,6 @@ html {
 
 body {
   background: linear-gradient(135deg, var(--primary-700) 95%, var(--secondary-500) 5%);
-  color: var(--background);
   font-family: var(--font-kufi);
   min-height: 100vh;
 }

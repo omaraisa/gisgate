@@ -24,12 +24,121 @@ export default function Header() {
             </h1>
             </div>
           <nav className="hidden md:flex gap-8">
-            <a href="/" className="nav-link">الرئيسية</a>
-            <a href="/articles" className="nav-link">المقالات</a>
-            <a href="#" className="nav-link">فيديوهات</a>
-            <a href="#" className="nav-link">دورات تدريبية</a>
-            <a href="/admin" className="nav-link-admin">إدارة المحتوى</a>
-            <a href="#" className="nav-link">من نحن</a>
+            <a 
+              href="/" 
+              style={{ 
+                color: 'white', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none' 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              الرئيسية
+            </a>
+            <a 
+              href="/articles" 
+              style={{ 
+                color: 'white', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none' 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              المقالات
+            </a>
+            <a 
+              href="#" 
+              style={{ 
+                color: 'white', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none' 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              فيديوهات
+            </a>
+            <a 
+              href="#" 
+              style={{ 
+                color: 'white', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none' 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              دورات تدريبية
+            </a>
+            <a 
+              href="/admin" 
+              style={{ 
+                color: '#D4FF33', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ADD900';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              إدارة المحتوى
+            </a>
+            <a 
+              href="#" 
+              style={{ 
+                color: 'white', 
+                padding: '0 0.5rem', 
+                transition: 'all 0.2s ease', 
+                textDecoration: 'none' 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#D4FF33';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              من نحن
+            </a>
           </nav>
         </div>
       </div>
