@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:wp": "node scripts/wp-migrator.mjs migrate",
+    "migrate:test": "node scripts/wp-migrator.mjs test",
+    "migrate:preview": "node scripts/wp-migrator.mjs preview",
+    "test:migration": "node scripts/test-migration.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.1",
@@ -47,6 +51,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "commander": "^12.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "tailwindcss": "^4",

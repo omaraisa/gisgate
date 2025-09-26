@@ -24,10 +24,11 @@ export default function Header() {
             </h1>
             </div>
           <nav className="hidden md:flex gap-8">
-            <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">الرئيسية</a>
+            <a href="/" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">الرئيسية</a>
             <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">فيديوهات</a>
             <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">مقالات</a>
             <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">دورات تدريبية</a>
+            <a href="/migrate" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">استيراد المقالات</a>
             <a href="#" className="text-primary-700 hover:text-secondary-600 transition-colors duration-200 px-2">من نحن</a>
           </nav>
         </div>
