@@ -11,14 +11,14 @@ const config: Config = {
       colors: {
         primary: {
           400: '#3A5339',
-          500: '#293F28',
+          500: '#293F28', 
           600: '#1F311E',
           700: '#152315',
         },
         secondary: {
-          400: '#D4FF33',
+          400: '#D4FF33',  // This is your bright yellow-green
           500: '#ADD900',
-          600: '#8BB500',
+          600: '#8BB500', 
           700: '#699100',
         },
         background: {
@@ -32,7 +32,7 @@ const config: Config = {
           muted: '#B8C2B8',
         },
         surface: {
-          DEFAULT: '#1A1F1A', 
+          DEFAULT: '#1A1F1A',
           elevated: '#242A24',
           hover: '#2E332E',
         },
