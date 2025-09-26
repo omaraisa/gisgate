@@ -63,15 +63,17 @@ export async function GET(request: NextRequest) {
       case 'preview':
         // Get first 5 posts to preview what would be migrated
         try {
-          const response = await fetch(`${wordpressUrl}/wp-json/wp/v2/posts?per_page=5&status=publish,draft&_embed`);
+          const response = await fetch(`${wordpressUrl}/wp-json/wp/v2/posts?per_page=5&status=publish&_embed`);
           if (response.ok) {
             const posts = await response.json();
             const preview = posts.map((post: any) => ({
               id: post.id,
               title: post.title.rendered,
-              slug: post.slug,
+              slug: decodeURIComponent(post.slug),
               status: post.status,
               date: post.date,
+              author: post._embedded?.author?.[0]?.name || 'Unknown',
+              featuredImage: post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
               excerpt: post.excerpt.rendered?.replace(/<[^>]*>/g, '').substring(0, 150) + '...'
             }));
             return NextResponse.json({ preview });

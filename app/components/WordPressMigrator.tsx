@@ -17,6 +17,8 @@ interface PreviewPost {
   slug: string;
   status: string;
   date: string;
+  author: string;
+  featuredImage: string | null;
   excerpt: string;
 }
 
@@ -192,10 +194,10 @@ export default function WordPressMigrator() {
             </p>
             <div className="space-y-3">
               {previewPosts.map((post) => (
-                <div key={post.id} className="bg-white p-3 rounded border">
+                <div key={post.id} className="bg-white p-4 rounded border shadow-sm">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-800">{post.title}</h3>
-                    <span className={`px-2 py-1 text-xs rounded ${
+                    <h3 className="font-medium text-gray-800 flex-1">{post.title}</h3>
+                    <span className={`px-2 py-1 text-xs rounded ml-2 ${
                       post.status === 'publish' 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-yellow-100 text-yellow-800'
@@ -203,9 +205,26 @@ export default function WordPressMigrator() {
                       {post.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{post.excerpt}</p>
-                  <div className="text-xs text-gray-500">
-                    <span>Slug: {post.slug}</span> | <span>Date: {new Date(post.date).toLocaleDateString()}</span>
+                  
+                  {post.featuredImage && (
+                    <div className="mb-3">
+                      <img 
+                        src={post.featuredImage} 
+                        alt={post.title} 
+                        className="w-full h-32 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{post.excerpt}</p>
+                  
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <div><strong>Author:</strong> {post.author}</div>
+                    <div><strong>Slug:</strong> {post.slug}</div>
+                    <div><strong>Date:</strong> {new Date(post.date).toLocaleDateString()}</div>
                   </div>
                 </div>
               ))}

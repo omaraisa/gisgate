@@ -38,6 +38,10 @@ model Article {
   category        String?
   tags            String? // JSON string for tags array
   
+  // Author information
+  author          String?
+  authorSlug      String?
+  
   @@map("articles")
 }
 

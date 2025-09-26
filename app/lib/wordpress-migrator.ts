@@ -106,11 +106,23 @@ interface MigrationStats {
   endTime?: Date;
 }
 
+interface WordPressAuthor {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  link: string;
+  avatar_urls: {
+    [size: string]: string;
+  };
+}
+
 export class WordPressMigrator {
   private config: MigrationConfig;
   private stats: MigrationStats;
   private categories: Map<number, string> = new Map();
   private tags: Map<number, string> = new Map();
+  private authors: Map<number, WordPressAuthor> = new Map();
 
   constructor(config: Partial<MigrationConfig> = {}) {
     this.config = {
@@ -171,11 +183,11 @@ export class WordPressMigrator {
   }
 
   /**
-   * Load categories and tags from WordPress
+   * Load categories, tags, and authors from WordPress
    */
   private async loadCategoriesAndTags(): Promise<void> {
     try {
-      console.log('📂 Loading categories and tags...');
+      console.log('📂 Loading categories, tags, and authors...');
 
       // Load categories
       const categoriesResponse = await this.fetchFromWordPress('/wp/v2/categories?per_page=100');
@@ -191,10 +203,17 @@ export class WordPressMigrator {
         this.tags.set(tag.id, tag.name);
       });
 
-      console.log(`📂 Loaded ${this.categories.size} categories and ${this.tags.size} tags`);
+      // Load authors
+      const authorsResponse = await this.fetchFromWordPress('/wp/v2/users?per_page=100');
+      const authors: WordPressAuthor[] = await authorsResponse.json();
+      authors.forEach(author => {
+        this.authors.set(author.id, author);
+      });
+
+      console.log(`📂 Loaded ${this.categories.size} categories, ${this.tags.size} tags, and ${this.authors.size} authors`);
     } catch (error) {
-      console.error('Failed to load categories and tags:', error);
-      // Continue without categories and tags
+      console.error('Failed to load metadata:', error);
+      // Continue without metadata
     }
   }
 
@@ -203,7 +222,7 @@ export class WordPressMigrator {
    */
   private async getTotalPostsCount(): Promise<number> {
     try {
-      const response = await this.fetchFromWordPress('/wp/v2/posts?per_page=1&status=publish,draft,private');
+      const response = await this.fetchFromWordPress('/wp/v2/posts?per_page=1&status=publish');
       const totalPosts = response.headers.get('X-WP-Total');
       return totalPosts ? parseInt(totalPosts, 10) : 0;
     } catch (error) {
@@ -241,7 +260,7 @@ export class WordPressMigrator {
    */
   private async fetchPosts(page: number): Promise<WordPressPost[]> {
     const response = await this.fetchFromWordPress(
-      `/wp/v2/posts?per_page=${this.config.batchSize}&page=${page}&status=publish,draft,private&_embed`
+      `/wp/v2/posts?per_page=${this.config.batchSize}&page=${page}&status=publish&_embed`
     );
     
     if (!response.ok) {
@@ -278,13 +297,16 @@ export class WordPressMigrator {
    * Process a single WordPress post
    */
   private async processPost(wpPost: WordPressPost): Promise<void> {
-    // Check if post already exists
+    // Decode the slug consistently
+    const decodedSlug = this.decodeSlug(wpPost.slug);
+    
+    // Check if post already exists using the decoded slug
     const existingArticle = await prisma.article.findUnique({
-      where: { slug: wpPost.slug }
+      where: { slug: decodedSlug }
     });
 
     if (existingArticle && !this.config.overwriteExisting) {
-      console.log(`⏭️ Skipping existing post: ${wpPost.slug}`);
+      console.log(`⏭️ Skipping existing post: ${decodedSlug}`);
       this.stats.skippedPosts++;
       return;
     }
@@ -292,17 +314,24 @@ export class WordPressMigrator {
     // Extract and clean content
     const title = this.cleanHtml(wpPost.title.rendered);
     const excerpt = this.cleanHtml(wpPost.excerpt.rendered);
-    const content = this.processContent(wpPost.content.rendered);
+    let content = this.processContent(wpPost.content.rendered);
 
-    // Map categories and tags
+    // Transform image URLs in content to use your server
+    content = this.transformImageUrls(content);
+
+    // Map categories, tags, and author
     const categoryName = wpPost.categories.length > 0 ? this.categories.get(wpPost.categories[0]) : null;
     const tagNames = wpPost.tags.map(tagId => this.tags.get(tagId)).filter(Boolean) as string[];
+    const author = this.authors.get(wpPost.author);
 
-    // Get featured image
+    // Get and transform featured image URL
     let featuredImageUrl: string | null = null;
     if (this.config.includeImages && wpPost.featured_media && wpPost._links?.['wp:featuredmedia']) {
       try {
-        featuredImageUrl = await this.getFeaturedImageUrl(wpPost.featured_media);
+        const originalImageUrl = await this.getFeaturedImageUrl(wpPost.featured_media);
+        if (originalImageUrl) {
+          featuredImageUrl = this.transformImageUrl(originalImageUrl);
+        }
       } catch (error) {
         console.warn(`Failed to get featured image for post ${wpPost.id}:`, error);
       }
@@ -311,7 +340,7 @@ export class WordPressMigrator {
     // Create or update article
     const articleData = {
       title,
-      slug: wpPost.slug,
+      slug: decodedSlug, // Use the same decoded slug
       excerpt,
       content,
       status: this.config.statusMapping[wpPost.status] || 'DRAFT',
@@ -319,6 +348,8 @@ export class WordPressMigrator {
       featuredImage: featuredImageUrl,
       category: categoryName,
       tags: JSON.stringify(tagNames),
+      author: author?.name || null,
+      authorSlug: author?.slug || null,
       metaTitle: title,
       metaDescription: excerpt,
       aiGenerated: false,
@@ -332,12 +363,12 @@ export class WordPressMigrator {
         where: { id: existingArticle.id },
         data: articleData
       });
-      console.log(`📝 Updated article: ${wpPost.slug}`);
+      console.log(`📝 Updated article: ${decodedSlug}`);
     } else {
       article = await prisma.article.create({
         data: articleData
       });
-      console.log(`✨ Created article: ${wpPost.slug}`);
+      console.log(`✨ Created article: ${decodedSlug}`);
     }
 
     // Process images in content
@@ -367,13 +398,18 @@ export class WordPressMigrator {
    */
   private async processContentImages(articleId: string, content: string): Promise<void> {
     const imageRegex = /<img[^>]+src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>/g;
-    const images: { url: string; alt: string }[] = [];
+    const images: { url: string; alt: string; caption?: string }[] = [];
     let match;
 
     while ((match = imageRegex.exec(content)) !== null) {
+      // Extract additional image attributes
+      const imgTag = match[0];
+      const captionMatch = imgTag.match(/title="([^"]*)"/);
+      
       images.push({
-        url: match[1],
-        alt: match[2] || ''
+        url: match[1], // URL is already transformed by transformImageUrls()
+        alt: match[2] || '',
+        caption: captionMatch ? captionMatch[1] : undefined
       });
     }
 
@@ -384,10 +420,12 @@ export class WordPressMigrator {
             articleId,
             url: img.url,
             alt: img.alt,
-            caption: null
+            caption: img.caption
           })),
           skipDuplicates: true
         });
+        
+        console.log(`📷 Saved ${images.length} images for article`);
       } catch (error) {
         console.warn(`Failed to save images for article ${articleId}:`, error);
       }
@@ -404,6 +442,48 @@ export class WordPressMigrator {
       // Clean up extra whitespace
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  /**
+   * Transform WordPress image URLs to use your server
+   * Converts: https://gis-gate.com/wp-content/uploads/2025/02/image.jpg
+   * To: http://13.61.185.194/static/image/2025/02/image.jpg
+   */
+  private transformImageUrls(content: string): string {
+    const imageUrlRegex = /https?:\/\/gis-gate\.com\/wp-content\/uploads\/([^"'\s>]+)/g;
+    
+    return content.replace(imageUrlRegex, (match, path) => {
+      return `http://13.61.185.194/static/image/${path}`;
+    });
+  }
+
+  /**
+   * Transform single WordPress image URL
+   */
+  private transformImageUrl(originalUrl: string): string {
+    if (!originalUrl.includes('gis-gate.com/wp-content/uploads/')) {
+      return originalUrl; // Return as-is if not a WordPress upload URL
+    }
+
+    // Extract the path after /wp-content/uploads/
+    const match = originalUrl.match(/\/wp-content\/uploads\/(.+)$/);
+    if (match) {
+      return `http://13.61.185.194/static/image/${match[1]}`;
+    }
+
+    return originalUrl;
+  }
+
+  /**
+   * Decode URL-encoded WordPress slugs
+   */
+  private decodeSlug(slug: string): string {
+    try {
+      return decodeURIComponent(slug);
+    } catch (error) {
+      console.warn(`Failed to decode slug: ${slug}`, error);
+      return slug;
+    }
   }
 
   /**

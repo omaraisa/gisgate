@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { program } from 'commander';
-import { WordPressMigrator } from '../app/lib/wordpress-migrator.js';
+// For now, we'll use the API endpoints for CLI testing
+import fetch from 'node-fetch';
 
 program
   .name('wp-migrator')
@@ -26,43 +27,49 @@ program
     console.log(`Overwrite existing: ${options.overwrite}`);
     
     try {
-      const migrator = new WordPressMigrator({
-        wordpressUrl: options.url,
-        batchSize: parseInt(options.batchSize),
-        delayBetweenRequests: parseInt(options.delay),
-        includeImages: options.images,
-        overwriteExisting: options.overwrite
+      // Use the API endpoint for migration
+      const response = await fetch('http://localhost:3000/api/wordpress-migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wordpressUrl: options.url,
+          batchSize: parseInt(options.batchSize),
+          delayBetweenRequests: parseInt(options.delay),
+          includeImages: options.images,
+          overwriteExisting: options.overwrite
+        })
       });
 
-      // Test connection first
-      const isConnected = await migrator.testConnection();
-      if (!isConnected) {
-        console.error('❌ Cannot connect to WordPress site');
-        process.exit(1);
-      }
-
-      console.log('✅ Connection successful');
-
-      // Start migration
-      const stats = await migrator.migrate();
+      const result = await response.json();
       
-      console.log('\n📊 Migration Statistics:');
-      console.log(`Total posts: ${stats.totalPosts}`);
-      console.log(`Successful imports: ${stats.successfulImports}`);
-      console.log(`Failed imports: ${stats.failedImports}`);
-      console.log(`Skipped posts: ${stats.skippedPosts}`);
-      
-      if (stats.errors.length > 0) {
-        console.log('\n❌ Errors:');
-        stats.errors.forEach(error => console.log(`  - ${error}`));
-      }
-      
-      const duration = stats.endTime 
-        ? new Date(stats.endTime).getTime() - new Date(stats.startTime).getTime()
-        : 0;
-      console.log(`\n⏱️ Duration: ${Math.round(duration / 1000)}s`);
-      
-      if (stats.failedImports > 0) {
+      if (response.ok) {
+        const stats = result.stats;
+        console.log('\n📊 Migration Statistics:');
+        console.log(`Total posts: ${stats.totalPosts}`);
+        console.log(`Successful imports: ${stats.successfulImports}`);
+        console.log(`Failed imports: ${stats.failedImports}`);
+        console.log(`Skipped posts: ${stats.skippedPosts}`);
+        
+        if (stats.errors.length > 0) {
+          console.log('\n❌ Errors:');
+          stats.errors.forEach(error => console.log(`  - ${error}`));
+        }
+        
+        const duration = stats.endTime 
+          ? new Date(stats.endTime).getTime() - new Date(stats.startTime).getTime()
+          : 0;
+        console.log(`\n⏱️ Duration: ${Math.round(duration / 1000)}s`);
+        
+        if (stats.failedImports > 0) {
+          process.exit(1);
+        }
+      } else {
+        console.error('❌ Migration failed:', result.error);
+        if (result.details) {
+          console.error('Details:', result.details);
+        }
         process.exit(1);
       }
       
@@ -78,23 +85,28 @@ program
   .requiredOption('-u, --url <url>', 'WordPress site URL')
   .action(async (options) => {
     try {
-      const migrator = new WordPressMigrator({ wordpressUrl: options.url });
-      
       console.log(`🔄 Testing connection to: ${options.url}`);
       
-      const isConnected = await migrator.testConnection();
-      if (isConnected) {
+      // Use the API endpoint for testing
+      const response = await fetch(`http://localhost:3000/api/wordpress-migrate?action=test&url=${encodeURIComponent(options.url)}`);
+      const result = await response.json();
+      
+      if (result.connected) {
         console.log('✅ Connection successful');
         
-        const siteInfo = await migrator.getSiteInfo();
-        if (siteInfo) {
+        // Get site info
+        const infoResponse = await fetch(`http://localhost:3000/api/wordpress-migrate?action=info&url=${encodeURIComponent(options.url)}`);
+        const infoResult = await infoResponse.json();
+        
+        if (infoResult.siteInfo) {
           console.log('\n📊 Site Information:');
-          if (siteInfo.name) console.log(`Name: ${siteInfo.name}`);
-          if (siteInfo.description) console.log(`Description: ${siteInfo.description}`);
-          if (siteInfo.url) console.log(`URL: ${siteInfo.url}`);
+          if (infoResult.siteInfo.name) console.log(`Name: ${infoResult.siteInfo.name}`);
+          if (infoResult.siteInfo.description) console.log(`Description: ${infoResult.siteInfo.description}`);
+          if (infoResult.siteInfo.url) console.log(`URL: ${infoResult.siteInfo.url}`);
         }
       } else {
         console.error('❌ Connection failed');
+        console.error('Message:', result.message);
         process.exit(1);
       }
     } catch (error) {
