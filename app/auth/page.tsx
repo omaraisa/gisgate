@@ -10,10 +10,30 @@ export default function AuthPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     username: '',
     fullNameArabic: '',
     fullNameEnglish: '',
   });
+
+  // Password validation function
+  const validatePassword = (password: string) => {
+    const minLength = password.length >= 8;
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    
+    return {
+      minLength,
+      hasLowerCase,
+      hasUpperCase,
+      hasNumber,
+      isValid: minLength && hasLowerCase && hasUpperCase && hasNumber
+    };
+  };
+
+  const passwordValidation = validatePassword(formData.password);
+  const passwordsMatch = formData.password === formData.confirmPassword;
 
   const router = useRouter();
 
@@ -21,6 +41,21 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate password for registration
+    if (!isLogin) {
+      if (!passwordValidation.isValid) {
+        setError('كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل، وحروف كبيرة وصغيرة وأرقام');
+        setLoading(false);
+        return;
+      }
+      
+      if (!passwordsMatch) {
+        setError('كلمتا المرور غير متطابقتان');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
@@ -124,14 +159,74 @@ export default function AuthPage() {
                 required
                 value={formData.password}
                 onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  !isLogin && formData.password && !passwordValidation.isValid
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300'
+                }`}
                 placeholder="كلمة المرور"
                 minLength={8}
               />
+              {!isLogin && formData.password && (
+                <div className="mt-2 text-xs space-y-1">
+                  <div className={`flex items-center ${
+                    passwordValidation.minLength ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="mr-2">{passwordValidation.minLength ? '✓' : '✗'}</span>
+                    8 أحرف على الأقل
+                  </div>
+                  <div className={`flex items-center ${
+                    passwordValidation.hasLowerCase ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="mr-2">{passwordValidation.hasLowerCase ? '✓' : '✗'}</span>
+                    حرف صغير واحد على الأقل (a-z)
+                  </div>
+                  <div className={`flex items-center ${
+                    passwordValidation.hasUpperCase ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="mr-2">{passwordValidation.hasUpperCase ? '✓' : '✗'}</span>
+                    حرف كبير واحد على الأقل (A-Z)
+                  </div>
+                  <div className={`flex items-center ${
+                    passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="mr-2">{passwordValidation.hasNumber ? '✓' : '✗'}</span>
+                    رقم واحد على الأقل (0-9)
+                  </div>
+                </div>
+              )}
             </div>
 
             {!isLogin && (
               <>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                    تأكيد كلمة المرور *
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                      formData.confirmPassword && !passwordsMatch
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300'
+                    }`}
+                    placeholder="أعد كتابة كلمة المرور"
+                  />
+                  {formData.confirmPassword && (
+                    <div className={`mt-1 text-xs ${
+                      passwordsMatch ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      <span className="mr-2">{passwordsMatch ? '✓' : '✗'}</span>
+                      {passwordsMatch ? 'كلمتا المرور متطابقتان' : 'كلمتا المرور غير متطابقتان'}
+                    </div>
+                  )}
+                </div>
+                
                 <div>
                   <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                     اسم المستخدم
