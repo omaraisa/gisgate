@@ -79,7 +79,7 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">المقال غير موجود</h1>
-          <Link href="/" className="text-blue-400 hover:text-blue-300">
+          <Link href="/" className="text-primary-500 hover:text-secondary-500">
             العودة إلى الرئيسية
           </Link>
         </div>
@@ -96,7 +96,8 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link 
             href="/"
-            className="inline-flex items-center gap-2 text-foreground hover:text-secondary-400 transition-colors"
+            className="inline-flex items-center gap-2 text- hover:text-secondary-400 transition-colors"
+            style={{ color: 'var(--background)' }}
           >
             <ArrowLeft className="w-5 h-5" />
             العودة إلى الرئيسية

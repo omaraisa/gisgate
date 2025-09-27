@@ -342,6 +342,34 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   </select>
                 </div>
 
+                {/* Publication Date */}
+                {article.publishedAt && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      تاريخ النشر (ميلادي)
+                    </label>
+                    <input
+                      type="text"
+                      value={new Date(article.publishedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(article.publishedAt).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
 
               </div>
             </div>
