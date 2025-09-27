@@ -10,7 +10,8 @@
     "migrate:wp": "node scripts/wp-migrator.mjs migrate",
     "migrate:test": "node scripts/wp-migrator.mjs test",
     "migrate:preview": "node scripts/wp-migrator.mjs preview",
-    "test:migration": "node scripts/test-migration.mjs"
+    "test:migration": "node scripts/test-migration.mjs",
+    "test:ai-api": "npx tsx scripts/test-ai-article-api.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.1",
