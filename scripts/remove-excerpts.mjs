@@ -36,12 +36,10 @@ async function removeExcerptSections() {
           /Excerpt[^]*?(?=\n\d+|\n[^\n]*\d{4})/gi
         ];
 
-        let hasChanges = false;
         for (const pattern of excerptPatterns) {
           const newContent = cleanedContent.replace(pattern, '');
           if (newContent !== cleanedContent) {
             cleanedContent = newContent;
-            hasChanges = true;
           }
         }
 

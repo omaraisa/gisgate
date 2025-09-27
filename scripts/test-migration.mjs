@@ -41,7 +41,7 @@ async function testMigrationSystem() {
               console.log(`  ${index + 1}. ${post.title.rendered} (${post.status})`);
             });
           }
-        } catch (error) {
+        } catch {
           console.log('⚠️  Could not fetch posts preview');
         }
         

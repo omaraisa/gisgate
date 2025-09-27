@@ -11,8 +11,8 @@
  * 3. The script will migrate users to the new system
  */
 
-import { createReadStream } from 'fs';
-import { createInterface } from 'readline';
+// import { createReadStream } from 'fs';
+// import { createInterface } from 'readline';
 import { WordPressUserMigrator } from '../lib/wordpress-user-migrator';
 
 interface WordPressUserExport {
@@ -26,7 +26,8 @@ interface WordPressUserExport {
   last_name?: string;
   user_url?: string;
   description?: string;
-  user_meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
+  user_meta?: Record<string, unknown>;
 }
 
 async function migrateFromWordPressJSON(jsonFilePath: string) {
@@ -34,7 +35,7 @@ async function migrateFromWordPressJSON(jsonFilePath: string) {
 
   try {
     // Read and parse JSON file
-    const fs = require('fs');
+    const fs = await import('fs');
     const data = fs.readFileSync(jsonFilePath, 'utf8');
     const wpUsers: WordPressUserExport[] = JSON.parse(data);
 
@@ -94,6 +95,7 @@ async function migrateFromWordPressJSON(jsonFilePath: string) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function migrateFromDatabase(connectionString: string) {
   console.log('🗄️  Direct database migration not implemented yet.');
   console.log('Please export your WordPress users to JSON format and use migrateFromWordPressJSON instead.');
