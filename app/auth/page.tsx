@@ -11,8 +11,6 @@ export default function AuthPage() {
     email: '',
     password: '',
     username: '',
-    firstName: '',
-    lastName: '',
     fullNameArabic: '',
     fullNameEnglish: '',
   });
@@ -32,8 +30,6 @@ export default function AuthPage() {
             email: formData.email,
             password: formData.password,
             username: formData.username,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
             fullNameArabic: formData.fullNameArabic,
             fullNameEnglish: formData.fullNameEnglish.toUpperCase(),
           };
@@ -149,38 +145,6 @@ export default function AuthPage() {
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     placeholder="username"
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                      الاسم الأول
-                    </label>
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="الاسم الأول"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                      الاسم الأخير
-                    </label>
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="الاسم الأخير"
-                    />
-                  </div>
                 </div>
 
                 <div>

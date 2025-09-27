@@ -139,10 +139,8 @@ export class AuthService {
     email: string;
     password: string;
     username?: string;
-    firstName?: string;
-    lastName?: string;
-    fullNameArabic?: string;
-    fullNameEnglish?: string;
+    fullNameArabic: string;
+    fullNameEnglish: string;
     wordpressId?: number;
   }): Promise<User> {
     const hashedPassword = await this.hashPassword(userData.password);
@@ -153,10 +151,8 @@ export class AuthService {
         email: userData.email.toLowerCase(),
         password: hashedPassword,
         username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
         fullNameArabic: userData.fullNameArabic,
-        fullNameEnglish: userData.fullNameEnglish?.toUpperCase(),
+        fullNameEnglish: userData.fullNameEnglish.toUpperCase(),
         emailVerificationToken: verificationToken,
         emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         wordpressId: userData.wordpressId,

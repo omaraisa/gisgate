@@ -6,8 +6,6 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   username: z.string().min(3, 'Username must be at least 3 characters').optional(),
-  firstName: z.string().min(1, 'First name is required').optional(),
-  lastName: z.string().min(1, 'Last name is required').optional(),
   fullNameArabic: z.string().min(1, 'Full name in Arabic is required'),
   fullNameEnglish: z.string().min(1, 'Full name in English is required'),
 });
