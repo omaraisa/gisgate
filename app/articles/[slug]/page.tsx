@@ -176,13 +176,30 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
         }
         
         .article-content blockquote {
-          border-right: 4px solid var(--primary-500);
-          padding-right: 1.5rem;
+          border-right: 4px solid #293F28;
+          padding: 1.5rem 1.5rem 1.5rem 2rem;
           margin: 2rem 0;
-          background: var(--background-secondary);
-          padding: 1.5rem;
+          background: #1A1F1A;
           border-radius: 0.5rem;
-          color: var(--foreground);
+          font-style: italic;
+          position: relative;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .article-content blockquote p {
+          color: #F5F7F5 !important;
+          margin-bottom: 1rem;
+        }
+
+        .article-content blockquote::before {
+          content: '"';
+          position: absolute;
+          top: -10px;
+          right: 10px;
+          font-size: 3rem;
+          color: #ADD900;
+          font-family: serif;
+          line-height: 1;
         }
 
         .article-content a {
