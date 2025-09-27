@@ -56,8 +56,17 @@ export default function Header() {
       }
     };
 
+    // Listen for custom auth change events (when user logs in/out in same tab)
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -80,6 +89,10 @@ export default function Header() {
       localStorage.removeItem('user');
       setUser(null);
       setIsUserMenuOpen(false);
+      
+      // Trigger auth change event
+      window.dispatchEvent(new Event('auth-change'));
+      
       router.push('/');
     }
   };

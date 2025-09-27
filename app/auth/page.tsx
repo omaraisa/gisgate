@@ -67,6 +67,7 @@ export default function AuthPage() {
             localStorage.removeItem('sessionToken');
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
+            window.dispatchEvent(new Event('auth-change'));
           }
         }
       } catch (error) {
@@ -75,6 +76,7 @@ export default function AuthPage() {
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
+        window.dispatchEvent(new Event('auth-change'));
       } finally {
         setIsCheckingAuth(false);
       }
@@ -134,6 +136,9 @@ export default function AuthPage() {
         localStorage.setItem('accessToken', data.tokens.accessToken);
         localStorage.setItem('sessionToken', data.tokens.sessionToken);
         localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Trigger a custom event to notify Header component
+        window.dispatchEvent(new Event('auth-change'));
       }
 
       // Redirect based on user role

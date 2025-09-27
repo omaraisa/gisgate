@@ -62,6 +62,7 @@ export default function ProfilePage() {
           localStorage.removeItem('sessionToken');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('user');
+          window.dispatchEvent(new Event('auth-change'));
           router.push('/auth');
           return;
         }
