@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,6 +37,51 @@ export default function AuthPage() {
   const passwordsMatch = formData.password === formData.confirmPassword;
 
   const router = useRouter();
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const sessionToken = localStorage.getItem('sessionToken');
+        const user = localStorage.getItem('user');
+        
+        if (sessionToken && user) {
+          // Verify the session is still valid
+          const response = await fetch('/api/user/profile', {
+            headers: {
+              'Authorization': `Bearer ${sessionToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const userData = JSON.parse(user);
+            // Redirect based on user role
+            if (userData.role === 'ADMIN') {
+              router.push('/admin');
+            } else {
+              router.push('/');
+            }
+            return;
+          } else {
+            // Invalid session, clear storage
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+          }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        // Clear potentially corrupted storage
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthentication();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +157,18 @@ export default function AuthPage() {
       [name]: name === 'fullNameEnglish' ? value.toUpperCase() : value,
     });
   };
+
+  // Show loading spinner while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">جاري التحقق من حالة تسجيل الدخول...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
