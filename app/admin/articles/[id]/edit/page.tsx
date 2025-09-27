@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ArticleStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import LinkExtension from '@tiptap/extension-link'
@@ -73,9 +74,9 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     if (!isNewArticle) {
       fetchArticle()
     }
-  }, [resolvedParams.id, isNewArticle])
+  }, [resolvedParams.id, isNewArticle, fetchArticle])
 
-  const fetchArticle = async () => {
+  const fetchArticle = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/articles/${resolvedParams.id}`)
       if (response.ok) {
@@ -91,7 +92,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [resolvedParams.id, router])
 
   const generateSlug = (title: string) => {
     return title
@@ -425,9 +426,11 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                 
                 {article.featuredImage && (
                   <div className="mt-3">
-                    <img
+                    <Image
                       src={article.featuredImage}
                       alt="معاينة الصورة"
+                      width={400}
+                      height={128}
                       className="w-full h-32 object-cover rounded-md"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'

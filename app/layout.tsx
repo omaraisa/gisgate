@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Arabic } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./components/Header";
-
-const notoSansArabic = Noto_Sans_Arabic({
-  variable: "--font-noto-sans-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "700"],
-});
 
 const kufi = localFont({
   src: "../fonts/kufi.ttf",

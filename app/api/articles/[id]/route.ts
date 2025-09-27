@@ -58,7 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       content,
       excerpt,
       featuredImage,

@@ -32,10 +32,10 @@ interface WordPressPost {
   sticky: boolean;
   template: string;
   format: string;
-  meta: any;
+  meta: Record<string, unknown>;
   categories: number[];
   tags: number[];
-  _links: any;
+  _links: Record<string, unknown>;
 }
 
 interface WordPressCategory {
@@ -75,7 +75,13 @@ interface WordPressMedia {
     width: number;
     height: number;
     file: string;
-    sizes: any;
+    sizes: Record<string, {
+      file: string;
+      width: number;
+      height: number;
+      mime_type: string;
+      source_url: string;
+    }>;
   };
   source_url: string;
   alt_text: string;
@@ -115,6 +121,18 @@ interface WordPressAuthor {
   avatar_urls: {
     [size: string]: string;
   };
+}
+
+interface WordPressSiteInfo {
+  name?: string;
+  description?: string;
+  url?: string;
+  home?: string;
+  gmt_offset?: number;
+  timezone_string?: string;
+  namespaces?: string[];
+  authentication?: Record<string, unknown>;
+  routes?: Record<string, unknown>;
 }
 
 export class WordPressMigrator {
@@ -550,7 +568,7 @@ export class WordPressMigrator {
   /**
    * Get WordPress site information
    */
-  async getSiteInfo(): Promise<any> {
+  async getSiteInfo(): Promise<WordPressSiteInfo | null> {
     try {
       const response = await this.fetchFromWordPress('/wp/v2');
       if (response.ok) {

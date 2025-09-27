@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
-import { Calendar, Eye, ArrowLeft, Globe, Zap, Users, BookOpen, Sparkles, ArrowRight, Play, FileText } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import Link from 'next/link';
@@ -70,23 +70,6 @@ const FloatingCard = ({ children, className = "" }: FloatingCardProps) => {
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {children}
-    </motion.div>
-  );
-};
-
-interface ParallaxSectionProps {
-  children: ReactNode;
-  className?: string;
-  offset?: number;
-}
-
-const ParallaxSection = ({ children, className = "", offset = 50 }: ParallaxSectionProps) => {
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], [0, offset]);
-
-  return (
-    <motion.div style={{ y }} className={className}>
       {children}
     </motion.div>
   );

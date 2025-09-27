@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function Footer() {
   return (
     <footer>
@@ -6,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
             <div className="text-center mb-8">
-              <img src="/logo.png" alt="بوابة نظم المعلومات الجغرافية" className="h-16 w-auto mx-auto" />
+              <Image src="/logo.png" alt="بوابة نظم المعلومات الجغرافية" width={64} height={64} className="h-16 w-auto mx-auto" />
             </div>
             <h3 className="text-lg font-semibold mb-4 text-secondary-400 text-center">تابعنا على</h3>
             <div className="flex justify-center gap-12">

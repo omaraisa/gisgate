@@ -22,26 +22,28 @@ model Article {
   publishedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // SEO fields
   metaTitle       String?
   metaDescription String?
-  
+
   // AI integration fields
   aiGenerated     Boolean @default(false)
   aiPrompt        String?
-  
+
   // Analytics
   viewCount       Int @default(0)
-  
+
   // Categories and tags
   category        String?
   tags            String? // JSON string for tags array
-  
-  // Author information
-  author          String?
+
+  // Author information - now linked to User model
+  authorId        String?
+  author          User?   @relation("UserArticles", fields: [authorId], references: [id])
+  authorName      String? // Fallback for legacy data
   authorSlug      String?
-  
+
   @@map("articles")
 }
 
@@ -60,4 +62,68 @@ enum ArticleStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String?   @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  displayName   String?
+  avatar        String?
+  bio           String?
+  website       String?
+
+  // Authentication
+  emailVerified Boolean   @default(false)
+  emailVerificationToken String?   @unique
+  emailVerificationExpires DateTime?
+  passwordResetToken String?   @unique
+  passwordResetExpires DateTime?
+
+  // Status
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  loginAttempts Int       @default(0)
+  lockUntil     DateTime?
+
+  // Roles and permissions
+  role          UserRole  @default(USER)
+
+  // WordPress migration
+  wordpressId   Int?      @unique
+  wordpressMeta String?   // JSON string for WordPress user meta
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sessions      UserSession[]
+  articles      Article[] @relation("UserArticles")
+
+  @@map("users")
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("user_sessions")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  AUTHOR
+  USER
 }

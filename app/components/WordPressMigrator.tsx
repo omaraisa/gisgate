@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface MigrationStats {
   totalPosts: number;
@@ -208,9 +209,11 @@ export default function WordPressMigrator() {
                   
                   {post.featuredImage && (
                     <div className="mb-3">
-                      <img 
+                      <Image 
                         src={post.featuredImage} 
                         alt={post.title} 
+                        width={400}
+                        height={128}
                         className="w-full h-32 object-cover rounded"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
@@ -392,7 +395,7 @@ export default function WordPressMigrator() {
           <li>5. Start the migration process</li>
         </ul>
         <p className="text-xs text-gray-500 mt-3">
-          Note: The WordPress REST API must be enabled (it's enabled by default in WordPress 4.7+).
+          Note: The WordPress REST API must be enabled (it&apos;s enabled by default in WordPress 4.7+).
           The migration will preserve article content, categories, tags, and featured images.
         </p>
       </div>

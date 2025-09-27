@@ -2,9 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Calendar, Eye, Tag, Share2, ArrowLeft } from 'lucide-react';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Article {
@@ -86,8 +84,6 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
       </div>
     );
   }
-
-  const tags = article.tags ? JSON.parse(article.tags) : [];
 
   return (
     <div className="min-h-screen bg-white">

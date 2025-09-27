@@ -65,8 +65,21 @@ export async function GET(request: NextRequest) {
         try {
           const response = await fetch(`${wordpressUrl}/wp-json/wp/v2/posts?per_page=5&status=publish&_embed`);
           if (response.ok) {
-            const posts = await response.json();
-            const preview = posts.map((post: any) => ({
+interface WordPressPost {
+  id: number;
+  title: { rendered: string };
+  slug: string;
+  status: string;
+  date: string;
+  _embedded?: {
+    author?: Array<{ name: string }>;
+    'wp:featuredmedia'?: Array<{ source_url: string }>;
+  };
+  excerpt: { rendered: string };
+}
+
+            const posts = await response.json() as WordPressPost[];
+            const preview = posts.map((post: WordPressPost) => ({
               id: post.id,
               title: post.title.rendered,
               slug: decodeURIComponent(post.slug),

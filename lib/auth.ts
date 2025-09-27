@@ -1,0 +1,339 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { User, UserRole, PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  role: UserRole;
+  emailVerified: boolean;
+  isActive: boolean;
+}
+
+export interface JWTPayload {
+  userId: string;
+  email: string;
+  role: UserRole;
+  iat?: number;
+  exp?: number;
+}
+
+export class AuthService {
+  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+  private static readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+  private static readonly BCRYPT_ROUNDS = 12;
+
+  // Password hashing
+  static async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, this.BCRYPT_ROUNDS);
+  }
+
+  static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(password, hashedPassword);
+  }
+
+  // JWT token management
+  static generateToken(user: AuthUser): string {
+    const payload: JWTPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const secret = this.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+
+    return jwt.sign(payload, secret as jwt.Secret, {
+      expiresIn: '7d',
+    });
+  }
+
+  static verifyToken(token: string): JWTPayload | null {
+    try {
+      return jwt.verify(token, this.JWT_SECRET) as JWTPayload;
+    } catch {
+      return null;
+    }
+  }
+
+  // Token generation for email verification and password reset
+  static generateSecureToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  // User authentication
+  static async authenticateUser(email: string, password: string): Promise<AuthUser | null> {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    // Check if account is locked
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      throw new Error('Account is temporarily locked due to too many failed login attempts');
+    }
+
+    const isValidPassword = await this.verifyPassword(password, user.password);
+    if (!isValidPassword) {
+      // Increment login attempts
+      await this.handleFailedLogin(user.id);
+      return null;
+    }
+
+    // Reset login attempts on successful login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        loginAttempts: 0,
+        lockUntil: null,
+        lastLogin: new Date(),
+      },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username || undefined,
+      firstName: user.firstName || undefined,
+      lastName: user.lastName || undefined,
+      displayName: user.displayName || undefined,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+    };
+  }
+
+  // Handle failed login attempts
+  private static async handleFailedLogin(userId: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return;
+
+    const newAttempts = user.loginAttempts + 1;
+    const lockUntil = newAttempts >= 5 ? new Date(Date.now() + 2 * 60 * 60 * 1000) : null; // 2 hours lock
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        loginAttempts: newAttempts,
+        lockUntil,
+      },
+    });
+  }
+
+  // User registration
+  static async registerUser(userData: {
+    email: string;
+    password: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    displayName?: string;
+    wordpressId?: number;
+  }): Promise<User> {
+    const hashedPassword = await this.hashPassword(userData.password);
+    const verificationToken = this.generateSecureToken();
+
+    return prisma.user.create({
+      data: {
+        email: userData.email.toLowerCase(),
+        password: hashedPassword,
+        username: userData.username,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        displayName: userData.displayName || `${userData.firstName} ${userData.lastName}`.trim(),
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        wordpressId: userData.wordpressId,
+      },
+    });
+  }
+
+  // Email verification
+  static async verifyEmail(token: string): Promise<boolean> {
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) return false;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+
+    return true;
+  }
+
+  // Password reset
+  static async initiatePasswordReset(email: string): Promise<string | null> {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) return null;
+
+    const resetToken = this.generateSecureToken();
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetExpires: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour
+      },
+    });
+
+    return resetToken;
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    if (!user) return false;
+
+    const hashedPassword = await this.hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        loginAttempts: 0,
+        lockUntil: null,
+      },
+    });
+
+    return true;
+  }
+
+  // Session management
+  static async createSession(userId: string, ipAddress?: string, userAgent?: string): Promise<string> {
+    const token = this.generateSecureToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await prisma.userSession.create({
+      data: {
+        userId,
+        token,
+        expiresAt,
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    return token;
+  }
+
+  static async validateSession(token: string): Promise<AuthUser | null> {
+    const session = await prisma.userSession.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!session || !session.isActive || session.expiresAt < new Date()) {
+      return null;
+    }
+
+    const user = session.user;
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username || undefined,
+      firstName: user.firstName || undefined,
+      lastName: user.lastName || undefined,
+      displayName: user.displayName || undefined,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      isActive: user.isActive,
+    };
+  }
+
+  static async invalidateSession(token: string): Promise<void> {
+    await prisma.userSession.updateMany({
+      where: { token },
+      data: { isActive: false },
+    });
+  }
+
+  static async invalidateAllUserSessions(userId: string): Promise<void> {
+    await prisma.userSession.updateMany({
+      where: { userId },
+      data: { isActive: false },
+    });
+  }
+
+  // User management utilities
+  static async getUserById(id: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { id } });
+  }
+
+  static async getUserByEmail(email: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  }
+
+  static async updateUser(id: string, data: Partial<User>): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  static async deleteUser(id: string): Promise<void> {
+    await prisma.user.delete({ where: { id } });
+  }
+
+  // WordPress migration helpers
+  static async migrateWordPressUser(wordpressUser: {
+    id: number;
+    email: string;
+    username: string;
+    password: string; // Already hashed
+    firstName?: string;
+    lastName?: string;
+    displayName?: string;
+    meta?: Record<string, unknown>;
+  }): Promise<User> {
+    return prisma.user.create({
+      data: {
+        wordpressId: wordpressUser.id,
+        email: wordpressUser.email.toLowerCase(),
+        username: wordpressUser.username,
+        password: wordpressUser.password, // Already hashed from WordPress
+        firstName: wordpressUser.firstName,
+        lastName: wordpressUser.lastName,
+        displayName: wordpressUser.displayName,
+        wordpressMeta: wordpressUser.meta ? JSON.stringify(wordpressUser.meta) : null,
+        emailVerified: true, // Assume WordPress users are verified
+        role: UserRole.USER, // Default role, can be updated later
+      },
+    });
+  }
+}
