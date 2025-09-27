@@ -3,11 +3,12 @@ import { prisma } from '@/app/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const article = await prisma.article.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         images: true
       }
@@ -32,13 +33,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const data = await request.json()
 
     const updatedArticle = await prisma.article.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         title: data.title,
         slug: data.slug,

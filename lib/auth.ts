@@ -11,7 +11,8 @@ export interface AuthUser {
   username?: string;
   firstName?: string;
   lastName?: string;
-  displayName?: string;
+  fullNameArabic?: string;
+  fullNameEnglish?: string;
   role: UserRole;
   emailVerified: boolean;
   isActive: boolean;
@@ -108,7 +109,8 @@ export class AuthService {
       username: user.username || undefined,
       firstName: user.firstName || undefined,
       lastName: user.lastName || undefined,
-      displayName: user.displayName || undefined,
+      fullNameArabic: user.fullNameArabic || undefined,
+      fullNameEnglish: user.fullNameEnglish || undefined,
       role: user.role,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
@@ -139,7 +141,8 @@ export class AuthService {
     username?: string;
     firstName?: string;
     lastName?: string;
-    displayName?: string;
+    fullNameArabic?: string;
+    fullNameEnglish?: string;
     wordpressId?: number;
   }): Promise<User> {
     const hashedPassword = await this.hashPassword(userData.password);
@@ -152,7 +155,8 @@ export class AuthService {
         username: userData.username,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        displayName: userData.displayName || `${userData.firstName} ${userData.lastName}`.trim(),
+        fullNameArabic: userData.fullNameArabic,
+        fullNameEnglish: userData.fullNameEnglish?.toUpperCase(),
         emailVerificationToken: verificationToken,
         emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         wordpressId: userData.wordpressId,
@@ -269,7 +273,8 @@ export class AuthService {
       username: user.username || undefined,
       firstName: user.firstName || undefined,
       lastName: user.lastName || undefined,
-      displayName: user.displayName || undefined,
+      fullNameArabic: user.fullNameArabic || undefined,
+      fullNameEnglish: user.fullNameEnglish || undefined,
       role: user.role,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
@@ -318,7 +323,8 @@ export class AuthService {
     password: string; // Already hashed
     firstName?: string;
     lastName?: string;
-    displayName?: string;
+    fullNameArabic: string;
+    fullNameEnglish: string;
     meta?: Record<string, unknown>;
   }): Promise<User> {
     return prisma.user.create({
@@ -329,7 +335,8 @@ export class AuthService {
         password: wordpressUser.password, // Already hashed from WordPress
         firstName: wordpressUser.firstName,
         lastName: wordpressUser.lastName,
-        displayName: wordpressUser.displayName,
+        fullNameArabic: wordpressUser.fullNameArabic,
+        fullNameEnglish: wordpressUser.fullNameEnglish.toUpperCase(),
         wordpressMeta: wordpressUser.meta ? JSON.stringify(wordpressUser.meta) : null,
         emailVerified: true, // Assume WordPress users are verified
         role: UserRole.USER, // Default role, can be updated later

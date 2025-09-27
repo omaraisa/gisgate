@@ -70,12 +70,6 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     }
   }, [editor, article.content])
 
-  useEffect(() => {
-    if (!isNewArticle) {
-      fetchArticle()
-    }
-  }, [resolvedParams.id, isNewArticle, fetchArticle])
-
   const fetchArticle = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/articles/${resolvedParams.id}`)
@@ -93,6 +87,12 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       setLoading(false)
     }
   }, [resolvedParams.id, router])
+
+  useEffect(() => {
+    if (!isNewArticle) {
+      fetchArticle()
+    }
+  }, [resolvedParams.id, isNewArticle, fetchArticle])
 
   const generateSlug = (title: string) => {
     return title

@@ -61,7 +61,8 @@ export class WordPressUserMigrator {
           password: wpUser.user_pass, // Already hashed from WordPress
           firstName: wpUser.first_name,
           lastName: wpUser.last_name,
-          displayName: wpUser.display_name,
+          fullNameArabic: wpUser.display_name || `${wpUser.first_name} ${wpUser.last_name}`.trim(),
+          fullNameEnglish: wpUser.display_name?.toUpperCase() || `${wpUser.first_name} ${wpUser.last_name}`.trim().toUpperCase(),
           meta: wpUser.user_meta,
         });
 

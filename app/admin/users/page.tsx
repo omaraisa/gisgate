@@ -9,7 +9,8 @@ interface User {
   username?: string;
   firstName?: string;
   lastName?: string;
-  displayName?: string;
+  fullNameArabic?: string;
+  fullNameEnglish?: string;
   role: UserRole;
   emailVerified: boolean;
   isActive: boolean;
@@ -269,14 +270,17 @@ export default function AdminUsersPage() {
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-700">
-                              {(user.displayName || user.email).charAt(0).toUpperCase()}
+                              {(user.fullNameArabic || user.fullNameEnglish || user.email).charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
                         <div className="mr-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {user.displayName || `${user.firstName} ${user.lastName}`.trim() || 'بدون اسم'}
+                            {user.fullNameArabic || user.fullNameEnglish || `${user.firstName} ${user.lastName}`.trim() || 'بدون اسم'}
                           </div>
+                          {user.fullNameEnglish && user.fullNameArabic && (
+                            <div className="text-xs text-gray-500">{user.fullNameEnglish}</div>
+                          )}
                           {user.username && (
                             <div className="text-sm text-gray-500">@{user.username}</div>
                           )}

@@ -7,13 +7,13 @@ export interface AuthenticatedRequest extends NextRequest {
 }
 
 export async function withAuth(
-  handler: (request: AuthenticatedRequest, context?: unknown) => Promise<NextResponse>,
+  handler: (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => Promise<NextResponse>,
   options: {
     requireAuth?: boolean;
     requireAdmin?: boolean;
   } = {}
 ) {
-  return async (request: NextRequest, context?: unknown) => {
+  return async (request: NextRequest, context?: { params?: Promise<Record<string, string>> }) => {
     try {
       const authHeader = request.headers.get('authorization');
 

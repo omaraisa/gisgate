@@ -42,7 +42,8 @@ model User {
   password      String
   firstName     String?
   lastName      String?
-  displayName   String?
+  fullNameArabic   String?
+  fullNameEnglish  String?
   avatar        String?
   bio           String?
   website       String?
@@ -120,7 +121,8 @@ const response = await fetch('/api/auth/register', {
     password: 'securepassword',
     firstName: 'John',
     lastName: 'Doe',
-    displayName: 'John Doe'
+    fullNameArabic: 'جون دو',
+    fullNameEnglish: 'JOHN DOE'
   })
 });
 ```
@@ -174,7 +176,8 @@ SELECT
   u.user_email,
   u.user_pass,
   u.user_registered,
-  u.display_name,
+  u.full_name_arabic,
+  u.full_name_english,
   umfn.meta_value as first_name,
   umln.meta_value as last_name,
   umurl.meta_value as user_url,

@@ -13,7 +13,8 @@ export default function AuthPage() {
     username: '',
     firstName: '',
     lastName: '',
-    displayName: '',
+    fullNameArabic: '',
+    fullNameEnglish: '',
   });
 
   const router = useRouter();
@@ -33,7 +34,8 @@ export default function AuthPage() {
             username: formData.username,
             firstName: formData.firstName,
             lastName: formData.lastName,
-            displayName: formData.displayName,
+            fullNameArabic: formData.fullNameArabic,
+            fullNameEnglish: formData.fullNameEnglish.toUpperCase(),
           };
 
       const response = await fetch(endpoint, {
@@ -72,9 +74,10 @@ export default function AuthPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === 'fullNameEnglish' ? value.toUpperCase() : value,
     });
   };
 
@@ -181,17 +184,35 @@ export default function AuthPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-                    الاسم المعروض
+                  <label htmlFor="fullNameArabic" className="block text-sm font-medium text-gray-700">
+                    الاسم الكامل بالعربية *
                   </label>
                   <input
-                    id="displayName"
-                    name="displayName"
+                    id="fullNameArabic"
+                    name="fullNameArabic"
                     type="text"
-                    value={formData.displayName}
+                    required
+                    value={formData.fullNameArabic}
                     onChange={handleInputChange}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="الاسم الذي سيظهر للآخرين"
+                    placeholder="كما سيظهر على الشهادة"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="fullNameEnglish" className="block text-sm font-medium text-gray-700">
+                    الاسم الكامل بالإنجليزية *
+                  </label>
+                  <input
+                    id="fullNameEnglish"
+                    name="fullNameEnglish"
+                    type="text"
+                    required
+                    value={formData.fullNameEnglish}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="كما سيظهر على الشهادة"
+                    style={{ textTransform: 'uppercase' }}
                   />
                 </div>
               </>

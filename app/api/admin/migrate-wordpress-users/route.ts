@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WordPressUserMigrator, WordPressUser } from '@/lib/wordpress-user-migrator';
-import { withAuth } from '@/lib/middleware';
+import { AuthService } from '@/lib/auth';
+import { UserRole } from '@prisma/client';
 
-export const POST = withAuth(async (request: NextRequest) => {
+async function requireAdmin(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('No token provided');
+  }
+
+  const token = authHeader.substring(7);
+  const user = await AuthService.validateSession(token);
+
+  if (!user || user.role !== UserRole.ADMIN) {
+    throw new Error('Admin access required');
+  }
+
+  return user;
+}
+
+export async function POST(request: NextRequest) {
   try {
+    await requireAdmin(request);
+    
     const body = await request.json();
     const { users }: { users: WordPressUser[] } = body;
 
@@ -27,16 +46,28 @@ export const POST = withAuth(async (request: NextRequest) => {
 
   } catch (error) {
     console.error('WordPress user migration error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message === 'No token provided' || error.message === 'Admin access required') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 401 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}, { requireAuth: true, requireAdmin: true });
+}
 
 // GET /api/admin/migrate-wordpress-users - Get migration stats
-export const GET = withAuth(async () => {
+export async function GET(request: NextRequest) {
   try {
+    await requireAdmin(request);
+    
     const stats = await WordPressUserMigrator.getMigrationStats();
 
     return NextResponse.json({
@@ -45,9 +76,19 @@ export const GET = withAuth(async () => {
 
   } catch (error) {
     console.error('Get migration stats error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message === 'No token provided' || error.message === 'Admin access required') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 401 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}, { requireAuth: true, requireAdmin: true });
+}

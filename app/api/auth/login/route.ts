@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        displayName: user.displayName,
+        fullNameArabic: user.fullNameArabic,
+        fullNameEnglish: user.fullNameEnglish,
         role: user.role,
         emailVerified: user.emailVerified,
       },
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       );
     }

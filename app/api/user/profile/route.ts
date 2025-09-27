@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
-import { withAuth } from '@/lib/middleware';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').optional(),
   lastName: z.string().min(1, 'Last name is required').optional(),
-  displayName: z.string().min(1, 'Display name is required').optional(),
+  fullNameArabic: z.string().min(1, 'Full name in Arabic is required').optional(),
+  fullNameEnglish: z.string().min(1, 'Full name in English is required').optional(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
   website: z.string().url('Invalid website URL').optional(),
   avatar: z.string().url('Invalid avatar URL').optional(),
@@ -17,16 +17,26 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
 
+async function requireAuth(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('No token provided');
+  }
+
+  const token = authHeader.substring(7);
+  const user = await AuthService.validateSession(token);
+
+  if (!user) {
+    throw new Error('Invalid or expired token');
+  }
+
+  return user;
+}
+
 // GET /api/user/profile - Get current user profile
-export const GET = withAuth(async (request: NextRequest) => {
+export async function GET(request: NextRequest) {
   try {
-    const user = request.user;
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const fullUser = await AuthService.getUserById(user.id);
     if (!fullUser) {
@@ -43,23 +53,27 @@ export const GET = withAuth(async (request: NextRequest) => {
 
   } catch (error) {
     console.error('Get profile error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message === 'No token provided' || error.message === 'Invalid or expired token') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 401 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}, { requireAuth: true });
+}
 
 // PUT /api/user/profile - Update user profile
-export const PUT = withAuth(async (request: NextRequest) => {
+export async function PUT(request: NextRequest) {
   try {
-    const user = request.user;
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const body = await request.json();
     const validatedData = updateProfileSchema.parse(body);
@@ -80,9 +94,18 @@ export const PUT = withAuth(async (request: NextRequest) => {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       );
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'No token provided' || error.message === 'Invalid or expired token') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 401 }
+        );
+      }
     }
 
     return NextResponse.json(
@@ -90,18 +113,12 @@ export const PUT = withAuth(async (request: NextRequest) => {
       { status: 500 }
     );
   }
-}, { requireAuth: true });
+}
 
 // PATCH /api/user/profile/password - Change password
-export const PATCH = withAuth(async (request: NextRequest) => {
+export async function PATCH(request: NextRequest) {
   try {
-    const user = request.user;
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    const user = await requireAuth(request);
 
     const body = await request.json();
     const { currentPassword, newPassword } = changePasswordSchema.parse(body);
@@ -140,9 +157,18 @@ export const PATCH = withAuth(async (request: NextRequest) => {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       );
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'No token provided' || error.message === 'Invalid or expired token') {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 401 }
+        );
+      }
     }
 
     return NextResponse.json(
@@ -150,4 +176,4 @@ export const PATCH = withAuth(async (request: NextRequest) => {
       { status: 500 }
     );
   }
-}, { requireAuth: true });
+}

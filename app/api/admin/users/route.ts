@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
         { username: { contains: search, mode: 'insensitive' } },
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } },
-        { displayName: { contains: search, mode: 'insensitive' } },
+        { fullNameArabic: { contains: search, mode: 'insensitive' } },
+        { fullNameEnglish: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -66,7 +67,8 @@ export async function GET(request: NextRequest) {
           username: true,
           firstName: true,
           lastName: true,
-          displayName: true,
+          fullNameArabic: true,
+          fullNameEnglish: true,
           role: true,
           emailVerified: true,
           isActive: true,

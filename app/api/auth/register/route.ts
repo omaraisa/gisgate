@@ -8,7 +8,8 @@ const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   firstName: z.string().min(1, 'First name is required').optional(),
   lastName: z.string().min(1, 'Last name is required').optional(),
-  displayName: z.string().min(1, 'Display name is required').optional(),
+  fullNameArabic: z.string().min(1, 'Full name in Arabic is required'),
+  fullNameEnglish: z.string().min(1, 'Full name in English is required'),
 });
 
 export async function POST(request: NextRequest) {
@@ -45,10 +46,11 @@ export async function POST(request: NextRequest) {
     const authUser = {
       id: user.id,
       email: user.email,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      displayName: user.displayName,
+      username: user.username ?? undefined,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+      fullNameArabic: user.fullNameArabic ?? undefined,
+      fullNameEnglish: user.fullNameEnglish ?? undefined,
       role: user.role,
       emailVerified: user.emailVerified,
       isActive: user.isActive,
@@ -72,7 +74,8 @@ export async function POST(request: NextRequest) {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        displayName: user.displayName,
+        fullNameArabic: user.fullNameArabic,
+        fullNameEnglish: user.fullNameEnglish,
         role: user.role,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       );
     }
