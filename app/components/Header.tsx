@@ -3,10 +3,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
+interface User {
+  id: string;
+  email: string;
+  fullNameArabic?: string;
+  fullNameEnglish?: string;
+  role: string;
+}
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +28,61 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check user authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const sessionToken = localStorage.getItem('sessionToken');
+      const userData = localStorage.getItem('user');
+      
+      if (sessionToken && userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+        }
+      }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (when user logs in/out in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user' || e.key === 'sessionToken') {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const sessionToken = localStorage.getItem('sessionToken');
+      if (sessionToken) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear local storage regardless of API call success
+      localStorage.removeItem('sessionToken');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsUserMenuOpen(false);
+      router.push('/');
+    }
+  };
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -48,7 +115,7 @@ export default function Header() {
     { href: '/articles', label: 'المقالات', icon: '📰' },
     { href: '#', label: 'فيديوهات', icon: '🎥' },
     { href: '#', label: 'دورات تدريبية', icon: '🎓' },
-    { href: '/admin', label: 'إدارة المحتوى', icon: '⚙️', highlight: true },
+    ...(user?.role === 'ADMIN' ? [{ href: '/admin', label: 'إدارة المحتوى', icon: '⚙️', highlight: true }] : []),
     { href: '#', label: 'من نحن', icon: '👥' },
   ];
   return (
@@ -74,21 +141,96 @@ export default function Header() {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex gap-6 lg:gap-8">
-              {navigationItems.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.href}
-                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                    item.highlight 
-                      ? 'text-lime-300 hover:text-lime-200 font-semibold' 
-                      : 'text-white hover:text-lime-300'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <div className="hidden md:flex items-center gap-6 lg:gap-8">
+              <nav className="flex gap-6 lg:gap-8">
+                {navigationItems.map((item, index) => (
+                  <Link
+                    key={index}
+                    href={item.href}
+                    className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                      item.highlight 
+                        ? 'text-lime-300 hover:text-lime-200 font-semibold' 
+                        : 'text-white hover:text-lime-300'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              {/* User Authentication Section */}
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 space-x-reverse text-white hover:text-lime-300 transition-colors duration-200 focus:outline-none"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold">
+                      {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden lg:inline text-sm">
+                      {user.fullNameArabic || user.fullNameEnglish || 'المستخدم'}
+                    </span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* User Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                        <p className="font-medium">{user.fullNameArabic || user.fullNameEnglish}</p>
+                        <p className="text-gray-500">{user.email}</p>
+                      </div>
+                      
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                      >
+                        <span className="ml-2">👤</span>
+                        الملف الشخصي
+                      </Link>
+                      
+                      {user.role === 'ADMIN' && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        >
+                          <span className="ml-2">⚙️</span>
+                          لوحة التحكم
+                        </Link>
+                      )}
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                      >
+                        <span className="ml-2">🚪</span>
+                        تسجيل الخروج
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <Link
+                    href="/auth"
+                    className="px-4 py-2 text-sm font-medium text-white hover:text-lime-300 transition-colors duration-200"
+                  >
+                    تسجيل الدخول
+                  </Link>
+                  <Link
+                    href="/auth"
+                    className="px-4 py-2 text-sm font-medium bg-lime-500 text-green-900 rounded-md hover:bg-lime-400 transition-colors duration-200"
+                  >
+                    إنشاء حساب
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {/* Mobile Menu Button */}
             <button
@@ -147,8 +289,32 @@ export default function Header() {
             </button>
           </div>
 
+          {/* User Info Section in Mobile */}
+          {user && (
+            <div className="px-6 py-4 border-b border-green-700">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white font-bold">
+                  {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-medium text-lg">
+                    {user.fullNameArabic || user.fullNameEnglish || 'مستخدم'}
+                  </p>
+                  <p className="text-green-200 text-sm">{user.email}</p>
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                    user.role === 'ADMIN' 
+                      ? 'bg-red-900 text-red-200' 
+                      : 'bg-green-900 text-green-200'
+                  }`}>
+                    {user.role === 'ADMIN' ? 'مدير' : 'مستخدم'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Mobile Menu Navigation */}
-          <nav className="py-6">
+          <nav className="py-6 flex-1 overflow-y-auto">
             <div className="px-6 mb-4">
               <p className="text-green-200 text-sm font-medium">التنقل الرئيسي</p>
             </div>
@@ -175,6 +341,83 @@ export default function Header() {
                 </svg>
               </Link>
             ))}
+
+            {/* User Options in Mobile Menu */}
+            {user && (
+              <>
+                <div className="px-6 mb-4 mt-8">
+                  <p className="text-green-200 text-sm font-medium">حسابي</p>
+                </div>
+                
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-white"
+                >
+                  <span className="text-2xl ml-4">👤</span>
+                  <div className="flex-1">
+                    <span className="block text-lg font-medium">الملف الشخصي</span>
+                    <span className="block text-sm text-green-200 mt-1">إدارة بياناتك الشخصية</span>
+                  </div>
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-red-700 text-red-300 hover:text-white w-full"
+                >
+                  <span className="text-2xl ml-4">🚪</span>
+                  <div className="flex-1 text-right">
+                    <span className="block text-lg font-medium">تسجيل الخروج</span>
+                    <span className="block text-sm text-red-200 mt-1">إنهاء الجلسة الحالية</span>
+                  </div>
+                </button>
+              </>
+            )}
+
+            {/* Auth Links for Non-Logged Users */}
+            {!user && (
+              <>
+                <div className="px-6 mb-4 mt-8">
+                  <p className="text-green-200 text-sm font-medium">الحساب</p>
+                </div>
+                
+                <Link
+                  href="/auth"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-white"
+                >
+                  <span className="text-2xl ml-4">🔑</span>
+                  <div className="flex-1">
+                    <span className="block text-lg font-medium">تسجيل الدخول</span>
+                    <span className="block text-sm text-green-200 mt-1">الوصول إلى حسابك</span>
+                  </div>
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
+
+                <Link
+                  href="/auth"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-lime-300"
+                >
+                  <span className="text-2xl ml-4">✨</span>
+                  <div className="flex-1">
+                    <span className="block text-lg font-medium">إنشاء حساب جديد</span>
+                    <span className="block text-sm text-lime-200 mt-1">انضم إلى منصتنا</span>
+                  </div>
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Mobile Menu Footer */}
