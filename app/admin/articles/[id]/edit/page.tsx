@@ -9,6 +9,18 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import LinkExtension from '@tiptap/extension-link'
 import ImageExtension from '@tiptap/extension-image'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
+import { TextAlign } from '@tiptap/extension-text-align'
+import { Highlight } from '@tiptap/extension-highlight'
+import { Underline } from '@tiptap/extension-underline'
+import { Subscript } from '@tiptap/extension-subscript'
+import { Superscript } from '@tiptap/extension-superscript'
+import { TaskList } from '@tiptap/extension-task-list'
+import { TaskItem } from '@tiptap/extension-task-item'
+import { Placeholder } from '@tiptap/extension-placeholder'
+import { CharacterCount } from '@tiptap/extension-character-count'
+import { Typography } from '@tiptap/extension-typography'
 
 interface ExtendedArticle {
   id?: string
@@ -55,7 +67,27 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       LinkExtension.configure({
         openOnClick: false,
       }),
-      ImageExtension
+      ImageExtension,
+      TextStyle,
+      Color,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      Underline,
+      Subscript,
+      Superscript,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      Placeholder.configure({
+        placeholder: 'ابدأ في كتابة محتوى المقال هنا...',
+      }),
+      CharacterCount,
+      Typography,
     ],
     content: article.content,
     onUpdate: ({ editor }) => {
@@ -266,57 +298,294 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
 
             {/* Content Editor */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">محتوى المقال</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">محتوى المقال</h3>
+                <div className="text-xs text-gray-500">
+                  <span className="mr-4">Ctrl+B: عريض</span>
+                  <span className="mr-4">Ctrl+I: مائل</span>
+                  <span className="mr-4">Ctrl+U: تحتي</span>
+                  <span>Ctrl+Z: تراجع</span>
+                </div>
+              </div>
               
-              {/* Editor Toolbar */}
-              <div className="mb-4 flex flex-wrap gap-2 p-3 border border-gray-300 rounded-t-md bg-gray-50">
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleBold().run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('bold') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  <strong>B</strong>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('italic') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  <em>I</em>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('heading', { level: 2 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  H2
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('heading', { level: 3 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  H3
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('bulletList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  • قائمة
-                </button>
-                <button
-                  type="button"
-                  onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                  className={`px-3 py-1 rounded text-sm ${editor?.isActive('orderedList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-                >
-                  1. قائمة
-                </button>
+            {/* Enhanced Editor Toolbar */}
+            <div className="mb-4 border border-gray-300 rounded-t-md bg-gray-50">
+              {/* Main Formatting Row */}
+              <div className="flex flex-wrap gap-1 p-3 border-b border-gray-200">
+                {/* Text Formatting */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleBold().run()}
+                    className={`px-3 py-2 rounded text-sm font-bold ${editor?.isActive('bold') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="عريض"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleItalic().run()}
+                    className={`px-3 py-2 rounded text-sm italic ${editor?.isActive('italic') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="مائل"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                    className={`px-3 py-2 rounded text-sm underline ${editor?.isActive('underline') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="تحتي"
+                  >
+                    U
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleStrike().run()}
+                    className={`px-3 py-2 rounded text-sm line-through ${editor?.isActive('strike') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="مشطوب"
+                  >
+                    S
+                  </button>
+                </div>
+
+                {/* Headings */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setParagraph().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('paragraph') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="فقرة عادية"
+                  >
+                    ¶
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+                    className={`px-3 py-2 rounded text-sm font-bold ${editor?.isActive('heading', { level: 1 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="عنوان رئيسي"
+                  >
+                    H1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                    className={`px-3 py-2 rounded text-sm font-bold ${editor?.isActive('heading', { level: 2 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="عنوان فرعي"
+                  >
+                    H2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+                    className={`px-3 py-2 rounded text-sm font-bold ${editor?.isActive('heading', { level: 3 }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="عنوان ثانوي"
+                  >
+                    H3
+                  </button>
+                </div>
+
+                {/* Lists */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('bulletList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="قائمة نقاط"
+                  >
+                    •
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('orderedList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="قائمة مرقمة"
+                  >
+                    1.
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleTaskList().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('taskList') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="قائمة مهام"
+                  >
+                    ☑
+                  </button>
+                </div>
+
+                {/* Text Effects */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleSubscript().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('subscript') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="حرف سفلي"
+                  >
+                    x₂
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleSuperscript().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('superscript') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="حرف علوي"
+                  >
+                    x²
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleCode().run()}
+                    className={`px-3 py-2 rounded text-sm font-mono ${editor?.isActive('code') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="كود"
+                  >
+                    &lt;/&gt;
+                  </button>
+                </div>
+
+                {/* Colors and Highlight */}
+                <div className="flex gap-1 mr-4">
+                  <input
+                    type="color"
+                    onChange={(e) => editor?.chain().focus().setColor(e.target.value).run()}
+                    className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                    title="لون النص"
+                  />
+                  <input
+                    type="color"
+                    onChange={(e) => editor?.chain().focus().toggleHighlight({ color: e.target.value }).run()}
+                    className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                    title="تمييز النص"
+                    defaultValue="#ffff00"
+                  />
+                </div>
+
+                {/* Alignment */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setTextAlign('left').run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive({ textAlign: 'left' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="محاذاة لليسار"
+                  >
+                    ⬅
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setTextAlign('center').run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive({ textAlign: 'center' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="توسيط"
+                  >
+                    ⬌
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setTextAlign('right').run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive({ textAlign: 'right' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="محاذاة لليمين"
+                  >
+                    ➡
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setTextAlign('justify').run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive({ textAlign: 'justify' }) ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="ضبط"
+                  >
+                    ⬌⬅
+                  </button>
+                </div>
+
+                {/* Special Elements */}
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('blockquote') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="اقتباس"
+                  >
+                    "
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().setHorizontalRule().run()}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('horizontalRule') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="خط أفقي"
+                  >
+                    ―
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = window.prompt('أدخل رابط URL:')
+                      if (url) {
+                        editor?.chain().focus().setLink({ href: url }).run()
+                      }
+                    }}
+                    className={`px-3 py-2 rounded text-sm ${editor?.isActive('link') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                    title="إدراج رابط"
+                  >
+                    🔗
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().unsetLink().run()}
+                    className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                    title="إزالة الرابط"
+                  >
+                    ❌
+                  </button>
+                </div>
               </div>
 
+              {/* Second Row - Additional Tools */}
+              <div className="flex flex-wrap gap-1 p-3">
+                {/* Undo/Redo */}
+                <div className="flex gap-1 mr-4">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().undo().run()}
+                    disabled={!editor?.can().undo()}
+                    className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="تراجع"
+                  >
+                    ↶
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().redo().run()}
+                    disabled={!editor?.can().redo()}
+                    className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="إعادة"
+                  >
+                    ↷
+                  </button>
+                </div>
+
+                {/* Character Count */}
+                <div className="flex items-center text-sm text-gray-600 mr-4">
+                  <span>{editor?.storage?.characterCount?.characters() || 0} حرف</span>
+                  <span className="mx-2">•</span>
+                  <span>{editor?.storage?.characterCount?.words() || 0} كلمة</span>
+                </div>
+
+                {/* Clear Formatting */}
+                <button
+                  type="button"
+                  onClick={() => editor?.chain().focus().unsetAllMarks().run()}
+                  className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                  title="مسح التنسيق"
+                >
+                  🧹 تنسيق
+                </button>
+              </div>
+            </div>
+
               {/* Editor Content */}
-              <div className="prose prose-sm max-w-none border border-gray-300 rounded-b-md min-h-[400px] p-4">
-                <EditorContent editor={editor} />
+              <div className="border border-gray-300 rounded-b-md min-h-[500px] overflow-y-auto">
+                <div className="p-6 prose prose-sm max-w-none focus:outline-none" style={{ direction: 'rtl' }}>
+                  <EditorContent 
+                    editor={editor} 
+                    className="min-h-[450px] focus:outline-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-r-4 prose-blockquote:border-gray-300 prose-blockquote:pr-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
+                  />
+                </div>
               </div>
             </div>
           </div>
