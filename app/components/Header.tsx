@@ -128,9 +128,8 @@ export default function Header() {
     { href: '/articles', label: 'المقالات', icon: '📰' },
     { href: '#', label: 'فيديوهات', icon: '🎥' },
     { href: '#', label: 'دورات تدريبية', icon: '🎓' },
-    ...(user?.role === 'ADMIN' ? [{ href: '/admin', label: 'إدارة المحتوى', icon: '⚙️', highlight: true }] : []),
     { href: '#', label: 'من نحن', icon: '👥' },
-  ];
+  ] as const;
   return (
     <>
       <header className="sticky top-0 z-50 shadow-lg backdrop-blur-sm" style={{ background: 'rgb(30 46 20 / 67%)' }}>
@@ -160,11 +159,7 @@ export default function Header() {
                   <Link
                     key={index}
                     href={item.href}
-                    className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                      item.highlight 
-                        ? 'text-lime-300 hover:text-lime-200 font-semibold' 
-                        : 'text-white hover:text-lime-300'
-                    }`}
+                    className="relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 text-white hover:text-lime-300"
                   >
                     {item.label}
                   </Link>
@@ -231,15 +226,9 @@ export default function Header() {
                 <div className="flex items-center space-x-4 space-x-reverse">
                   <Link
                     href="/auth"
-                    className="px-4 py-2 text-sm font-medium text-white hover:text-lime-300 transition-colors duration-200"
-                  >
-                    تسجيل الدخول
-                  </Link>
-                  <Link
-                    href="/auth"
                     className="px-4 py-2 text-sm font-medium bg-lime-500 text-green-900 rounded-md hover:bg-lime-400 transition-colors duration-200"
                   >
-                    إنشاء حساب
+                    تسجيل الدخول
                   </Link>
                 </div>
               )}
@@ -336,18 +325,11 @@ export default function Header() {
                 key={index}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 ${
-                  item.highlight 
-                    ? 'text-lime-300 bg-green-800 border-r-4 border-lime-400' 
-                    : 'text-white'
-                }`}
+                className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-white"
               >
                 <span className="text-2xl ml-4">{item.icon}</span>
                 <div className="flex-1">
                   <span className="block text-lg font-medium">{item.label}</span>
-                  {item.highlight && (
-                    <span className="block text-sm text-lime-200 mt-1">لوحة التحكم</span>
-                  )}
                 </div>
                 <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -403,27 +385,12 @@ export default function Header() {
                 <Link
                   href="/auth"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-white"
+                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-lime-300"
                 >
                   <span className="text-2xl ml-4">🔑</span>
                   <div className="flex-1">
                     <span className="block text-lg font-medium">تسجيل الدخول</span>
-                    <span className="block text-sm text-green-200 mt-1">الوصول إلى حسابك</span>
-                  </div>
-                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </Link>
-
-                <Link
-                  href="/auth"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-lime-300"
-                >
-                  <span className="text-2xl ml-4">✨</span>
-                  <div className="flex-1">
-                    <span className="block text-lg font-medium">إنشاء حساب جديد</span>
-                    <span className="block text-sm text-lime-200 mt-1">انضم إلى منصتنا</span>
+                    <span className="block text-sm text-lime-200 mt-1">الوصول إلى حسابك</span>
                   </div>
                   <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
