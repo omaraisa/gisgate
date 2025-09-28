@@ -54,6 +54,8 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     async function initializeParams() {
@@ -62,6 +64,24 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
     initializeParams();
   }, [params]);
+
+  useEffect(() => {
+    // Check authentication status
+    const sessionToken = localStorage.getItem('sessionToken');
+    const userData = localStorage.getItem('user');
+
+    if (sessionToken && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.error('Failed to parse user data:', err);
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -82,40 +102,72 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
 
     async function fetchEnrollment() {
+      if (!isAuthenticated) return;
+
       try {
-        // This would require authentication - for now we'll assume no enrollment
-        // const response = await fetch('/api/courses/enroll', {
-        //   headers: { Authorization: `Bearer ${token}` }
-        // });
-        // const enrollmentData = await response.json();
-        // Check if user is enrolled in this course
-        // setEnrollment(enrollmentData.enrollments?.find(e => e.course.id === course?.id) || null);
+        const sessionToken = localStorage.getItem('sessionToken');
+        if (!sessionToken) return;
+
+        const response = await fetch('/api/courses/enroll', {
+          headers: { Authorization: `Bearer ${sessionToken}` }
+        });
+
+        if (response.ok) {
+          const enrollmentData = await response.json();
+          // Check if user is enrolled in this course
+          const userEnrollment = enrollmentData.enrollments?.find((e: any) => e.course.id === course?.id) || null;
+          setEnrollment(userEnrollment);
+        }
       } catch (err) {
         console.error('Failed to fetch enrollment:', err);
       }
     }
 
     fetchCourse();
-    fetchEnrollment();
-  }, [slug]);
+    if (isAuthenticated) {
+      fetchEnrollment();
+    }
+  }, [slug, isAuthenticated, course?.id]);
 
   const handleEnroll = async () => {
     if (!course) return;
 
+    if (!isAuthenticated) {
+      // Redirect to login or show login prompt
+      alert('يجب تسجيل الدخول أولاً للتسجيل في الدورة');
+      window.location.href = '/auth';
+      return;
+    }
+
     setEnrolling(true);
     try {
-      // This would require authentication
-      // const response = await fetch('/api/courses/enroll', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     Authorization: `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({ courseId: course.id })
-      // });
+      const sessionToken = localStorage.getItem('sessionToken');
+      if (!sessionToken) {
+        alert('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى');
+        window.location.href = '/auth';
+        return;
+      }
 
-      // For now, just show a message
-      alert('Enrollment functionality will be implemented with authentication');
+      const response = await fetch('/api/courses/enroll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({ courseId: course.id })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEnrollment(data.enrollment);
+        alert('تم التسجيل في الدورة بنجاح!');
+      } else if (response.status === 402) {
+        // Payment required
+        alert('هذه الدورة مدفوعة وتتطلب الدفع');
+      } else {
+        setError(data.error || 'Failed to enroll in course');
+      }
     } catch (err) {
       setError('Failed to enroll in course');
     } finally {
@@ -306,7 +358,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
               <div className="space-y-4">
                 {course.lessons.map((lesson, index) => {
                   const isCompleted = enrollment?.lessonProgress?.find(p => p.lessonId === lesson.id)?.isCompleted;
-                  const isLocked = !enrollment && !course.isFree;
+                  const isLocked = !enrollment && !course.isFree && isAuthenticated;
 
                   return (
                     <motion.div

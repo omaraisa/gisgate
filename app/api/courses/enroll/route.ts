@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
 
 // GET /api/courses/enroll - Get user's enrollments
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    // For testing purposes, use a mock user ID
-    const mockUserId = 'test-user-123';
+    const user = getCurrentUser(request);
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const enrollments = await prisma.courseEnrollment.findMany({
-      where: { userId: mockUserId },
+      where: { userId: user.id },
       include: {
         course: {
           select: {
@@ -43,13 +46,15 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching enrollments:', error);
     return NextResponse.json({ error: 'Failed to fetch enrollments' }, { status: 500 });
   }
-}
+});
 
 // POST /api/courses/enroll - Enroll in a course
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest) => {
   try {
-    // For testing purposes, use a mock user ID
-    const mockUserId = 'test-user-123';
+    const user = getCurrentUser(request as AuthenticatedRequest);
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { courseId } = await request.json();
     if (!courseId) {
@@ -59,18 +64,30 @@ export async function POST(request: NextRequest) {
     // Check if course exists and is published
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { id: true, status: true, isFree: true, lessons: { select: { id: true } } }
+      select: {
+        id: true,
+        status: true,
+        isFree: true,
+        isPrivate: true,
+        price: true,
+        lessons: { select: { id: true } }
+      }
     });
 
     if (!course || course.status !== 'PUBLISHED') {
       return NextResponse.json({ error: 'Course not found or not available' }, { status: 404 });
     }
 
+    // Check private course access (for now, only allow if user is admin or course is not private)
+    if (course.isPrivate && user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'This course is private and requires special access' }, { status: 403 });
+    }
+
     // Check if user is already enrolled
     const existingEnrollment = await prisma.courseEnrollment.findUnique({
       where: {
         userId_courseId: {
-          userId: mockUserId,
+          userId: user.id,
           courseId: courseId
         }
       }
@@ -80,10 +97,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Already enrolled in this course' }, { status: 400 });
     }
 
+    // For paid courses, check if payment is required (placeholder for future payment integration)
+    if (!course.isFree && course.price && course.price > 0) {
+      return NextResponse.json({
+        error: 'This course requires payment',
+        requiresPayment: true,
+        price: course.price
+      }, { status: 402 }); // 402 Payment Required
+    }
+
     // Create enrollment
     const enrollment = await prisma.courseEnrollment.create({
       data: {
-        userId: mockUserId,
+        userId: user.id,
         courseId: courseId
       },
       include: {
@@ -104,4 +130,4 @@ export async function POST(request: NextRequest) {
     console.error('Error enrolling in course:', error);
     return NextResponse.json({ error: 'Failed to enroll in course' }, { status: 500 });
   }
-}
+});
