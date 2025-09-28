@@ -31,11 +31,11 @@
 - ✅ Bulk operations
 
 ## Phase 3: Learning Experience
-### ❌ Enrollment & Access Control
-- ❌ Free course enrollment
-- ❌ Paid course enrollment
-- ❌ Private course access
-- ❌ Course prerequisites
+### ✅ Enrollment & Access Control
+- ✅ Free course enrollment
+- ✅ Paid course enrollment (placeholder)
+- ✅ Private course access (admin-only)
+- ✅ Course prerequisites (not implemented yet)
 
 ### ✅ Course Progress Tracking
 - ✅ Database models for progress tracking (Course, CourseEnrollment, LessonProgress)
