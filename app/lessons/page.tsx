@@ -6,15 +6,36 @@ export const metadata = {
   description: 'مجموعة شاملة من الدروس التعليمية في نظم المعلومات الجغرافية',
 };
 
+interface Lesson {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  publishedAt: Date | null;
+  featuredImage: string | null;
+  authorName: string | null;
+  category: string | null;
+}
+
 export default async function LessonsPage() {
-  const lessons = await prisma.video.findMany({
+  const lessons: Lesson[] = await prisma.video.findMany({
     where: {
       status: 'PUBLISHED'
     },
     orderBy: {
       publishedAt: 'desc'
     },
-    take: 20
+    take: 20,
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      publishedAt: true,
+      featuredImage: true,
+      authorName: true,
+      category: true,
+    }
   });
 
   return (
