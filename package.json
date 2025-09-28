@@ -14,7 +14,7 @@
     "find:image-urls": "npx tsx migration/utils.ts find-urls",
     "validate:migration": "npx tsx migration/utils.ts validate",
     "test:migration": "node scripts/test-migration.mjs",
-    "test:ai-api": "npx tsx scripts/test-ai-article-api.ts"
+    "test:ai-apis": "npx tsx scripts/test-ai-apis.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.1",
@@ -51,6 +51,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
+    "form-data": "^4.0.4",
+    "formdata-node": "^6.0.3",
     "framer-motion": "^12.23.21",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",

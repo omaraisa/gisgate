@@ -501,7 +501,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                     className={`px-3 py-2 rounded text-sm ${editor?.isActive('blockquote') ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
                     title="اقتباس"
                   >
-                    "
+                    &quot;
                   </button>
                   <button
                     type="button"

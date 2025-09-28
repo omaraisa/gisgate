@@ -240,7 +240,7 @@ export class ImageMigrationUtils {
 
     let validArticles = 0;
     let invalidArticles = 0;
-    let brokenUrls: string[] = [];
+    const brokenUrls: string[] = [];
 
     for (const article of articles) {
       const urls = article.content.match(/http:\/\/13\.61\.185\.194:9000\/images\/[^"'\s]+/g) || [];
