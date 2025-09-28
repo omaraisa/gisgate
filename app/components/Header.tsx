@@ -126,7 +126,7 @@ export default function Header() {
   const navigationItems = [
     { href: '/', label: 'الرئيسية', icon: '🏠' },
     { href: '/articles', label: 'المقالات', icon: '📰' },
-    { href: '#', label: 'فيديوهات', icon: '🎥' },
+    { href: '/videos', label: 'فيديوهات', icon: '🎥' },
     { href: '#', label: 'دورات تدريبية', icon: '🎓' },
     { href: '#', label: 'من نحن', icon: '👥' },
   ] as const;
