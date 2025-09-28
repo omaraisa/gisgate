@@ -97,6 +97,20 @@ body {
   min-height: 100vh;
 }
 
+/* Ensure all interactive elements have pointer cursor */
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="file"]::-webkit-file-upload-button,
+select,
+textarea,
+input {
+  cursor: pointer;
+}
+
 /* Input styling for dark theme */
 input,
 textarea,
