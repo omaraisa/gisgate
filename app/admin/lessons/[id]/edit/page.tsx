@@ -22,7 +22,7 @@ import { Placeholder } from '@tiptap/extension-placeholder'
 import { CharacterCount } from '@tiptap/extension-character-count'
 import { Typography } from '@tiptap/extension-typography'
 
-interface ExtendedArticle {
+interface ExtendedLesson {
   id?: string
   title: string
   slug: string
@@ -35,18 +35,21 @@ interface ExtendedArticle {
   tags?: string
   metaTitle?: string
   metaDescription?: string
+  videoUrl?: string
+  duration?: string
+  thumbnail?: string
 }
 
-interface ArticleEditorProps {
+interface LessonEditorProps {
   params: Promise<{ id: string }>
 }
 
-export default function ArticleEditor({ params }: ArticleEditorProps) {
+export default function LessonEditor({ params }: LessonEditorProps) {
   const router = useRouter()
   const resolvedParams = React.use(params)
-  const isNewArticle = resolvedParams.id === 'new'
-  
-  const [article, setArticle] = useState<ExtendedArticle>({
+  const isNewLesson = resolvedParams.id === 'new'
+
+  const [lesson, setLesson] = useState<ExtendedLesson>({
     title: '',
     slug: '',
     excerpt: '',
@@ -56,9 +59,12 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     category: '',
     tags: '',
     metaTitle: '',
-    metaDescription: ''
+    metaDescription: '',
+    videoUrl: '',
+    duration: '',
+    thumbnail: ''
   })
-  const [loading, setLoading] = useState(!isNewArticle)
+  const [loading, setLoading] = useState(!isNewLesson)
   const [saving, setSaving] = useState(false)
 
   const editor = useEditor({
@@ -84,47 +90,47 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
         nested: true,
       }),
       Placeholder.configure({
-        placeholder: 'ابدأ في كتابة محتوى المقال هنا...',
+        placeholder: 'ابدأ في كتابة محتوى الدرس هنا...',
       }),
       CharacterCount,
       Typography,
     ],
-    content: article.content,
+    content: lesson.content,
     onUpdate: ({ editor }) => {
-      setArticle(prev => ({ ...prev, content: editor.getHTML() }))
+      setLesson(prev => ({ ...prev, content: editor.getHTML() }))
     },
     immediatelyRender: false,
   })
 
   useEffect(() => {
-    if (editor && article.content !== editor.getHTML()) {
-      editor.commands.setContent(article.content)
+    if (editor && lesson.content !== editor.getHTML()) {
+      editor.commands.setContent(lesson.content)
     }
-  }, [editor, article.content])
+  }, [editor, lesson.content])
 
-  const fetchArticle = useCallback(async () => {
+  const fetchLesson = useCallback(async () => {
     try {
-      const response = await fetch(`/api/admin/articles/${resolvedParams.id}`)
+      const response = await fetch(`/api/admin/lessons/${resolvedParams.id}`)
       if (response.ok) {
         const data = await response.json()
-        setArticle(data)
+        setLesson(data)
       } else {
-        console.error('Article not found')
-        router.push('/admin')
+        console.error('Lesson not found')
+        router.push('/admin/lessons')
       }
     } catch (error) {
-      console.error('Error fetching article:', error)
-      router.push('/admin')
+      console.error('Error fetching lesson:', error)
+      router.push('/admin/lessons')
     } finally {
       setLoading(false)
     }
   }, [resolvedParams.id, router])
 
   useEffect(() => {
-    if (!isNewArticle) {
-      fetchArticle()
+    if (!isNewLesson) {
+      fetchLesson()
     }
-  }, [resolvedParams.id, isNewArticle, fetchArticle])
+  }, [resolvedParams.id, isNewLesson, fetchLesson])
 
   const generateSlug = (title: string) => {
     return title
@@ -137,13 +143,13 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
 
   const handleSave = async (status?: ArticleStatus) => {
     setSaving(true)
-    
+
     try {
       const saveData = {
-        ...article,
-        status: status || article.status,
-        publishedAt: (status === ArticleStatus.PUBLISHED || article.status === ArticleStatus.PUBLISHED) 
-          ? new Date().toISOString() 
+        ...lesson,
+        status: status || lesson.status,
+        publishedAt: (status === ArticleStatus.PUBLISHED || lesson.status === ArticleStatus.PUBLISHED)
+          ? new Date().toISOString()
           : null
       }
 
@@ -152,11 +158,11 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
         saveData.slug = generateSlug(saveData.title)
       }
 
-      const url = isNewArticle 
-        ? '/api/admin/articles/create'
-        : `/api/admin/articles/${resolvedParams.id}`
-      
-      const method = isNewArticle ? 'POST' : 'PUT'
+      const url = isNewLesson
+        ? '/api/admin/lessons/create'
+        : `/api/admin/lessons/${resolvedParams.id}`
+
+      const method = isNewLesson ? 'POST' : 'PUT'
 
       const response = await fetch(url, {
         method,
@@ -165,21 +171,21 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       })
 
       if (response.ok) {
-        const savedArticle = await response.json()
-        if (isNewArticle) {
-          router.push(`/admin/articles/${savedArticle.id}/edit`)
+        const savedLesson = await response.json()
+        if (isNewLesson) {
+          router.push(`/admin/lessons/${savedLesson.id}/edit`)
         } else {
-          setArticle(savedArticle)
+          setLesson(savedLesson)
         }
-        
+
         // Show success message
-        // alert(status === ArticleStatus.PUBLISHED ? 'تم نشر المقال بنجاح!' : 'تم حفظ المقال بنجاح!')
+        // alert(status === ArticleStatus.PUBLISHED ? 'تم نشر الدرس بنجاح!' : 'تم حفظ الدرس بنجاح!')
       } else {
         const error = await response.json()
         alert(`خطأ في الحفظ: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error saving article:', error)
+      console.error('Error saving lesson:', error)
       alert('حدث خطأ أثناء الحفظ')
     } finally {
       setSaving(false)
@@ -216,9 +222,9 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
         const marker = `[YOUTUBE:${videoId}]`
         editor?.chain().focus().insertContent(marker).run()
 
-        // Update the article state
+        // Update the lesson state
         const updatedHTML = editor?.getHTML() || ''
-        setArticle(prev => ({ ...prev, content: updatedHTML }))
+        setLesson(prev => ({ ...prev, content: updatedHTML }))
       } else {
         // alert('رابط يوتيوب غير صحيح')
       }
@@ -230,7 +236,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل المقال...</p>
+          <p className="mt-4 text-gray-600">جاري تحميل الدرس...</p>
         </div>
       </div>
     )
@@ -243,19 +249,19 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {isNewArticle ? 'إضافة مقال جديد' : 'تحرير المقال'}
+              {isNewLesson ? 'إضافة درس جديد' : 'تحرير الدرس'}
             </h1>
             <div className="flex items-center gap-4 text-sm text-gray-600">
-              <Link href="/admin" className="hover:text-blue-600">
-                ← العودة لإدارة المقالات
+              <Link href="/admin/lessons" className="hover:text-blue-600">
+                ← العودة لإدارة الدروس
               </Link>
-              {!isNewArticle && article.slug && (
-                <Link 
-                  href={`/articles/${article.slug}`} 
+              {!isNewLesson && lesson.slug && (
+                <Link
+                  href={`/lessons/${lesson.slug}`}
                   target="_blank"
                   className="hover:text-blue-600"
                 >
-                  عرض المقال ↗
+                  عرض الدرس ↗
                 </Link>
               )}
             </div>
@@ -275,7 +281,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
               disabled={saving}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors"
             >
-              {saving ? 'جاري النشر...' : 'نشر المقال'}
+              {saving ? 'جاري النشر...' : 'نشر الدرس'}
             </button>
           </div>
         </div>
@@ -286,22 +292,22 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* Basic Info */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">معلومات أساسية</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    عنوان المقال *
+                    عنوان الدرس *
                   </label>
                   <input
                     type="text"
-                    value={article.title || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ 
-                      ...prev, 
+                    value={lesson.title || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({
+                      ...prev,
                       title: e.target.value,
                       slug: prev.slug || generateSlug(e.target.value)
                     }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="أدخل عنوان المقال"
+                    placeholder="أدخل عنوان الدرس"
                   />
                 </div>
 
@@ -311,23 +317,23 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   </label>
                   <input
                     type="text"
-                    value={article.slug || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, slug: e.target.value }))}
+                    value={lesson.slug || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, slug: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="article-slug"
+                    placeholder="lesson-slug"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    مقدمة المقال
+                    مقدمة الدرس
                   </label>
                   <textarea
-                    value={article.excerpt || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, excerpt: e.target.value }))}
+                    value={lesson.excerpt || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, excerpt: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     rows={3}
-                    placeholder="مقدمة مختصرة عن المقال"
+                    placeholder="مقدمة مختصرة عن الدرس"
                   />
                 </div>
               </div>
@@ -336,7 +342,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* Content Editor */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">محتوى المقال</h3>
+                <h3 className="text-lg font-semibold">محتوى الدرس</h3>
                 <div className="text-xs text-gray-500">
                   <span className="mr-4">Ctrl+B: عريض</span>
                   <span className="mr-4">Ctrl+I: مائل</span>
@@ -344,7 +350,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   <span>Ctrl+Z: تراجع</span>
                 </div>
               </div>
-              
+
             {/* Enhanced Editor Toolbar */}
             <div className="mb-4 border border-gray-300 rounded-t-md bg-gray-50">
               {/* Main Formatting Row */}
@@ -626,8 +632,8 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
               {/* Editor Content */}
               <div className="border border-gray-300 rounded-b-md min-h-[500px] overflow-y-auto">
                 <div className="p-6 prose prose-sm max-w-none focus:outline-none" style={{ direction: 'rtl' }}>
-                  <EditorContent 
-                    editor={editor} 
+                  <EditorContent
+                    editor={editor}
                     className="min-h-[450px] focus:outline-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-r-4 prose-blockquote:border-gray-300 prose-blockquote:pr-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
                   />
                 </div>
@@ -640,15 +646,15 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* Publish Settings */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">إعدادات النشر</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    حالة المقال
+                    حالة الدرس
                   </label>
                   <select
-                    value={article.status || ArticleStatus.DRAFT}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, status: e.target.value as ArticleStatus }))}
+                    value={lesson.status || ArticleStatus.DRAFT}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, status: e.target.value as ArticleStatus }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value={ArticleStatus.DRAFT}>مسودة</option>
@@ -658,14 +664,14 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                 </div>
 
                 {/* Publication Date */}
-                {article.publishedAt && (
+                {lesson.publishedAt && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       تاريخ النشر (ميلادي)
                     </label>
                     <input
                       type="text"
-                      value={new Date(article.publishedAt).toLocaleDateString('en-US', {
+                      value={new Date(lesson.publishedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -674,7 +680,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {new Date(article.publishedAt).toLocaleDateString('en-US', {
+                      {new Date(lesson.publishedAt).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -692,7 +698,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* Categories & Tags */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">التصنيف والوسوم</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -700,10 +706,10 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   </label>
                   <input
                     type="text"
-                    value={article.category || ''}
-                                        onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, category: e.target.value }))}
+                    value={lesson.category || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, category: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="تصنيف المقال"
+                    placeholder="تصنيف الدرس"
                   />
                 </div>
 
@@ -713,8 +719,8 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   </label>
                   <input
                     type="text"
-                    value={article.tags || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, tags: e.target.value }))}
+                    value={lesson.tags || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, tags: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="وسم1, وسم2, وسم3"
                   />
@@ -725,23 +731,23 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* Featured Image */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">الصورة البارزة</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   رابط الصورة
                 </label>
                 <input
                   type="url"
-                  value={article.featuredImage || ''}
-                  onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, featuredImage: e.target.value }))}
+                  value={lesson.featuredImage || ''}
+                  onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, featuredImage: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="https://example.com/image.jpg"
                 />
-                
-                {article.featuredImage && (
+
+                {lesson.featuredImage && (
                   <div className="mt-3">
                     <Image
-                      src={article.featuredImage}
+                      src={lesson.featuredImage}
                       alt="معاينة الصورة"
                       width={400}
                       height={128}
@@ -758,7 +764,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
             {/* SEO Settings */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">إعدادات SEO</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -766,14 +772,14 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   </label>
                   <input
                     type="text"
-                    value={article.metaTitle || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, metaTitle: e.target.value }))}
+                    value={lesson.metaTitle || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, metaTitle: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="عنوان محسن لمحركات البحث"
                     maxLength={60}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    {(article.metaTitle || '').length}/60 حرف
+                    {(lesson.metaTitle || '').length}/60 حرف
                   </p>
                 </div>
 
@@ -782,15 +788,15 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                     وصف SEO
                   </label>
                   <textarea
-                    value={article.metaDescription || ''}
-                    onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, metaDescription: e.target.value }))}
+                    value={lesson.metaDescription || ''}
+                    onChange={(e) => setLesson((prev: ExtendedLesson) => ({ ...prev, metaDescription: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     rows={3}
                     placeholder="وصف محسن لمحركات البحث"
                     maxLength={160}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    {(article.metaDescription || '').length}/160 حرف
+                    {(lesson.metaDescription || '').length}/160 حرف
                   </p>
                 </div>
               </div>

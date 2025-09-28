@@ -3,12 +3,12 @@
 import { useMemo } from 'react';
 import YouTubePlayer, { extractYouTubeVideoId } from './YouTubePlayer';
 
-interface LessonContentProps {
+interface ArticleContentProps {
   content: string;
   className?: string;
 }
 
-export default function LessonContent({ content, className = '' }: LessonContentProps) {
+export default function ArticleContent({ content, className = '' }: ArticleContentProps) {
   // Process content to extract and replace YouTube embeds
   const processedContent = useMemo(() => {
     if (!content) return [];
@@ -120,7 +120,7 @@ export default function LessonContent({ content, className = '' }: LessonContent
   }, [content]);
 
   return (
-    <div className={`lesson-content ${className}`}>
+    <div className={`article-content ${className}`}>
       {processedContent.map((part, index) => {
         if (part.type === 'youtube' && part.videoId) {
           return (
@@ -128,7 +128,7 @@ export default function LessonContent({ content, className = '' }: LessonContent
               <div className="w-full max-w-4xl">
                 <YouTubePlayer
                   videoId={part.videoId}
-                  title={`درس - ${part.videoId}`}
+                  title={`مقال - ${part.videoId}`}
                   className="w-full"
                   opts={{
                     width: '100%',

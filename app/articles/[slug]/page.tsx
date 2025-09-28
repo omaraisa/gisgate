@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { remark } from 'remark';
 import html from 'remark-html';
+import ArticleContent from '@/app/components/ArticleContent';
 import Footer from '@/app/components/Footer';
 
 interface Article {
@@ -125,10 +126,7 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
             textAlign: 'right'
           }}
         >
-          <div
-            dangerouslySetInnerHTML={{ __html: processedContent }}
-            className="article-content"
-          />
+          <ArticleContent content={processedContent} />
         </div>
       </article>
 
