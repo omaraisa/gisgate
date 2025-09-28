@@ -60,6 +60,10 @@ model Video {
   authorSlug      String?
   images          VideoImage[]
   author          User?          @relation("UserVideos", fields: [authorId], references: [id])
+  courseId        String?
+  course          Course?        @relation("CourseLessons", fields: [courseId], references: [id])
+  order           Int            @default(0)
+  progress        LessonProgress[]
 
   @@map("videos")
 }
@@ -114,6 +118,9 @@ model User {
   updatedAt                DateTime      @updatedAt
   articles                 Article[]     @relation("UserArticles")
   videos                   Video[]       @relation("UserVideos")
+  courses                  Course[]      @relation("UserCourses")
+  enrollments              CourseEnrollment[] @relation("UserEnrollments")
+  progress                 LessonProgress[] @relation("UserProgress")
   sessions                 UserSession[]
 
   @@map("users")
@@ -133,6 +140,69 @@ model UserSession {
   @@map("user_sessions")
 }
 
+model Course {
+  id              String           @id @default(uuid())
+  title           String
+  slug            String           @unique
+  description     String?
+  excerpt         String?
+  featuredImage   String?
+  category        String?
+  tags            String?
+  status          ArticleStatus    @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  price           Float?           @default(0)
+  currency        String?          @default("USD")
+  isFree          Boolean          @default(true)
+  isPrivate       Boolean          @default(false)
+  authorId        String?
+  authorName      String?
+  author          User?            @relation("UserCourses", fields: [authorId], references: [id])
+  lessons         Video[]          @relation("CourseLessons")
+  enrollments     CourseEnrollment[]
+  totalLessons    Int              @default(0)
+  duration        String?
+  level           CourseLevel      @default(BEGINNER)
+  language        String?          @default("ar")
+
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  id            String            @id @default(uuid())
+  userId        String
+  courseId      String
+  enrolledAt    DateTime          @default(now())
+  completedAt   DateTime?
+  progress      Float             @default(0)
+  isCompleted   Boolean           @default(false)
+  user          User              @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
+  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+
+  @@unique([userId, courseId])
+  @@map("course_enrollments")
+}
+
+model LessonProgress {
+  id            String           @id @default(uuid())
+  userId        String
+  lessonId      String
+  enrollmentId  String
+  watchedTime   Int              @default(0) // in seconds
+  isCompleted   Boolean          @default(false)
+  completedAt   DateTime?
+  lastWatchedAt DateTime         @default(now())
+  user          User             @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
+  lesson        Video            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
+}
+
 enum ArticleStatus {
   DRAFT
   PUBLISHED
@@ -144,4 +214,10 @@ enum UserRole {
   EDITOR
   AUTHOR
   USER
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
 }
