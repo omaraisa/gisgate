@@ -6,7 +6,7 @@ export interface AuthenticatedRequest extends NextRequest {
   user?: AuthUser;
 }
 
-export async function withAuth(
+export function withAuth(
   handler: (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => Promise<NextResponse>,
   options: {
     requireAuth?: boolean;

@@ -127,7 +127,7 @@ export default function Header() {
     { href: '/', label: 'الرئيسية', icon: '🏠' },
     { href: '/articles', label: 'مقالات', icon: '📰' },
     { href: '/lessons', label: 'دروس', icon: '🎥' },
-    { href: '#', label: 'دورات تدريبية', icon: '🎓' },
+    { href: '/courses', label: 'دورات تدريبية', icon: '🎓' },
     { href: '#', label: 'من نحن', icon: '👥' },
   ] as const;
   return (

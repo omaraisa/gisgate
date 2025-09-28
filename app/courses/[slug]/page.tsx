@@ -271,7 +271,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                 {course.publishedAt && (
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    <span>{format(new Date(course.publishedAt), 'dd MMM yyyy')}</span>
+                    <span>{new Date(course.publishedAt).toLocaleDateString('ar-SA')}</span>
                   </div>
                 )}
               </div>
@@ -355,54 +355,86 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
             <div className="lg:col-span-2">
               <h2 className="text-3xl font-bold text-white mb-8">محتوى الدورة</h2>
 
-              <div className="space-y-4">
-                {course.lessons.map((lesson, index) => {
-                  const isCompleted = enrollment?.lessonProgress?.find(p => p.lessonId === lesson.id)?.isCompleted;
-                  const isLocked = !enrollment && !course.isFree && isAuthenticated;
+              <div className="space-y-6">
+            {course.lessons.map((lesson, index) => {
+              const isCompleted = enrollment?.lessonProgress?.find(p => p.lessonId === lesson.id)?.isCompleted;
+              const isLocked = !enrollment && !course.isFree && isAuthenticated;
 
-                  return (
-                    <motion.div
-                      key={lesson.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      className={`p-6 rounded-xl border backdrop-blur-md transition-all duration-300 ${
-                        isLocked
-                          ? 'border-white/20 bg-white/5 cursor-not-allowed'
-                          : 'border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            isCompleted ? 'bg-green-500' : isLocked ? 'bg-gray-500' : 'bg-secondary-500'
-                          }`}>
-                            {isCompleted ? (
-                              <CheckCircle className="w-6 h-6 text-white" />
-                            ) : isLocked ? (
+              if (isLocked) {
+                return (
+                  <motion.div
+                key={lesson.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="p-6 rounded-xl border border-white/20 bg-white/5 cursor-not-allowed backdrop-blur-md transition-all duration-300 mb-4"
+                  >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-500">
                               <Lock className="w-6 h-6 text-white" />
-                            ) : (
-                              <Play className="w-6 h-6 text-white" />
-                            )}
-                          </div>
-
-                          <div>
-                            <h3 className={`font-semibold ${
-                              isLocked ? 'text-white/60' : 'text-white'
-                            }`}>
-                              {index + 1}. {lesson.title}
-                            </h3>
-                            {lesson.duration && (
-                              <p className="text-white/60 text-sm">{lesson.duration}</p>
-                            )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-400">
+                                {index + 1}. {lesson.title}
+                              </h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {lesson.duration} دقيقة
+                              </p>
+                            </div>
                           </div>
                         </div>
+                      </motion.div>
+                    );
+                  }
 
-                        {isLocked && (
-                          <Lock className="w-5 h-5 text-white/40" />
-                        )}
-                      </div>
-                    </motion.div>
+                  return (
+                    <Link
+                      key={lesson.id}
+                      href={enrollment ? `/courses/${course.slug}/lessons/${lesson.slug}` : '#'}
+                      onClick={(e) => {
+                        if (!enrollment) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer backdrop-blur-md transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              isCompleted ? 'bg-green-500' : 'bg-secondary-500'
+                            }`}>
+                              {isCompleted ? (
+                                <CheckCircle className="w-6 h-6 text-white" />
+                              ) : (
+                                <Play className="w-6 h-6 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-white">
+                                {index + 1}. {lesson.title}
+                              </h3>
+                              {lesson.duration && (
+                                <p className="text-white/60 text-sm">{lesson.duration}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {isLocked ? (
+                            <Lock className="w-5 h-5 text-white/40" />
+                          ) : (
+                            <div className="text-secondary-400 hover:text-secondary-300 text-sm font-medium">
+                              مشاهدة الدرس →
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </Link>
                   );
                 })}
               </div>

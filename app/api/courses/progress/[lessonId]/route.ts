@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../../../app/lib/prisma';
-import { withAuth, getCurrentUser, AuthenticatedRequest } from '../../../../../lib/middleware';
+import { prisma } from '@/lib/prisma';
+import { AuthService } from '@/lib/auth';
 
 // GET /api/courses/progress/[lessonId] - Get lesson progress
-export const GET = withAuth(async (request: AuthenticatedRequest, context) => {
+export async function GET(request: NextRequest, context: { params: Promise<{ lessonId: string }> }) {
   try {
-    const user = getCurrentUser(request);
-    if (!user?.id) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const params = await context?.params;
-    const lessonId = params?.lessonId;
+    const token = authHeader.substring(7);
+    const user = await AuthService.validateSession(token);
+
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    }
+
+    const params = await context.params;
+    const lessonId = params.lessonId;
 
     if (!lessonId) {
       return NextResponse.json({ error: 'Lesson ID is required' }, { status: 400 });
@@ -31,18 +38,25 @@ export const GET = withAuth(async (request: AuthenticatedRequest, context) => {
     console.error('Error fetching lesson progress:', error);
     return NextResponse.json({ error: 'Failed to fetch lesson progress' }, { status: 500 });
   }
-}, { requireAuth: true });
+}
 
 // POST /api/courses/progress/[lessonId] - Update lesson progress
-export const POST = withAuth(async (request: AuthenticatedRequest, context) => {
+export async function POST(request: NextRequest, context: { params: Promise<{ lessonId: string }> }) {
   try {
-    const user = getCurrentUser(request);
-    if (!user?.id) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const params = await context?.params;
-    const lessonId = params?.lessonId;
+    const token = authHeader.substring(7);
+    const user = await AuthService.validateSession(token);
+
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    }
+
+    const params = await context.params;
+    const lessonId = params.lessonId;
 
     if (!lessonId) {
       return NextResponse.json({ error: 'Lesson ID is required' }, { status: 400 });
@@ -112,7 +126,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest, context) => {
     console.error('Error updating lesson progress:', error);
     return NextResponse.json({ error: 'Failed to update lesson progress' }, { status: 500 });
   }
-}, { requireAuth: true });
+}
 
 // Helper function to update course progress
 async function updateCourseProgress(enrollmentId: string, courseId: string) {

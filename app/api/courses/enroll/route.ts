@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
+import { AuthService } from '@/lib/auth';
 
 // GET /api/courses/enroll - Get user's enrollments
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+export async function GET(request: NextRequest) {
   try {
-    const user = getCurrentUser(request);
-    if (!user?.id) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const user = await AuthService.validateSession(token);
+
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
     const enrollments = await prisma.courseEnrollment.findMany({
@@ -46,14 +53,21 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     console.error('Error fetching enrollments:', error);
     return NextResponse.json({ error: 'Failed to fetch enrollments' }, { status: 500 });
   }
-});
+}
 
 // POST /api/courses/enroll - Enroll in a course
-export const POST = withAuth(async (request: NextRequest) => {
+export async function POST(request: NextRequest) {
   try {
-    const user = getCurrentUser(request as AuthenticatedRequest);
-    if (!user?.id) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const user = await AuthService.validateSession(token);
+
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
     const { courseId } = await request.json();
@@ -130,4 +144,4 @@ export const POST = withAuth(async (request: NextRequest) => {
     console.error('Error enrolling in course:', error);
     return NextResponse.json({ error: 'Failed to enroll in course' }, { status: 500 });
   }
-});
+}
