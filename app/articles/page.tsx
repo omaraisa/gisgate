@@ -5,7 +5,6 @@ import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Calendar, Eye } from 'lucide-react';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
@@ -244,7 +243,7 @@ export default function ArticlesPage() {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             <span>
-                              {format(new Date(article.publishedAt), 'dd MMM yyyy', { locale: ar })}
+                              {format(new Date(article.publishedAt), 'dd MMM yyyy')}
                             </span>
                           </div>
                         )}

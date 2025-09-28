@@ -421,7 +421,7 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="p-4 text-gray-600">
-                      {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('ar-SA') : 'غير منشور'}
+                      {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('en-US') : 'غير منشور'}
                     </td>
                     <td className="p-4">
                       <select

@@ -1,11 +1,12 @@
 'use client';
 
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { useRef, ReactNode } from 'react';
+import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Globe, Zap, Users, BookOpen, Sparkles, ArrowRight, Play, FileText } from 'lucide-react';
 import Footer from './Footer';
 import AnimatedBackground from './AnimatedBackground';
+import PostCard from './PostCard';
 
 interface MotionCardProps {
   children: ReactNode;
@@ -68,7 +69,83 @@ const ParallaxSection = ({ children, className = "", offset = 50 }: ParallaxSect
   );
 };
 
+interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage?: string;
+  category?: string;
+  publishedAt?: string;
+  viewCount: number;
+  authorName?: string;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage?: string;
+  category?: string;
+  publishedAt?: string;
+  viewCount: number;
+  authorName?: string;
+  videoUrl?: string;
+  duration?: string;
+}
+
+interface ArticlesResponse {
+  articles: Article[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface LessonsResponse {
+  lessons: Lesson[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function Home() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [articlesResponse, lessonsResponse] = await Promise.all([
+          fetch('/api/articles?status=PUBLISHED&limit=3'),
+          fetch('/api/lessons?status=PUBLISHED&limit=3')
+        ]);
+
+        if (articlesResponse.ok) {
+          const articlesData = await articlesResponse.json();
+          setArticles(articlesData.articles);
+        }
+
+        if (lessonsResponse.ok) {
+          const lessonsData = await lessonsResponse.json();
+          setLessons(lessonsData.lessons);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
 
   const videoPosts = [
     { title: 'تصميم الخرائط والتطبيقات على ArcGIS Online', link: '#', icon: <Globe className="w-6 h-6" /> },
@@ -218,30 +295,60 @@ export default function Home() {
             </MotionCard>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {videoPosts.map((post, index) => (
-                <MotionCard key={index} delay={index * 0.1}>
-                  <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
-                    <div className="flex items-center gap-4 mb-4">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6 }}
-                        className="p-3 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl text-white"
-                      >
-                        {post.icon}
-                      </motion.div>
-                      <div className="w-2 h-2 bg-secondary-400 rounded-full animate-pulse"></div>
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full animate-pulse">
+                      <div className="h-48 bg-white/10 rounded-lg mb-4"></div>
+                      <div className="h-6 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded w-2/3"></div>
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-secondary-300 transition-colors">
-                      {post.title}
-                    </h3>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileHover={{ width: "100%" }}
-                      className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
+                  </MotionCard>
+                ))
+              ) : lessons.length > 0 ? (
+                lessons.map((lesson, index) => (
+                  <MotionCard key={lesson.id} delay={index * 0.1}>
+                    <PostCard
+                      title={lesson.title}
+                      excerpt={lesson.excerpt}
+                      slug={lesson.slug}
+                      publishedAt={lesson.publishedAt ? new Date(lesson.publishedAt) : null}
+                      featuredImage={lesson.featuredImage}
+                      authorName={lesson.authorName}
+                      category={lesson.category}
+                      type="video"
                     />
-                  </FloatingCard>
-                </MotionCard>
-              ))}
+                  </MotionCard>
+                ))
+              ) : (
+                // Fallback to sample data if no lessons
+                videoPosts.slice(0, 3).map((post, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
+                      <div className="flex items-center gap-4 mb-4">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                          className="p-3 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl text-white"
+                        >
+                          {post.icon}
+                        </motion.div>
+                        <div className="w-2 h-2 bg-secondary-400 rounded-full animate-pulse"></div>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-secondary-300 transition-colors">
+                        {post.title}
+                      </h3>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileHover={{ width: "100%" }}
+                        className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
+                      />
+                    </FloatingCard>
+                  </MotionCard>
+                ))
+              )}
             </div>
 
             <MotionCard className="text-center mt-12" delay={0.8}>
@@ -267,32 +374,62 @@ export default function Home() {
             </MotionCard>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articlePosts.map((post, index) => (
-                <MotionCard key={index} delay={index * 0.1}>
-                  <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
-                    <a href={post.link}>
-                      <div className="flex items-center gap-4 mb-4">
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full animate-pulse">
+                      <div className="h-48 bg-white/10 rounded-lg mb-4"></div>
+                      <div className="h-6 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded w-2/3"></div>
+                    </div>
+                  </MotionCard>
+                ))
+              ) : articles.length > 0 ? (
+                articles.map((article, index) => (
+                  <MotionCard key={article.id} delay={index * 0.1}>
+                    <PostCard
+                      title={article.title}
+                      excerpt={article.excerpt}
+                      slug={article.slug}
+                      publishedAt={article.publishedAt ? new Date(article.publishedAt) : null}
+                      featuredImage={article.featuredImage}
+                      authorName={article.authorName}
+                      category={article.category}
+                      type="article"
+                    />
+                  </MotionCard>
+                ))
+              ) : (
+                // Fallback to sample data if no articles
+                articlePosts.slice(0, 3).map((post, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
+                      <a href={post.link}>
+                        <div className="flex items-center gap-4 mb-4">
+                          <motion.div
+                            whileHover={{ rotate: -360 }}
+                            transition={{ duration: 0.6 }}
+                            className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-white"
+                          >
+                            {post.icon}
+                          </motion.div>
+                          <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"></div>
+                        </div>
+                        <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-primary-300 transition-colors">
+                          {post.title}
+                        </h3>
                         <motion.div
-                          whileHover={{ rotate: -360 }}
-                          transition={{ duration: 0.6 }}
-                          className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-white"
-                        >
-                          {post.icon}
-                        </motion.div>
-                        <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"></div>
-                      </div>
-                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-primary-300 transition-colors">
-                        {post.title}
-                      </h3>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileHover={{ width: "100%" }}
-                        className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
-                      />
-                    </a>
-                  </FloatingCard>
-                </MotionCard>
-              ))}
+                          initial={{ width: 0 }}
+                          whileHover={{ width: "100%" }}
+                          className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full"
+                        />
+                      </a>
+                    </FloatingCard>
+                  </MotionCard>
+                ))
+              )}
             </div>
 
             <MotionCard className="text-center mt-12" delay={0.8}>

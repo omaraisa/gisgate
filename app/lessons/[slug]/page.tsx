@@ -136,7 +136,7 @@ export default function VideoPage({ params }: { params: Promise<{ slug: string }
             )}
             {video.publishedAt && (
               <span>
-                {new Date(video.publishedAt).toLocaleDateString('ar-SA', {
+                {new Date(video.publishedAt).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'

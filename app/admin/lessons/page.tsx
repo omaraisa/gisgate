@@ -301,7 +301,7 @@ export default function AdminLessonsPage() {
                       </div>
                     </td>
                     <td className="p-4 text-gray-600">
-                      {lesson.publishedAt ? new Date(lesson.publishedAt).toLocaleDateString('ar-SA') : 'غير منشور'}
+                      {lesson.publishedAt ? new Date(lesson.publishedAt).toLocaleDateString('en-US') : 'غير منشور'}
                     </td>
                     <td className="p-4">
                       <select

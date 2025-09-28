@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface PostCardProps {
   title: string;
@@ -25,55 +26,73 @@ export default function PostCard({
   const link = type === 'video' ? `/lessons/${slug}` : `/articles/${slug}`;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
-      {featuredImage && (
-        <Image
-          src={featuredImage}
-          alt={title}
-          width={400}
-          height={192}
-          className="w-full h-48 object-cover"
-        />
-      )}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          {category && (
-            <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-              {category}
-            </span>
-          )}
-          {type === 'video' && (
-            <span className="text-sm text-red-600 dark:text-red-400 font-medium">
-              🎥 فيديو
-            </span>
-          )}
-        </div>
-
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          <Link href={link} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">
-            {title}
-          </Link>
-        </h3>
-
-        {excerpt && (
-          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
-            {excerpt}
-          </p>
+    <motion.div
+      whileHover={{ 
+        y: -10, 
+        scale: 1.02,
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 overflow-hidden"
+    >
+      <Link href={link}>
+        {/* Featured Image */}
+        {featuredImage && (
+          <div className="relative h-48 overflow-hidden rounded-t-2xl">
+            <motion.img 
+              src={featuredImage} 
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            {category && (
+              <div className="absolute top-4 right-4">
+                <span className="px-3 py-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-xs font-semibold rounded-full">
+                  {category}
+                </span>
+              </div>
+            )}
+            {type === 'video' && (
+              <div className="absolute top-4 left-4">
+                <span className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+                  🎥 فيديو
+                </span>
+              </div>
+            )}
+          </div>
         )}
 
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          {authorName && <span>بواسطة {authorName}</span>}
-          {publishedAt && (
-            <span>
-              {new Date(publishedAt).toLocaleDateString('ar-SA', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              })}
-            </span>
+        {/* Content */}
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-secondary-300 transition-colors">
+            {title}
+          </h3>
+          
+          {excerpt && (
+            <p className="text-white/90 text-sm leading-relaxed mb-4">
+              {excerpt}
+            </p>
           )}
+
+          {/* Meta Info */}
+          <div className="flex items-center justify-between text-sm text-white/60">
+            {publishedAt && (
+              <span>
+                {new Date(publishedAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </span>
+            )}
+          </div>
+          
+          <motion.div
+            initial={{ width: 0 }}
+            whileHover={{ width: "100%" }}
+            className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full mt-4"
+          />
         </div>
-      </div>
-    </div>
+      </Link>
+    </motion.div>
   );
 }
