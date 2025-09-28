@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  gisgate:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the existing image directory
+      - /var/www/static/image:/app/public/uploads/images:ro
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      # Mount image directories
+      - /var/www/static/image:/var/www/static/image:ro
+      - ./public/uploads/images:/var/www/uploads/images:ro
+    depends_on:
+      - gisgate
+    restart: unless-stopped
+
+  # Optional: PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=gisgate
+      - POSTGRES_USER=gisgate
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

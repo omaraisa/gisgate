@@ -10,6 +10,9 @@
     "migrate:wp": "node scripts/wp-migrator.mjs migrate",
     "migrate:test": "node scripts/wp-migrator.mjs test",
     "migrate:preview": "node scripts/wp-migrator.mjs preview",
+    "migrate:images": "npx tsx migration/image-migration.ts",
+    "find:image-urls": "npx tsx migration/utils.ts find-urls",
+    "validate:migration": "npx tsx migration/utils.ts validate",
     "test:migration": "node scripts/test-migration.mjs",
     "test:ai-api": "npx tsx scripts/test-ai-article-api.ts"
   },
@@ -51,6 +54,7 @@
     "framer-motion": "^12.23.21",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
+    "minio": "^8.0.6",
     "next": "15.5.4",
     "node-fetch": "^3.3.2",
     "prisma": "^6.16.2",
