@@ -34,6 +34,36 @@ model Article {
   @@map("articles")
 }
 
+model Video {
+  id              String         @id @default(uuid())
+  title           String
+  slug            String         @unique
+  excerpt         String?
+  content         String
+  videoUrl        String?
+  duration        String?
+  thumbnail       String?
+  featuredImage   String?
+  status          ArticleStatus  @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  metaTitle       String?
+  metaDescription String?
+  aiGenerated     Boolean        @default(false)
+  aiPrompt        String?
+  viewCount       Int            @default(0)
+  category        String?
+  tags            String?
+  authorId        String?
+  authorName      String?
+  authorSlug      String?
+  images          VideoImage[]
+  author          User?          @relation("UserVideos", fields: [authorId], references: [id])
+
+  @@map("videos")
+}
+
 model ArticleImage {
   id        String  @id @default(uuid())
   url       String
@@ -43,6 +73,17 @@ model ArticleImage {
   article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   @@map("article_images")
+}
+
+model VideoImage {
+  id      String @id @default(uuid())
+  url     String
+  alt     String?
+  caption String?
+  videoId String
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@map("video_images")
 }
 
 model User {
@@ -72,6 +113,7 @@ model User {
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   articles                 Article[]     @relation("UserArticles")
+  videos                   Video[]       @relation("UserVideos")
   sessions                 UserSession[]
 
   @@map("users")

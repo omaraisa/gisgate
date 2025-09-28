@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Ensure bucket exists
     try {
       await minioClient.bucketExists(BUCKET_NAME)
-    } catch (error) {
+    } catch {
       await minioClient.makeBucket(BUCKET_NAME)
       // Set public read policy
       const policy = {

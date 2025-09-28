@@ -152,7 +152,7 @@ async function uploadImagesToMinIO(files: File[]): Promise<string[]> {
     // Ensure bucket exists
     try {
       await minioClient.bucketExists(BUCKET_NAME)
-    } catch (error) {
+    } catch {
       await minioClient.makeBucket(BUCKET_NAME)
       const policy = {
         Version: '2012-10-17',
