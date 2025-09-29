@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
 import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
 
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').optional(),
@@ -46,10 +47,145 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get enrolled courses with progress
+    const enrollments = await prisma.courseEnrollment.findMany({
+      where: { userId: user.id },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            titleEnglish: true,
+            slug: true,
+            description: true,
+            excerpt: true,
+            featuredImage: true,
+            category: true,
+            level: true,
+            language: true,
+            totalLessons: true,
+            duration: true,
+            createdAt: true,
+          },
+        },
+        lessonProgress: {
+          select: {
+            id: true,
+            lessonId: true,
+            watchedTime: true,
+            isCompleted: true,
+            completedAt: true,
+            lastWatchedAt: true,
+            lesson: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                duration: true,
+                order: true,
+              },
+            },
+          },
+          orderBy: { lesson: { order: 'asc' } },
+        },
+        certificates: {
+          select: {
+            id: true,
+            certificateId: true,
+            createdAt: true,
+            template: {
+              select: {
+                name: true,
+                language: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { enrolledAt: 'desc' },
+    });
+
+    // Calculate learning statistics
+    const totalEnrolledCourses = enrollments.length;
+    const completedCourses = enrollments.filter((e: any) => e.isCompleted).length;
+    const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
+    }, 0);
+    const totalLessonsWatched = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.length;
+    }, 0);
+    const totalWatchTime = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.reduce((courseTotal: number, lp: any) => courseTotal + lp.watchedTime, 0);
+    }, 0);
+    const certificatesEarned = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.certificates.length;
+    }, 0);
+
+    // Format enrolled courses with progress
+    const enrolledCourses = enrollments.map((enrollment: any) => {
+      const completedLessons = enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
+      const totalLessons = enrollment.course.totalLessons || enrollment.lessonProgress.length;
+      const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+      return {
+        id: enrollment.course.id,
+        title: enrollment.course.title,
+        titleEnglish: enrollment.course.titleEnglish,
+        slug: enrollment.course.slug,
+        description: enrollment.course.description,
+        excerpt: enrollment.course.excerpt,
+        featuredImage: enrollment.course.featuredImage,
+        category: enrollment.course.category,
+        level: enrollment.course.level,
+        language: enrollment.course.language,
+        enrolledAt: enrollment.enrolledAt,
+        completedAt: enrollment.completedAt,
+        isCompleted: enrollment.isCompleted,
+        progress: {
+          percentage: progressPercentage,
+          completedLessons,
+          totalLessons,
+          totalWatchTime: enrollment.lessonProgress.reduce((total: number, lp: any) => total + lp.watchedTime, 0),
+        },
+        lessons: enrollment.lessonProgress.map((lp: any) => ({
+          id: lp.lesson.id,
+          title: lp.lesson.title,
+          slug: lp.lesson.slug,
+          duration: lp.lesson.duration,
+          order: lp.lesson.order,
+          watchedTime: lp.watchedTime,
+          isCompleted: lp.isCompleted,
+          completedAt: lp.completedAt,
+          lastWatchedAt: lp.lastWatchedAt,
+        })),
+        certificates: enrollment.certificates.map((cert: any) => ({
+          id: cert.id,
+          certificateId: cert.certificateId,
+          templateName: cert.template.name,
+          language: cert.template.language,
+          earnedAt: cert.createdAt,
+        })),
+      };
+    });
+
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = fullUser; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-    return NextResponse.json({ user: safeUser });
+    return NextResponse.json({
+      user: safeUser,
+      learningProfile: {
+        enrolledCourses,
+        statistics: {
+          totalEnrolledCourses,
+          completedCourses,
+          totalLessonsCompleted,
+          totalLessonsWatched,
+          totalWatchTime, // in seconds
+          certificatesEarned,
+          completionRate: totalEnrolledCourses > 0 ? Math.round((completedCourses / totalEnrolledCourses) * 100) : 0,
+        },
+      },
+    });
 
   } catch (error) {
     console.error('Get profile error:', error);
