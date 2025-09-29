@@ -230,7 +230,7 @@ export class CertificateService {
     }
   }
 
-  static async generateCertificate(enrollmentId: string): Promise<string> {
+  static async generateCertificate(enrollmentId: string, templateId?: string): Promise<string> {
     // Get enrollment with course and user data
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { id: enrollmentId },
@@ -258,13 +258,30 @@ export class CertificateService {
       return existingCert.certificateId;
     }
 
-    // Get appropriate template based on course language
-    const template = await prisma.certificateTemplate.findFirst({
-      where: {
-        language: enrollment.course.language || 'ar',
-        isActive: true
+    let template;
+
+    if (templateId) {
+      // Use specified template
+      template = await prisma.certificateTemplate.findUnique({
+        where: { id: templateId }
+      });
+
+      if (!template || !template.isActive) {
+        throw new Error('Certificate template not found or inactive');
       }
-    });
+    } else {
+      // Get appropriate template based on course language - prefer default templates
+      template = await prisma.certificateTemplate.findFirst({
+        where: {
+          language: enrollment.course.language || 'ar',
+          isActive: true
+        },
+        orderBy: [
+          { isDefault: 'desc' }, // Default templates first
+          { createdAt: 'desc' }  // Then by creation date
+        ]
+      });
+    }
 
     if (!template) {
       throw new Error('No active certificate template found');

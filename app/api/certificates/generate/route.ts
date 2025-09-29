@@ -10,14 +10,14 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const { enrollmentId } = await request.json();
+    const { enrollmentId, templateId } = await request.json();
 
     if (!enrollmentId) {
       return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 });
     }
 
     // Generate certificate
-    const certificateId = await CertificateService.generateCertificate(enrollmentId);
+    const certificateId = await CertificateService.generateCertificate(enrollmentId, templateId);
 
     return NextResponse.json({ 
       certificateId,

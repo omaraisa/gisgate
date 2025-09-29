@@ -381,8 +381,8 @@ export default function CertificateBuilderPage() {
                           <label className="block text-xs font-medium text-white/60 mb-1">حجم الخط</label>
                           <input
                             type="number"
-                            value={field.fontSize}
-                            onChange={(e) => updateField(field.id, { fontSize: parseInt(e.target.value) })}
+                            value={field.fontSize || 16}
+                            onChange={(e) => updateField(field.id, { fontSize: parseInt(e.target.value) || 16 })}
                             className="w-full px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white"
                           />
                         </div>
@@ -391,7 +391,7 @@ export default function CertificateBuilderPage() {
                           <label className="block text-xs font-medium text-white/60 mb-1">اللون</label>
                           <input
                             type="color"
-                            value={field.color}
+                            value={field.color || '#000000'}
                             onChange={(e) => updateField(field.id, { color: e.target.value })}
                             className="w-full h-8 bg-white/10 border border-white/20 rounded"
                           />
@@ -442,7 +442,7 @@ export default function CertificateBuilderPage() {
                           <div>
                             <label className="block text-xs font-medium text-white/60 mb-1">نوع الخط</label>
                             <select
-                              value={field.fontFamily}
+                              value={field.fontFamily || 'Kufi'}
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
                               className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
@@ -468,7 +468,7 @@ export default function CertificateBuilderPage() {
                         <div>
                           <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
                           <select
-                            value={field.textAlign}
+                            value={field.textAlign || 'left'}
                             onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
                             className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
                           >
@@ -524,11 +524,11 @@ export default function CertificateBuilderPage() {
                       style={{
                         left: `${(field.x / 1000) * 100}%`,
                         top: `${(field.y / 600) * 100}%`,
-                        fontSize: `${field.fontSize * 0.8}px`,
-                        color: field.color,
-                        textAlign: field.textAlign,
+                        fontSize: `${(field.fontSize || 16) * 0.8}px`,
+                        color: field.color || '#000000',
+                        textAlign: field.textAlign || 'left',
                         maxWidth: field.type !== 'QR_CODE' && field.maxWidth ? `${Math.min(field.maxWidth * 0.8, 720)}px` : 'auto',
-                        fontFamily: field.fontFamily,
+                        fontFamily: field.fontFamily || 'Kufi',
                         fontWeight: field.fontWeight || 'normal',
                         transform: field.rotation ? `rotate(${field.rotation}deg)` : undefined,
                         whiteSpace: field.type !== 'QR_CODE' ? 'nowrap' : 'normal',
@@ -576,7 +576,7 @@ export default function CertificateBuilderPage() {
                         </div>
                       ) : (
                         <span style={{ 
-                          fontFamily: 'Kufi',
+                          fontFamily: field.fontFamily || 'Kufi',
                           fontWeight: field.fontWeight || 'normal'
                         }}>
                           {getFieldDisplayText(field)}
