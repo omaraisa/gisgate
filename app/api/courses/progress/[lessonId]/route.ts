@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AuthService } from '@/lib/auth';
+import { CertificateService } from '@/lib/certificate-service';
 
 // GET /api/courses/progress/[lessonId] - Get lesson progress
 export async function GET(request: NextRequest, context: { params: Promise<{ lessonId: string }> }) {
@@ -156,4 +157,15 @@ async function updateCourseProgress(enrollmentId: string, courseId: string) {
       completedAt: isCompleted ? new Date() : undefined
     }
   });
+
+  // Generate certificate if course is completed
+  if (isCompleted) {
+    try {
+      await CertificateService.generateCertificate(enrollmentId);
+      console.log(`Certificate generated for enrollment ${enrollmentId}`);
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      // Don't fail the progress update if certificate generation fails
+    }
+  }
 }

@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Kufi Font Face */
+@font-face {
+  font-family: 'Kufi';
+  src: url('/fonts/kufi.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Custom color variables */
 :root {
   --primary-400: #3A5339;

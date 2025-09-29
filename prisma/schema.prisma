@@ -122,6 +122,7 @@ model User {
   enrollments              CourseEnrollment[] @relation("UserEnrollments")
   progress                 LessonProgress[] @relation("UserProgress")
   sessions                 UserSession[]
+  certificates             Certificate[] @relation("UserCertificates")
 
   @@map("users")
 }
@@ -181,6 +182,7 @@ model CourseEnrollment {
   user          User              @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
   course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
+  certificates  Certificate[]
 
   @@unique([userId, courseId])
   @@map("course_enrollments")
@@ -201,6 +203,36 @@ model LessonProgress {
 
   @@unique([userId, lessonId])
   @@map("lesson_progress")
+}
+
+model CertificateTemplate {
+  id              String        @id @default(uuid())
+  name            String        // "Arabic Certificate", "English Certificate"
+  language        String        // "ar", "en"
+  backgroundImage String        // URL to uploaded background image
+  fields          Json          // Array of field configurations
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  certificates    Certificate[]
+
+  @@map("certificate_templates")
+}
+
+model Certificate {
+  id           String              @id @default(uuid())
+  templateId   String
+  userId       String
+  enrollmentId String
+  certificateId String            @unique // Public certificate ID for verification
+  data         Json               // Generated certificate data
+  createdAt    DateTime           @default(now())
+  template     CertificateTemplate @relation(fields: [templateId], references: [id])
+  user         User               @relation("UserCertificates", fields: [userId], references: [id])
+  enrollment   CourseEnrollment   @relation(fields: [enrollmentId], references: [id])
+
+  @@unique([userId, enrollmentId])
+  @@map("certificates")
 }
 
 enum ArticleStatus {

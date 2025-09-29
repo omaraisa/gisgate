@@ -294,15 +294,58 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
               )}
 
               {/* Enrollment Button */}
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 {enrollment ? (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
-                  >
-                    متابعة الدورة ({Math.round(enrollment.progress)}%)
-                  </motion.button>
+                  <>
+                    {enrollment.isCompleted ? (
+                      <div className="flex items-center gap-4">
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl flex items-center gap-2"
+                        >
+                          <CheckCircle className="w-6 h-6" />
+                          تم إكمال الدورة 🎉
+                        </motion.div>
+                        <motion.button
+                          onClick={async () => {
+                            try {
+                              const sessionToken = localStorage.getItem('sessionToken');
+                              const response = await fetch('/api/certificates/generate', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  Authorization: `Bearer ${sessionToken}`
+                                },
+                                body: JSON.stringify({ enrollmentId: enrollment.id })
+                              });
+                              
+                              if (response.ok) {
+                                const data = await response.json();
+                                window.open(data.downloadUrl, '_blank');
+                              } else {
+                                alert('فشل في تحميل الشهادة');
+                              }
+                            } catch (err) {
+                              alert('فشل في تحميل الشهادة');
+                            }
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-gradient-to-r from-yellow-600 to-orange-500 text-white px-6 py-3 rounded-full font-semibold text-base shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300"
+                        >
+                          📜 تحميل الشهادة
+                        </motion.button>
+                      </div>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
+                      >
+                        متابعة الدورة ({Math.round(enrollment.progress)}%)
+                      </motion.button>
+                    )}
+                  </>
                 ) : (
                   <motion.button
                     onClick={handleEnroll}
