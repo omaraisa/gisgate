@@ -16,12 +16,11 @@ interface Lesson {
   videoUrl?: string;
   duration?: string;
   order: number;
-  attachments?: Array<{
+  images?: Array<{
     id: string;
-    name: string;
     url: string;
-    type: string;
-    size?: string;
+    alt?: string;
+    caption?: string;
   }>;
 }
 
@@ -103,8 +102,12 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
         const courseData = await courseResponse.json();
         setCourse(courseData);
 
-        // Find current lesson
-        const lesson = courseData.lessons.find((l: Lesson) => l.slug === lessonSlug);
+        // Find current lesson by slug first, then by ID if slug fails
+        let lesson = courseData.lessons.find((l: Lesson) => l.slug === lessonSlug);
+        if (!lesson) {
+          // Try to find by ID
+          lesson = courseData.lessons.find((l: Lesson) => l.id === lessonSlug);
+        }
         if (!lesson) {
           throw new Error('Lesson not found');
         }
@@ -171,7 +174,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
   };
 
   const navigateToLesson = (targetLesson: Lesson) => {
-    router.push(`/courses/${courseSlug}/lessons/${targetLesson.slug}`);
+    router.push(`/courses/${courseSlug}/lessons/${targetLesson.id}`);
   };
 
   const getNextLesson = () => {
@@ -335,7 +338,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
               </motion.div>
 
               {/* Attachments */}
-              {currentLesson.attachments && currentLesson.attachments.length > 0 && (
+              {currentLesson.images && currentLesson.images.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -347,25 +350,26 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                     المرفقات والموارد
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentLesson.attachments.map((attachment) => (
+                    {currentLesson.images.map((image) => (
                       <div
-                        key={attachment.id}
+                        key={image.id}
                         className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
                       >
                         <FileText className="w-8 h-8 text-secondary-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-semibold truncate">{attachment.name}</h4>
+                          <h4 className="text-white font-semibold truncate">{image.alt || image.caption || 'مرفق'}</h4>
                           <p className="text-white/60 text-sm">
-                            {attachment.type} {attachment.size && `• ${attachment.size}`}
+                            مرفق
                           </p>
                         </div>
                         <a
-                          href={attachment.url}
-                          download
+                          href={image.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center gap-2 px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors"
                         >
                           <Download className="w-4 h-4" />
-                          تحميل
+                          عرض
                         </a>
                       </div>
                     ))}
@@ -463,9 +467,6 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                             </div>
                             <div>
                               <h4 className="font-semibold text-sm leading-tight">{lesson.title}</h4>
-                              {lesson.duration && (
-                                <p className="text-xs opacity-60">{lesson.duration}</p>
-                              )}
                             </div>
                           </div>
                         </div>

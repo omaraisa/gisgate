@@ -290,16 +290,10 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                   <Play className="w-5 h-5" />
                   <span>{course.totalLessons} درس</span>
                 </div>
-                {course.duration && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    <span>{course.duration}</span>
-                  </div>
-                )}
                 {course.publishedAt && (
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    <span>{new Date(course.publishedAt).toLocaleDateString('ar-SA')}</span>
+                    <span>{new Date(course.publishedAt).toLocaleDateString('en-US')}</span>
                   </div>
                 )}
               </div>
@@ -358,13 +352,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                   </motion.button>
                 )}
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="border-2 border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-all duration-300"
-                >
-                  معاينة الدورة
-                </motion.button>
               </div>
             </motion.div>
 
@@ -421,9 +408,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                               <h3 className="font-semibold text-gray-400">
                                 {index + 1}. {lesson.title}
                               </h3>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {lesson.duration} دقيقة
-                              </p>
                             </div>
                           </div>
                         </div>
@@ -434,7 +418,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                   return (
                     <Link
                       key={lesson.id}
-                      href={enrollment ? `/courses/${course.slug}/lessons/${lesson.slug}` : '#'}
+                      href={enrollment ? `/courses/${course.slug}/lessons/${lesson.id}` : '#'}
                       onClick={(e) => {
                         if (!enrollment) {
                           e.preventDefault();
@@ -462,9 +446,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                               <h3 className="font-semibold text-white">
                                 {index + 1}. {lesson.title}
                               </h3>
-                              {lesson.duration && (
-                                <p className="text-white/60 text-sm">{lesson.duration}</p>
-                              )}
                             </div>
                           </div>
 
@@ -508,13 +489,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                     <span>عدد الدروس:</span>
                     <span className="font-semibold">{course.totalLessons}</span>
                   </div>
-
-                  {course.duration && (
-                    <div className="flex justify-between">
-                      <span>المدة الزمنية:</span>
-                      <span className="font-semibold">{course.duration}</span>
-                    </div>
-                  )}
 
                   <div className="flex justify-between">
                     <span>عدد الطلاب:</span>

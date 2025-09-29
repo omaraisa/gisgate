@@ -31,6 +31,7 @@ interface CourseData {
   level?: string
   language?: string
   duration?: string
+  lessons?: any[]
 }
 
 export async function POST(request: NextRequest) {
@@ -120,6 +121,41 @@ export async function POST(request: NextRequest) {
         duration: courseData.duration || null,
       }
     })
+
+    // Create lessons if provided
+    if (courseData.lessons && courseData.lessons.length > 0) {
+      for (const lessonData of courseData.lessons) {
+        const lesson = await prisma.video.create({
+          data: {
+            title: lessonData.title,
+            slug: lessonData.slug || generateSlug(lessonData.title),
+            excerpt: lessonData.excerpt || null,
+            content: lessonData.content || '',
+            videoUrl: lessonData.videoUrl || null,
+            duration: lessonData.duration || null,
+            status: ArticleStatus.DRAFT,
+            courseId: newCourse.id,
+            order: lessonData.order || 0,
+          }
+        })
+
+        // Create attachments if provided
+        if (lessonData.attachments && lessonData.attachments.length > 0) {
+          for (const attachment of lessonData.attachments) {
+            if (attachment.url) {
+              await prisma.videoImage.create({
+                data: {
+                  url: attachment.url,
+                  alt: attachment.title || null,
+                  caption: attachment.title || null,
+                  videoId: lesson.id,
+                }
+              })
+            }
+          }
+        }
+      }
+    }
 
     return NextResponse.json(newCourse, { status: 201 })
 

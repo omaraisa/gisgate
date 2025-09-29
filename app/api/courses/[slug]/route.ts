@@ -12,13 +12,25 @@ export async function GET(
       where: { slug },
       include: {
         lessons: {
-          where: { status: 'PUBLISHED' },
+          where: { 
+            status: { in: ['PUBLISHED', 'DRAFT'] }
+          },
           select: {
             id: true,
             title: true,
             slug: true,
+            content: true,
+            videoUrl: true,
             duration: true,
-            order: true
+            order: true,
+            images: {
+              select: {
+                id: true,
+                url: true,
+                alt: true,
+                caption: true
+              }
+            }
           },
           orderBy: { order: 'asc' }
         },
@@ -49,7 +61,7 @@ export async function GET(
       currency: course.currency,
       isFree: course.isFree,
       duration: course.duration,
-      totalLessons: course.totalLessons,
+      totalLessons: course.lessons.length,
       publishedAt: course.publishedAt?.toISOString(),
       enrollmentCount: course._count.enrollments,
       lessons: course.lessons

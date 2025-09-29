@@ -268,13 +268,6 @@ export default function CoursesPage() {
                                 <span>{course.totalLessons} درس</span>
                               </div>
                             )}
-
-                            {course.duration && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                <span>{course.duration}</span>
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex items-center gap-1">

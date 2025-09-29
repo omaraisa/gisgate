@@ -4,6 +4,24 @@ import React, { useState, useEffect } from 'react'
 import { ArticleStatus, CourseLevel } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import YouTubePlayer, { extractYouTubeVideoId, isYouTubeUrl } from '@/app/components/YouTubePlayer'
+
+interface Lesson {
+  id?: string
+  title: string
+  slug: string
+  excerpt?: string
+  content?: string
+  videoUrl?: string
+  order: number
+  attachments?: Attachment[]
+}
+
+interface Attachment {
+  id?: string
+  url: string
+  title: string
+}
 
 interface ExtendedCourse {
   id?: string
@@ -23,6 +41,28 @@ interface ExtendedCourse {
   level: CourseLevel
   language?: string
   duration?: string
+  lessons?: Lesson[]
+}
+
+interface ExtendedCourse {
+  id?: string
+  title: string
+  slug: string
+  description?: string
+  excerpt?: string
+  featuredImage?: string
+  status: ArticleStatus
+  publishedAt?: Date | null
+  category?: string
+  tags?: string
+  price?: number
+  currency?: string
+  isFree: boolean
+  isPrivate: boolean
+  level: CourseLevel
+  language?: string
+  duration?: string
+  lessons?: Lesson[]
 }
 
 interface CourseEditorProps {
@@ -49,11 +89,23 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     isPrivate: false,
     level: CourseLevel.BEGINNER,
     language: 'ar',
-    duration: ''
+    duration: '',
+    lessons: []
   })
   const [loading, setLoading] = useState(!isNewCourse)
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [showLessonForm, setShowLessonForm] = useState(false)
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
+  const [lessonForm, setLessonForm] = useState<Lesson>({
+    title: '',
+    slug: '',
+    excerpt: '',
+    content: '',
+    videoUrl: '',
+    order: 0,
+    attachments: []
+  })
 
   useEffect(() => {
     if (!isNewCourse) {
@@ -73,7 +125,15 @@ export default function CourseEditor({ params }: CourseEditorProps) {
           isFree: courseData.isFree !== false,
           isPrivate: courseData.isPrivate || false,
           level: courseData.level || CourseLevel.BEGINNER,
-          language: courseData.language || 'ar'
+          language: courseData.language || 'ar',
+          lessons: courseData.lessons?.map((lesson: any) => ({
+            ...lesson,
+            attachments: lesson.images?.map((image: any) => ({
+              id: image.id,
+              url: image.url,
+              title: image.caption || image.alt || ''
+            })) || []
+          })) || []
         })
       }
     } catch (error) {
@@ -94,7 +154,14 @@ export default function CourseEditor({ params }: CourseEditorProps) {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(course)
+        body: JSON.stringify({
+          ...course,
+          lessons: course.lessons?.map(lesson => ({
+            ...lesson,
+            // Remove UI-specific fields and ensure proper format
+            attachments: lesson.attachments?.filter(att => att.url.trim())
+          }))
+        })
       })
 
       if (response.ok) {
@@ -152,6 +219,111 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  // Lesson management functions
+  const addLesson = () => {
+    setLessonForm({
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      videoUrl: '',
+      order: course.lessons?.length || 0,
+      attachments: []
+    })
+    setEditingLesson(null)
+    setShowLessonForm(true)
+  }
+
+  const editLesson = (lesson: Lesson) => {
+    setLessonForm({ ...lesson })
+    setEditingLesson(lesson)
+    setShowLessonForm(true)
+  }
+
+  const deleteLesson = (lessonId: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا الدرس؟')) {
+      setCourse(prev => ({
+        ...prev,
+        lessons: prev.lessons?.filter(l => l.id !== lessonId) || []
+      }))
+    }
+  }
+
+  const saveLesson = () => {
+    if (!lessonForm.title.trim()) {
+      alert('يرجى إدخال عنوان الدرس')
+      return
+    }
+
+    const lessonToSave = {
+      ...lessonForm,
+      slug: lessonForm.slug || generateSlug(lessonForm.title)
+    }
+
+    setCourse(prev => {
+      const lessons = [...(prev.lessons || [])]
+      if (editingLesson) {
+        const index = lessons.findIndex(l => l.id === editingLesson.id)
+        if (index !== -1) {
+          lessons[index] = lessonToSave
+        }
+      } else {
+        lessons.push(lessonToSave)
+      }
+      return { ...prev, lessons }
+    })
+
+    setShowLessonForm(false)
+    setLessonForm({
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      videoUrl: '',
+      order: 0,
+      attachments: []
+    })
+  }
+
+  const addAttachment = () => {
+    setLessonForm(prev => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), { url: '', title: '' }]
+    }))
+  }
+
+  const updateAttachment = (index: number, field: 'url' | 'title', value: string) => {
+    setLessonForm(prev => ({
+      ...prev,
+      attachments: prev.attachments?.map((att, i) =>
+        i === index ? { ...att, [field]: value } : att
+      ) || []
+    }))
+  }
+
+  const removeAttachment = (index: number) => {
+    setLessonForm(prev => ({
+      ...prev,
+      attachments: prev.attachments?.filter((_, i) => i !== index) || []
+    }))
+  }
+
+  const moveLesson = (index: number, direction: 'up' | 'down') => {
+    setCourse(prev => {
+      const lessons = [...(prev.lessons || [])]
+      if (direction === 'up' && index > 0) {
+        [lessons[index], lessons[index - 1]] = [lessons[index - 1], lessons[index]]
+      } else if (direction === 'down' && index < lessons.length - 1) {
+        [lessons[index], lessons[index + 1]] = [lessons[index + 1], lessons[index]]
+      }
+      // Update order numbers
+      lessons.forEach((lesson, i) => {
+        lesson.order = i
+      })
+      return { ...prev, lessons }
+    })
   }
 
   if (loading) {
@@ -442,6 +614,221 @@ export default function CourseEditor({ params }: CourseEditorProps) {
               <option value={ArticleStatus.PUBLISHED}>منشور</option>
             </select>
           </div>
+
+          {/* Lessons Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                الدروس ({course.lessons?.length || 0})
+              </label>
+              <button
+                type="button"
+                onClick={addLesson}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                إضافة درس جديد
+              </button>
+            </div>
+
+            {/* Lessons List */}
+            <div className="space-y-3">
+              {course.lessons?.map((lesson, index) => (
+                <div key={lesson.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{lesson.title}</h4>
+                      {lesson.excerpt && (
+                        <p className="text-sm text-gray-600 mt-1">{lesson.excerpt}</p>
+                      )}
+                      {lesson.videoUrl && (
+                        <div className="mt-2">
+                          <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                            يحتوي على فيديو يوتيوب
+                          </span>
+                        </div>
+                      )}
+                      {lesson.attachments && lesson.attachments.length > 0 && (
+                        <div className="mt-2">
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                            {lesson.attachments.length} مرفق
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => moveLesson(index, 'up')}
+                        disabled={index === 0}
+                        className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveLesson(index, 'down')}
+                        disabled={index === (course.lessons?.length || 0) - 1}
+                        className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editLesson(lesson)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteLesson(lesson.id!)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!course.lessons || course.lessons.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  لا توجد دروس بعد. اضغط على "إضافة درس جديد" لبدء إضافة المحتوى.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Lesson Form Modal */}
+          {showLessonForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h3 className="text-lg font-bold mb-4">
+                  {editingLesson ? 'تعديل الدرس' : 'إضافة درس جديد'}
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      عنوان الدرس *
+                    </label>
+                    <input
+                      type="text"
+                      value={lessonForm.title}
+                      onChange={(e) => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      الرابط (Slug)
+                    </label>
+                    <input
+                      type="text"
+                      value={lessonForm.slug}
+                      onChange={(e) => setLessonForm(prev => ({ ...prev, slug: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      محتوى الدرس
+                    </label>
+                    <textarea
+                      value={lessonForm.content || ''}
+                      onChange={(e) => setLessonForm(prev => ({ ...prev, content: e.target.value }))}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      رابط فيديو يوتيوب
+                    </label>
+                    <input
+                      type="url"
+                      value={lessonForm.videoUrl || ''}
+                      onChange={(e) => setLessonForm(prev => ({ ...prev, videoUrl: e.target.value }))}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {lessonForm.videoUrl && isYouTubeUrl(lessonForm.videoUrl) && (
+                      <div className="mt-3">
+                        <p className="text-sm text-gray-600 mb-2">معاينة الفيديو:</p>
+                        <YouTubePlayer
+                          videoId={extractYouTubeVideoId(lessonForm.videoUrl)!}
+                          className="max-w-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Attachments */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        المرفقات
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addAttachment}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        إضافة مرفق
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {lessonForm.attachments?.map((attachment, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            placeholder="عنوان المرفق"
+                            value={attachment.title}
+                            onChange={(e) => updateAttachment(index, 'title', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          />
+                          <input
+                            type="url"
+                            placeholder="رابط المرفق"
+                            value={attachment.url}
+                            onChange={(e) => updateAttachment(index, 'url', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(index)}
+                            className="text-red-600 hover:text-red-800 px-2"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowLessonForm(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveLesson}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingLesson ? 'حفظ التغييرات' : 'إضافة الدرس'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <div className="flex justify-end gap-4">
