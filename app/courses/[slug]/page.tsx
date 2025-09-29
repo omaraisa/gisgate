@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
+import PayPalButton from '../../components/PayPalButton';
 
 interface Course {
   id: string;
@@ -298,8 +299,8 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                 )}
               </div>
 
-              {/* Enrollment Button */}
-              <div className="flex flex-wrap gap-4">
+              {/* Enrollment/Purchase Button */}
+              <div className="flex flex-col gap-4">
                 {enrollment ? (
                   <>
                     {enrollment.isCompleted ? (
@@ -340,7 +341,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                       </motion.button>
                     )}
                   </>
-                ) : (
+                ) : course.isFree ? (
                   <motion.button
                     onClick={handleEnroll}
                     disabled={enrolling}
@@ -348,10 +349,49 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                     whileTap={{ scale: 0.95 }}
                     className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {enrolling ? 'جاري التسجيل...' : course.isFree ? 'التسجيل مجاناً' : `التسجيل - ${course.price} ${course.currency}`}
+                    {enrolling ? 'جاري التسجيل...' : 'التسجيل مجاناً'}
                   </motion.button>
-                )}
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white mb-2">
+                        {course.price} {course.currency}
+                      </div>
+                      <div className="text-white/80">
+                        دورة مدفوعة - ادفع مرة واحدة واستمتع بالوصول مدى الحياة
+                      </div>
+                    </div>
 
+                    {isAuthenticated ? (
+                      <PayPalButton
+                        courseId={course.id}
+                        amount={course.price || 0}
+                        currency={course.currency || 'USD'}
+                        courseTitle={course.title}
+                        onSuccess={(orderId) => {
+                          console.log('Payment successful for order:', orderId);
+                          // The success page will handle enrollment
+                        }}
+                        onError={(error) => {
+                          console.error('Payment error:', error);
+                          alert('حدث خطأ في عملية الدفع: ' + error);
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center space-y-3">
+                        <div className="text-white/80 mb-4">
+                          يجب تسجيل الدخول أولاً لشراء الدورة
+                        </div>
+                        <Link
+                          href="/auth"
+                          className="inline-block bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-3 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300"
+                        >
+                          تسجيل الدخول / إنشاء حساب
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
 

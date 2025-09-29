@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             title: true,
-            titleEnglish: true,
             slug: true,
             description: true,
             excerpt: true,
@@ -105,22 +104,62 @@ export async function GET(request: NextRequest) {
       orderBy: { enrolledAt: 'desc' },
     });
 
-    // Calculate learning statistics
-    const totalEnrolledCourses = enrollments.length;
-    const completedCourses = enrollments.filter((e: any) => e.isCompleted).length;
-    const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
-    }, 0);
-    const totalLessonsWatched = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.lessonProgress.length;
-    }, 0);
-    const totalWatchTime = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.lessonProgress.reduce((courseTotal: number, lp: any) => courseTotal + lp.watchedTime, 0);
-    }, 0);
-    const certificatesEarned = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.certificates.length;
+    // Get payment history
+    const payments = await prisma.paymentOrder.findMany({
+      where: { userId: user.id },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            titleEnglish: true,
+            featuredImage: true,
+          },
+        },
+        transactions: {
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        refunds: {
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            reason: true,
+            status: true,
+            requestedAt: true,
+          },
+          orderBy: {
+            requestedAt: 'desc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 10, // Limit to recent payments
+    });
+
+    // Calculate payment statistics
+    const totalPaid = payments.reduce((sum, payment) => {
+      const completedTransactions = payment.transactions.filter(t => t.status === 'COMPLETED');
+      return sum + completedTransactions.reduce((tSum, t) => tSum + t.amount, 0);
     }, 0);
 
+    const totalRefunded = payments.reduce((sum, payment) => {
+      const completedRefunds = payment.refunds.filter(r => r.status === 'COMPLETED');
+      return sum + completedRefunds.reduce((rSum, r) => rSum + r.amount, 0);
+    }, 0);
+
+    // Format enrolled courses with progress
     // Format enrolled courses with progress
     const enrolledCourses = enrollments.map((enrollment: any) => {
       const completedLessons = enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
@@ -130,7 +169,6 @@ export async function GET(request: NextRequest) {
       return {
         id: enrollment.course.id,
         title: enrollment.course.title,
-        titleEnglish: enrollment.course.titleEnglish,
         slug: enrollment.course.slug,
         description: enrollment.course.description,
         excerpt: enrollment.course.excerpt,
@@ -167,7 +205,6 @@ export async function GET(request: NextRequest) {
         })),
       };
     });
-
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = fullUser; // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -183,6 +220,15 @@ export async function GET(request: NextRequest) {
           totalWatchTime, // in seconds
           certificatesEarned,
           completionRate: totalEnrolledCourses > 0 ? Math.round((completedCourses / totalEnrolledCourses) * 100) : 0,
+        },
+      },
+      paymentProfile: {
+        recentPayments: payments.slice(0, 5), // Show only 5 most recent
+        statistics: {
+          totalPaid,
+          totalRefunded,
+          netSpent: totalPaid - totalRefunded,
+          totalPayments: payments.length,
         },
       },
     });

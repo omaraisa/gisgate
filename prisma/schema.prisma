@@ -123,6 +123,7 @@ model User {
   progress                 LessonProgress[] @relation("UserProgress")
   sessions                 UserSession[]
   certificates             Certificate[] @relation("UserCertificates")
+  payments                 PaymentOrder[] @relation("UserPayments")
 
   @@map("users")
 }
@@ -169,6 +170,7 @@ model Course {
   duration        String?
   level           CourseLevel      @default(BEGINNER)
   language        String?          @default("ar")
+  paymentOrders   PaymentOrder[]
 
   @@map("courses")
 }
@@ -238,6 +240,56 @@ model Certificate {
   @@map("certificates")
 }
 
+model PaymentOrder {
+  id            String            @id @default(uuid())
+  userId        String
+  courseId      String
+  amount        Float
+  currency      String            @default("USD")
+  status        PaymentStatus     @default(PENDING)
+  paypalOrderId String?           @unique
+  paypalPaymentId String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  paidAt        DateTime?
+  user          User              @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  transactions  PaymentTransaction[]
+  refunds       PaymentRefund[]
+
+  @@map("payment_orders")
+}
+
+model PaymentTransaction {
+  id            String            @id @default(uuid())
+  orderId       String
+  paypalTransactionId String      @unique
+  amount        Float
+  currency      String            @default("USD")
+  status        PaymentStatus     @default(PENDING)
+  paypalFee     Float?
+  netAmount     Float?
+  createdAt     DateTime          @default(now())
+  order         PaymentOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payment_transactions")
+}
+
+model PaymentRefund {
+  id            String            @id @default(uuid())
+  orderId       String
+  paypalRefundId String           @unique
+  amount        Float
+  currency      String            @default("USD")
+  reason        String?
+  status        RefundStatus      @default(PENDING)
+  requestedAt   DateTime          @default(now())
+  processedAt   DateTime?
+  order         PaymentOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payment_refunds")
+}
+
 enum ArticleStatus {
   DRAFT
   PUBLISHED
@@ -255,4 +307,22 @@ enum CourseLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
