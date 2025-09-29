@@ -56,9 +56,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const [slug, setSlug] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [showCertificateModal, setShowCertificateModal] = useState(false);
-  const [availableTemplates, setAvailableTemplates] = useState<any[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     async function initializeParams() {
@@ -178,32 +175,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
   };
 
-  const fetchCertificateTemplates = async () => {
-    if (!course) return;
-
-    try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      const response = await fetch(`/api/certificates/templates/${course.id}`, {
-        headers: { Authorization: `Bearer ${sessionToken}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTemplates(data.templates);
-      }
-    } catch (err) {
-      console.error('Failed to fetch templates:', err);
-    }
-  };
-
-  const handleCertificateDownload = async () => {
-    if (!enrollment) return;
-
-    await fetchCertificateTemplates();
-    setShowCertificateModal(true);
-  };
-
-  const downloadCertificate = async (templateId?: string) => {
+  const downloadCertificate = async (language: 'ar' | 'en') => {
     if (!enrollment) return;
 
     try {
@@ -216,14 +188,13 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
         },
         body: JSON.stringify({ 
           enrollmentId: enrollment.id,
-          templateId: templateId || undefined
+          language: language
         })
       });
       
       if (response.ok) {
         const data = await response.json();
         window.open(data.downloadUrl, '_blank');
-        setShowCertificateModal(false);
       } else {
         alert('فشل في تحميل الشهادة');
       }
@@ -363,14 +334,24 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                           <CheckCircle className="w-6 h-6" />
                           تم إكمال الدورة 🎉
                         </motion.div>
-                        <motion.button
-                          onClick={handleCertificateDownload}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-gradient-to-r from-yellow-600 to-orange-500 text-white px-6 py-3 rounded-full font-semibold text-base shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300"
-                        >
-                          📜 تحميل الشهادة
-                        </motion.button>
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            onClick={() => downloadCertificate('ar')}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-2xl hover:shadow-blue-500/25 transition-all duration-300"
+                          >
+                            📜 شهادة عربية
+                          </motion.button>
+                          <motion.button
+                            onClick={() => downloadCertificate('en')}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
+                          >
+                            📜 English Certificate
+                          </motion.button>
+                        </div>
                       </div>
                     ) : (
                       <motion.button
@@ -573,82 +554,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
           </div>
         </div>
       </section>
-
-      {/* Certificate Template Selection Modal */}
-      {showCertificateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white">اختر قالب الشهادة</h3>
-              <button
-                onClick={() => setShowCertificateModal(false)}
-                className="text-white/60 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {availableTemplates.length > 0 ? (
-                availableTemplates.map((template) => (
-                  <motion.div
-                    key={template.id}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-all duration-300"
-                    onClick={() => downloadCertificate(template.id)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={template.backgroundImage}
-                        alt={template.name}
-                        className="w-16 h-12 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-white">{template.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            template.language === 'ar' 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-green-500 text-white'
-                          }`}>
-                            {template.language === 'ar' ? 'العربية' : 'English'}
-                          </span>
-                          {template.isDefault && (
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500 text-white">
-                              افتراضي
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-secondary-400">
-                        <Play className="w-6 h-6" />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-white/60">لا توجد قوالب شهادات متاحة</p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-white/10">
-              <button
-                onClick={() => downloadCertificate()}
-                className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-300"
-              >
-                تحميل بالقالب الافتراضي
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       <Footer />
     </div>

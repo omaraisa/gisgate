@@ -144,6 +144,7 @@ model UserSession {
 model Course {
   id              String           @id @default(uuid())
   title           String
+  titleEnglish    String?
   slug            String           @unique
   description     String?
   excerpt         String?
@@ -160,6 +161,7 @@ model Course {
   isPrivate       Boolean          @default(false)
   authorId        String?
   authorName      String?
+  authorNameEnglish String?
   author          User?            @relation("UserCourses", fields: [authorId], references: [id])
   lessons         Video[]          @relation("CourseLessons")
   enrollments     CourseEnrollment[]

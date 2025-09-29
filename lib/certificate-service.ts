@@ -137,8 +137,8 @@ export class CertificateService {
           }
 
           body {
-            width: 297mm;
-            height: 210mm;
+            width: 2000px;
+            height: 1414px;
             position: relative;
             background-image: url('${template.backgroundImage}');
             background-size: cover;
@@ -146,6 +146,8 @@ export class CertificateService {
             background-repeat: no-repeat;
             font-family: 'Kufi', sans-serif;
             overflow: hidden;
+            margin: 0;
+            padding: 0;
           }
 
           .field {
@@ -230,7 +232,7 @@ export class CertificateService {
     }
   }
 
-  static async generateCertificate(enrollmentId: string, templateId?: string): Promise<string> {
+  static async generateCertificate(enrollmentId: string, language?: string): Promise<string> {
     // Get enrollment with course and user data
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { id: enrollmentId },
@@ -260,14 +262,18 @@ export class CertificateService {
 
     let template;
 
-    if (templateId) {
-      // Use specified template
-      template = await prisma.certificateTemplate.findUnique({
-        where: { id: templateId }
+    if (language) {
+      // Find default template for the specified language
+      template = await prisma.certificateTemplate.findFirst({
+        where: {
+          language: language,
+          isDefault: true,
+          isActive: true
+        }
       });
 
-      if (!template || !template.isActive) {
-        throw new Error('Certificate template not found or inactive');
+      if (!template) {
+        throw new Error(`No default certificate template found for language: ${language}`);
       }
     } else {
       // Get appropriate template based on course language - prefer default templates
@@ -290,19 +296,30 @@ export class CertificateService {
     // Generate unique certificate ID
     const certificateId = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    // Prepare certificate data
-    const studentName = enrollment.course.language === 'ar' 
-      ? enrollment.user.fullNameArabic || enrollment.user.firstName || enrollment.user.email
-      : enrollment.user.fullNameEnglish || `${enrollment.user.firstName} ${enrollment.user.lastName}`.trim() || enrollment.user.email;
+    // Prepare certificate data with proper language support
+    const isArabic = template.language === 'ar';
+    
+    const studentName = isArabic 
+      ? enrollment.user.fullNameArabic || `${enrollment.user.firstName} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email
+      : enrollment.user.fullNameEnglish || `${enrollment.user.firstName} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email;
+
+    // Course title based on certificate language (not course language)
+    const courseTitle = isArabic 
+      ? enrollment.course.title // Arabic title
+      : enrollment.course.titleEnglish || enrollment.course.title; // English title or fallback
 
     const certificateData: CertificateData = {
       studentName,
-      courseTitle: enrollment.course.title,
-      completionDate: enrollment.completedAt?.toLocaleDateString('ar-SA') || new Date().toLocaleDateString('ar-SA'),
+      courseTitle,
+      completionDate: isArabic 
+        ? enrollment.completedAt?.toLocaleDateString('ar-SA') || new Date().toLocaleDateString('ar-SA')
+        : enrollment.completedAt?.toLocaleDateString('en-US') || new Date().toLocaleDateString('en-US'),
       duration: enrollment.course.duration || undefined,
-      instructor: enrollment.course.authorName || 'عمر الهادي',
+      instructor: isArabic 
+        ? enrollment.course.authorName || 'عمر الهادي'
+        : enrollment.course.authorNameEnglish || enrollment.course.authorName || 'Omar Elhadi',
       certificateId,
-      language: enrollment.course.language || 'ar'
+      language: template.language
     };
 
     // Create certificate record
