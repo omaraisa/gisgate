@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Article, ArticleStatus } from '@prisma/client'
+import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -20,12 +20,30 @@ interface LessonWithStats {
   authorName?: string
 }
 
-type ContentType = 'articles' | 'lessons'
+interface CourseWithStats {
+  id: string
+  title: string
+  slug: string
+  description?: string | null
+  status: ArticleStatus
+  publishedAt?: Date | null
+  updatedAt: Date
+  price?: number | null
+  currency?: string | null
+  isFree: boolean
+  level: CourseLevel
+  language?: string | null
+  lessonCount?: number
+  enrollmentCount?: number
+}
+
+type ContentType = 'articles' | 'lessons' | 'courses' | 'courses'
 
 export default function AdminPage() {
   const [contentType, setContentType] = useState<ContentType>('articles')
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
+  const [courses, setCourses] = useState<CourseWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,6 +53,7 @@ export default function AdminPage() {
   useEffect(() => {
     fetchArticles()
     fetchLessons()
+    fetchCourses()
   }, [])
 
   const fetchArticles = async () => {
@@ -56,6 +75,16 @@ export default function AdminPage() {
       console.error('Error fetching lessons:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/admin/courses')
+      const data = await response.json()
+      setCourses(data)
+    } catch (error) {
+      console.error('Error fetching courses:', error)
     }
   }
 
@@ -145,16 +174,59 @@ export default function AdminPage() {
     }
   }
 
+  const handleCourseStatusChange = async (id: string, status: ArticleStatus) => {
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+
+      if (response.ok) {
+        setCourses(prev => 
+          prev.map(course => 
+            course.id === id ? { ...course, status } : course
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Error updating course status:', error)
+    }
+  }
+
+  const handleCourseDelete = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
+
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+
+      if (response.ok) {
+        setCourses(prev => prev.filter(course => course.id !== id))
+        setSelectedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(id)
+          return newSet
+        })
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error)
+    }
+  }
+
   const handleBulkAction = async () => {
     if (!bulkAction || selectedItems.size === 0) return
 
     const itemIds = Array.from(selectedItems)
     
     try {
-      const apiEndpoint = contentType === 'articles' ? '/api/admin/articles/bulk' : '/api/admin/lessons/bulk'
+      const apiEndpoint = contentType === 'articles' ? '/api/admin/articles/bulk' : contentType === 'lessons' ? '/api/admin/lessons/bulk' : '/api/admin/courses/bulk'
       
       if (bulkAction === 'delete') {
-        const itemType = contentType === 'articles' ? 'مقال' : 'درس'
+        const itemType = contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'
         if (!confirm(`هل أنت متأكد من حذف ${itemIds.length} ${itemType}؟`)) return
         
         const response = await fetch(apiEndpoint, {
@@ -166,8 +238,10 @@ export default function AdminPage() {
         if (response.ok) {
           if (contentType === 'articles') {
             setArticles(prev => prev.filter(item => !selectedItems.has(item.id)))
-          } else {
+          } else if (contentType === 'lessons') {
             setLessons(prev => prev.filter(item => !selectedItems.has(item.id)))
+          } else {
+            setCourses(prev => prev.filter(item => !selectedItems.has(item.id)))
           }
           setSelectedItems(new Set())
         }
@@ -188,8 +262,16 @@ export default function AdminPage() {
                   : item
               )
             )
-          } else {
+          } else if (contentType === 'lessons') {
             setLessons(prev => 
+              prev.map(item => 
+                selectedItems.has(item.id) 
+                  ? { ...item, status: bulkAction as ArticleStatus }
+                  : item
+              )
+            )
+          } else {
+            setCourses(prev => 
               prev.map(item => 
                 selectedItems.has(item.id) 
                   ? { ...item, status: bulkAction as ArticleStatus }
@@ -208,7 +290,7 @@ export default function AdminPage() {
   }
 
   const toggleSelectAll = () => {
-    const currentItems = contentType === 'articles' ? filteredArticles : filteredLessons
+    const currentItems = contentType === 'articles' ? filteredArticles : contentType === 'lessons' ? filteredLessons : filteredCourses
     if (selectedItems.size === currentItems.length) {
       setSelectedItems(new Set())
     } else {
@@ -226,6 +308,13 @@ export default function AdminPage() {
   const filteredLessons = lessons.filter(lesson => {
     const matchesFilter = filter === 'all' || lesson.status === filter
     const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+
+  const filteredCourses = courses.filter(course => {
+    const matchesFilter = filter === 'all' || course.status === filter
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
     return matchesFilter && matchesSearch
   })
 
@@ -249,9 +338,9 @@ export default function AdminPage() {
             إدارة {contentType === 'articles' ? 'المقالات' : 'الدروس'}
           </h1>
           <p className="text-gray-600">
-            إجمالي {contentType === 'articles' ? 'المقالات' : 'الدروس'}: {contentType === 'articles' ? articles.length : lessons.length} | 
-            المنشور: {(contentType === 'articles' ? articles : lessons).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
-            المسودة: {(contentType === 'articles' ? articles : lessons).filter(item => item.status === ArticleStatus.DRAFT).length}
+            إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : courses.length} | 
+            المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
+            المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.DRAFT).length}
           </p>
         </div>
 
@@ -286,6 +375,20 @@ export default function AdminPage() {
             >
               إدارة الدروس ({lessons.length})
             </button>
+            <button
+              onClick={() => {
+                setContentType('courses')
+                setSelectedItems(new Set())
+                setBulkAction('')
+              }}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                contentType === 'courses'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              إدارة الكورسات ({courses.length})
+            </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -293,7 +396,7 @@ export default function AdminPage() {
             <div className="flex-1 max-w-md">
               <input
                 type="text"
-                placeholder={`البحث في ${contentType === 'articles' ? 'المقالات' : 'الدروس'}...`}
+                placeholder={`البحث في ${contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -319,10 +422,10 @@ export default function AdminPage() {
 
             {/* Add New */}
             <Link
-              href={contentType === 'articles' ? '/admin/articles/new' : '/admin/lessons/new'}
+              href={contentType === 'articles' ? '/admin/articles/new' : contentType === 'lessons' ? '/admin/lessons/new' : '/admin/courses/new'}
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              إضافة {contentType === 'articles' ? 'مقال' : 'درس'} جديد
+              إضافة {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'} جديد
             </Link>
           </div>
 
@@ -331,7 +434,7 @@ export default function AdminPage() {
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium text-blue-900">
-                  تم اختيار {selectedItems.size} {contentType === 'articles' ? 'مقال' : 'درس'}
+                  تم اختيار {selectedItems.size} {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'}
                 </span>
                 <select
                   value={bulkAction}
@@ -364,20 +467,32 @@ export default function AdminPage() {
                   <th className="p-4 text-right">
                     <input
                       type="checkbox"
-                      checked={selectedItems.size === (contentType === 'articles' ? filteredArticles.length : filteredLessons.length) && (contentType === 'articles' ? filteredArticles.length : filteredLessons.length) > 0}
+                      checked={selectedItems.size === (contentType === 'articles' ? filteredArticles.length : contentType === 'lessons' ? filteredLessons.length : filteredCourses.length) && (contentType === 'articles' ? filteredArticles.length : contentType === 'lessons' ? filteredLessons.length : filteredCourses.length) > 0}
                       onChange={toggleSelectAll}
                       className="rounded border-gray-300"
                     />
                   </th>
                   <th className="p-4 text-right font-medium text-gray-900">العنوان</th>
+                  {contentType === 'courses' && (
+                    <>
+                      <th className="p-4 text-right font-medium text-gray-900">المستوى</th>
+                      <th className="p-4 text-right font-medium text-gray-900">السعر</th>
+                    </>
+                  )}
                   <th className="p-4 text-right font-medium text-gray-900">تاريخ النشر</th>
                   <th className="p-4 text-right font-medium text-gray-900">الحالة</th>
-                  <th className="p-4 text-right font-medium text-gray-900">الصور</th>
+                  {contentType === 'articles' && <th className="p-4 text-right font-medium text-gray-900">الصور</th>}
+                  {contentType === 'courses' && (
+                    <>
+                      <th className="p-4 text-right font-medium text-gray-900">الدروس</th>
+                      <th className="p-4 text-right font-medium text-gray-900">المسجلين</th>
+                    </>
+                  )}
                   <th className="p-4 text-right font-medium text-gray-900">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {(contentType === 'articles' ? filteredArticles : filteredLessons).map((item, index) => (
+                {(contentType === 'articles' ? filteredArticles : contentType === 'lessons' ? filteredLessons : filteredCourses).map((item, index) => (
                   <motion.tr
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -415,11 +530,22 @@ export default function AdminPage() {
                             target="_blank"
                             className="hover:text-blue-600"
                           >
-                            عرض {contentType === 'articles' ? 'المقال' : 'الدرس'} ↗
+                            عرض {contentType === 'articles' ? 'المقال' : contentType === 'lessons' ? 'الدرس' : 'الكورس'} ↗
                           </Link>
                         </div>
                       </div>
                     </td>
+                    {contentType === 'courses' && (
+                      <>
+                        <td className="p-4 text-gray-600">
+                          {(item as CourseWithStats).level === 'BEGINNER' ? 'مبتدئ' :
+                           (item as CourseWithStats).level === 'INTERMEDIATE' ? 'متوسط' : 'متقدم'}
+                        </td>
+                        <td className="p-4 text-gray-600">
+                          {(item as CourseWithStats).isFree ? 'مجاني' : `${(item as CourseWithStats).price} ${(item as CourseWithStats).currency || 'USD'}`}
+                        </td>
+                      </>
+                    )}
                     <td className="p-4 text-gray-600">
                       {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('en-US') : 'غير منشور'}
                     </td>
@@ -430,8 +556,10 @@ export default function AdminPage() {
                           const newStatus = e.target.value as ArticleStatus
                           if (contentType === 'articles') {
                             handleStatusChange(item.id, newStatus)
-                          } else {
+                          } else if (contentType === 'lessons') {
                             handleLessonStatusChange(item.id, newStatus)
+                          } else {
+                            handleCourseStatusChange(item.id, newStatus)
                           }
                         }}
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -444,9 +572,21 @@ export default function AdminPage() {
                         <option value={ArticleStatus.DRAFT}>مسودة</option>
                       </select>
                     </td>
-                    <td className="p-4 text-gray-600 text-center">
-                      {item.imageCount || 0}
-                    </td>
+                    {contentType === 'articles' && (
+                      <td className="p-4 text-gray-600 text-center">
+                        {(item as ArticleWithStats).imageCount || 0}
+                      </td>
+                    )}
+                    {contentType === 'courses' && (
+                      <>
+                        <td className="p-4 text-gray-600 text-center">
+                          {(item as CourseWithStats).lessonCount || 0}
+                        </td>
+                        <td className="p-4 text-gray-600 text-center">
+                          {(item as CourseWithStats).enrollmentCount || 0}
+                        </td>
+                      </>
+                    )}
                     <td className="p-4">
                       <div className="flex gap-2">
                         <Link
@@ -459,8 +599,10 @@ export default function AdminPage() {
                           onClick={() => {
                             if (contentType === 'articles') {
                               handleDelete(item.id)
-                            } else {
+                            } else if (contentType === 'lessons') {
                               handleLessonDelete(item.id)
+                            } else {
+                              handleCourseDelete(item.id)
                             }
                           }}
                           className="text-red-600 hover:text-red-800 text-sm"

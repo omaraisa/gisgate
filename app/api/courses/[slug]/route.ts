@@ -11,13 +11,6 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { slug },
       include: {
-        author: {
-          select: {
-            fullNameArabic: true,
-            fullNameEnglish: true,
-            avatar: true
-          }
-        },
         lessons: {
           where: { status: 'PUBLISHED' },
           select: {
@@ -58,8 +51,6 @@ export async function GET(
       duration: course.duration,
       totalLessons: course.totalLessons,
       publishedAt: course.publishedAt?.toISOString(),
-      authorName: course.author?.fullNameArabic || course.author?.fullNameEnglish || 'مجهول',
-      authorAvatar: course.author?.avatar,
       enrollmentCount: course._count.enrollments,
       lessons: course.lessons
     };

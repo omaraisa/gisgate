@@ -34,13 +34,6 @@ export async function GET(request: NextRequest) {
     const courses = await prisma.course.findMany({
       where,
       include: {
-        author: {
-          select: {
-            fullNameArabic: true,
-            fullNameEnglish: true,
-            avatar: true
-          }
-        },
         lessons: {
           select: {
             id: true,
@@ -79,8 +72,6 @@ export async function GET(request: NextRequest) {
       duration: course.duration,
       totalLessons: course.totalLessons,
       publishedAt: course.publishedAt?.toISOString(),
-      authorName: course.author?.fullNameArabic || course.author?.fullNameEnglish || 'مجهول',
-      authorAvatar: course.author?.avatar,
       enrollmentCount: course._count.enrollments,
       lessons: course.lessons
     }));

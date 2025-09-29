@@ -270,7 +270,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                 )}
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
                 {course.title}
               </h1>
 
@@ -303,23 +303,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                   </div>
                 )}
               </div>
-
-              {/* Author */}
-              {course.authorName && (
-                <div className="flex items-center gap-3 mb-8">
-                  {course.authorAvatar && (
-                    <img
-                      src={course.authorAvatar}
-                      alt={course.authorName}
-                      className="w-12 h-12 rounded-full border-2 border-secondary-400"
-                    />
-                  )}
-                  <div>
-                    <p className="text-white font-semibold">{course.authorName}</p>
-                    <p className="text-white/70 text-sm">المدرب</p>
-                  </div>
-                </div>
-              )}
 
               {/* Enrollment Button */}
               <div className="flex flex-wrap gap-4">

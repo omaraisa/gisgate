@@ -283,20 +283,6 @@ export default function CoursesPage() {
                           </div>
                         </div>
 
-                        {/* Author */}
-                        {course.authorName && (
-                          <div className="flex items-center gap-2 mb-4">
-                            {course.authorAvatar && (
-                              <img
-                                src={course.authorAvatar}
-                                alt={course.authorName}
-                                className="w-6 h-6 rounded-full"
-                              />
-                            )}
-                            <span className="text-sm text-white/70">بواسطة {course.authorName}</span>
-                          </div>
-                        )}
-
                         <motion.div
                           initial={{ width: 0 }}
                           whileHover={{ width: "100%" }}
