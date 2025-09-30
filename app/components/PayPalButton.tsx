@@ -35,8 +35,9 @@ export default function PayPalButton({
   useEffect(() => {
     // Load PayPal SDK if not already loaded
     if (!window.paypal) {
-      const script = document.createElement('script');
-      script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=${currency}&components=buttons&locale=ar_SA`;
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+  const script = document.createElement('script');
+  script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}&components=buttons&locale=ar_SA`;
       script.async = true;
       script.onload = initializePayPalButton;
       document.body.appendChild(script);

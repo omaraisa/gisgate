@@ -14,9 +14,10 @@ export class PayPalService {
   private paymentsController: PaymentsController;
 
   constructor() {
-    const clientId = process.env.PAYPAL_CLIENT_ID;
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    const environment = process.env.PAYPAL_ENVIRONMENT === 'production'
+    // Server-side: use private env vars (not exposed to client)
+    const clientId = process.env.NEXT_PRIVATE_PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.NEXT_PRIVATE_PAYPAL_CLIENT_SECRET || process.env.PAYPAL_CLIENT_SECRET;
+    const environment = (process.env.NEXT_PRIVATE_PAYPAL_ENVIRONMENT || process.env.PAYPAL_ENVIRONMENT || 'sandbox') === 'production'
       ? Environment.Production
       : Environment.Sandbox;
 
@@ -49,8 +50,9 @@ export class PayPalService {
           description: `دورة: ${courseTitle}`,
         }],
         applicationContext: {
-          returnUrl: process.env.PAYMENT_SUCCESS_URL || 'http://localhost:3000/payment/success',
-          cancelUrl: process.env.PAYMENT_CANCEL_URL || 'http://localhost:3000/payment/cancel',
+          // Use server-side private env vars first, fallback to public if necessary
+          returnUrl: process.env.NEXT_PRIVATE_PAYMENT_SUCCESS_URL || process.env.PAYMENT_SUCCESS_URL || process.env.NEXT_PUBLIC_PAYMENT_SUCCESS_URL || 'http://localhost:3000/payment/success',
+          cancelUrl: process.env.NEXT_PRIVATE_PAYMENT_CANCEL_URL || process.env.PAYMENT_CANCEL_URL || process.env.NEXT_PUBLIC_PAYMENT_CANCEL_URL || 'http://localhost:3000/payment/cancel',
           userAction: OrderApplicationContextUserAction.PayNow,
           brandName: 'GIS Gate',
           locale: 'ar-SA',
@@ -58,7 +60,7 @@ export class PayPalService {
       };
 
       const response = await this.ordersController.createOrder({ body });
-      return response.result;
+  return response.result;
     } catch (error) {
       console.error('PayPal create order error:', error);
       throw new Error('Failed to create PayPal order');
