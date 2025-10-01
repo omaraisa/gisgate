@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -37,53 +38,31 @@ export default function AuthPage() {
   const passwordsMatch = formData.password === formData.confirmPassword;
 
   const router = useRouter();
+  const { login, isAuthenticated, user, checkAuth } = useAuthStore();
 
   // Check if user is already authenticated
   useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const sessionToken = localStorage.getItem('sessionToken');
-        const user = localStorage.getItem('user');
-        
-        if (sessionToken && user) {
-          // Verify the session is still valid
-          const response = await fetch('/api/user/profile', {
-            headers: {
-              'Authorization': `Bearer ${sessionToken}`,
-            },
-          });
-
-          if (response.ok) {
-            const userData = JSON.parse(user);
-            // Redirect based on user role
-            if (userData.role === 'ADMIN') {
-              router.push('/admin');
-            } else {
-              router.push('/');
-            }
-            return;
-          } else {
-            // Invalid session, clear storage
-            localStorage.removeItem('sessionToken');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            window.dispatchEvent(new Event('auth-change'));
-          }
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        // Clear potentially corrupted storage
-        localStorage.removeItem('sessionToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        window.dispatchEvent(new Event('auth-change'));
-      } finally {
+    const verifyAuth = async () => {
+      if (isAuthenticated && user) {
+        // Already authenticated, redirect immediately
+        const redirectUrl = user.role === 'ADMIN' ? '/admin' : '/';
+        window.location.href = redirectUrl;
+        return;
+      }
+      
+      // Check if there's a token without user data
+      const hasAuth = await checkAuth();
+      if (hasAuth) {
+        const currentUser = useAuthStore.getState().user;
+        const redirectUrl = currentUser?.role === 'ADMIN' ? '/admin' : '/';
+        window.location.href = redirectUrl;
+      } else {
         setIsCheckingAuth(false);
       }
     };
 
-    checkAuthentication();
-  }, [router]);
+    verifyAuth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,21 +110,15 @@ export default function AuthPage() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      // Store tokens
-      if (data.tokens) {
-        localStorage.setItem('accessToken', data.tokens.accessToken);
-        localStorage.setItem('sessionToken', data.tokens.sessionToken);
-        localStorage.setItem('user', JSON.stringify(data.user));
+      // Store tokens using auth store
+      if (data.tokens && data.user) {
+        login(data.tokens.accessToken, data.user);
         
-        // Trigger a custom event to notify Header component
-        window.dispatchEvent(new Event('auth-change'));
-      }
-
-      // Redirect based on user role
-      if (data.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
+        // Force immediate redirect using window.location for hard navigation
+        // This ensures middleware runs and processes the new cookie
+        const redirectPath = data.user.role === 'ADMIN' ? '/admin' : '/';
+        window.location.href = redirectPath;
+        return;
       }
 
     } catch (err) {

@@ -3,6 +3,10 @@ import localFont from "next/font/local";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./components/Header";
+import { StoreProvider } from "@/lib/stores/store-provider";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ScrollToTop from "./components/ScrollToTop";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 
 const kufi = localFont({
   src: "../fonts/kufi.ttf",
@@ -24,8 +28,14 @@ export default function RootLayout({
       <body
         className={`${kufi.variable} font-sans antialiased`}
       >
-        <Header />
-        {children}
+        <ErrorBoundary>
+          <StoreProvider>
+            <Header />
+            <ScrollToTop />
+            {children}
+            <ScrollToTopButton />
+          </StoreProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

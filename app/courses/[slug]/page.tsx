@@ -8,6 +8,8 @@ import { format } from 'date-fns';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
 import PayPalButton from '../../components/PayPalButton';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useCourseStore } from '@/lib/stores/course-store';
 
 interface Course {
   id: string;
@@ -50,14 +52,17 @@ interface Enrollment {
 
 export default function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const [course, setCourse] = useState<Course | null>(null);
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string>('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+
+  // Use auth store
+  const { isAuthenticated, user } = useAuthStore();
+  const { enrollInCourse, fetchEnrollments, enrollments } = useCourseStore();
+
+  // Get enrollment for this course
+  const enrollment = enrollments.find(e => e.courseId === course?.id) || null;
 
   useEffect(() => {
     async function initializeParams() {
@@ -66,48 +71,6 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
     initializeParams();
   }, [params]);
-
-  useEffect(() => {
-    // Check authentication status using API
-    async function checkAuth() {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
-        setAuthChecked(true);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/auth/check', {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated) {
-            setUser(data.user);
-            setIsAuthenticated(true);
-          } else {
-            // Token is invalid, clear localStorage
-            localStorage.removeItem('sessionToken');
-            localStorage.removeItem('user');
-          }
-        } else {
-          // Token is invalid, clear localStorage
-          localStorage.removeItem('sessionToken');
-          localStorage.removeItem('user');
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        // Clear potentially invalid tokens
-        localStorage.removeItem('sessionToken');
-        localStorage.removeItem('user');
-      } finally {
-        setAuthChecked(true);
-      }
-    }
-
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -128,32 +91,22 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
 
     async function fetchEnrollment() {
-      if (!authChecked || !isAuthenticated) return;
+      if (!isAuthenticated) return;
 
       try {
-        const sessionToken = localStorage.getItem('sessionToken');
-        if (!sessionToken) return;
-
-        const response = await fetch('/api/courses/enroll', {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
-
-        if (response.ok) {
-          const enrollmentData = await response.json();
-          // Check if user is enrolled in this course
-          const userEnrollment = enrollmentData.enrollments?.find((e: any) => e.course.id === course?.id) || null;
-          setEnrollment(userEnrollment);
-        }
+        await fetchEnrollments();
+        // The enrollment will be updated in the course store
+        // We can get it from the store or refetch if needed
       } catch (err) {
         console.error('Failed to fetch enrollment:', err);
       }
     }
 
     fetchCourse();
-    if (authChecked && isAuthenticated) {
+    if (isAuthenticated) {
       fetchEnrollment();
     }
-  }, [slug, authChecked, isAuthenticated, course?.id]);
+  }, [slug, isAuthenticated, fetchEnrollments]);
 
   const handleEnroll = async () => {
     if (!course) return;
@@ -167,32 +120,13 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
 
     setEnrolling(true);
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
-        alert('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى');
-        window.location.href = '/auth';
-        return;
-      }
-
-      const response = await fetch('/api/courses/enroll', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
-        },
-        body: JSON.stringify({ courseId: course.id })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setEnrollment(data.enrollment);
+      const success = await enrollInCourse(course.id);
+      if (success) {
         alert('تم التسجيل في الدورة بنجاح!');
-      } else if (response.status === 402) {
-        // Payment required
-        alert('هذه الدورة مدفوعة وتتطلب الدفع');
+        // Refresh enrollments
+        await fetchEnrollments();
       } else {
-        setError(data.error || 'Failed to enroll in course');
+        alert('فشل في التسجيل في الدورة');
       }
     } catch (err) {
       setError('Failed to enroll in course');
@@ -205,7 +139,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     if (!enrollment) return;
 
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
+      const { sessionToken } = useAuthStore.getState();
       const response = await fetch('/api/certificates/generate', {
         method: 'POST',
         headers: {
@@ -387,7 +321,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                       </div>
                     </div>
 
-                    {authChecked && !isAuthenticated ? (
+                    {!isAuthenticated ? (
                       <div className="text-center space-y-3">
                         <div className="text-white/80 mb-4">
                           يجب تسجيل الدخول أولاً لشراء الدورة
@@ -399,14 +333,14 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                           تسجيل الدخول / إنشاء حساب
                         </Link>
                       </div>
-                    ) : authChecked && isAuthenticated ? (
+                    ) : (
                       <Link
                         href={`/courses/${course.slug}/checkout`}
                         className="inline-block bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300 text-center"
                       >
                         شراء الدورة
                       </Link>
-                    ) : null}
+                    )}
                   </div>
                 )}
               </div>

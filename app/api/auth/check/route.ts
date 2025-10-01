@@ -12,19 +12,51 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const user = await AuthService.validateSession(token);
-
-    if (!user) {
+    
+    // Try to verify as JWT token (server-side only)
+    let payload;
+    try {
+      payload = await AuthService.verifyToken(token);
+    } catch {
+      // If JWT verification fails, token is invalid
       return NextResponse.json(
         { authenticated: false, message: 'Invalid or expired token' },
         { status: 401 }
       );
     }
+    
+    if (!payload) {
+      return NextResponse.json(
+        { authenticated: false, message: 'Invalid token payload' },
+        { status: 401 }
+      );
+    }
 
-    // Return user info (AuthUser is already safe)
+    // Get user from database using the userId from JWT
+    const user = await AuthService.getUserById(payload.userId);
+    
+    if (!user || !user.isActive) {
+      return NextResponse.json(
+        { authenticated: false, message: 'User not found or inactive' },
+        { status: 401 }
+      );
+    }
+
+    // Return user info
     return NextResponse.json({
       authenticated: true,
-      user: user,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username || undefined,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        fullNameArabic: user.fullNameArabic || undefined,
+        fullNameEnglish: user.fullNameEnglish || undefined,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        isActive: user.isActive,
+      },
     });
 
   } catch (error) {

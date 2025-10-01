@@ -57,8 +57,7 @@ export async function POST(request: NextRequest) {
       emailVerified: user.emailVerified,
       isActive: user.isActive,
     };
-
-    const token = AuthService.generateToken(authUser);
+    const token = await AuthService.generateToken(authUser);
 
     // Create session
     const sessionToken = await AuthService.createSession(

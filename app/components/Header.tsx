@@ -3,22 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-
-interface User {
-  id: string;
-  email: string;
-  fullNameArabic?: string;
-  fullNameEnglish?: string;
-  role: string;
-}
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Use auth store
+  const { user, logout, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,72 +25,10 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check user authentication status
-  useEffect(() => {
-    const checkAuth = () => {
-      const sessionToken = localStorage.getItem('sessionToken');
-      const userData = localStorage.getItem('user');
-      
-      if (sessionToken && userData) {
-        try {
-          setUser(JSON.parse(userData));
-        } catch (error) {
-          console.error('Failed to parse user data:', error);
-          localStorage.removeItem('sessionToken');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-        }
-      }
-    };
-
-    checkAuth();
-
-    // Listen for storage changes (when user logs in/out in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'user' || e.key === 'sessionToken') {
-        checkAuth();
-      }
-    };
-
-    // Listen for custom auth change events (when user logs in/out in same tab)
-    const handleAuthChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('auth-change', handleAuthChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('auth-change', handleAuthChange);
-    };
-  }, []);
-
   const handleLogout = async () => {
-    try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (sessionToken) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${sessionToken}`,
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Clear local storage regardless of API call success
-      localStorage.removeItem('sessionToken');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      setUser(null);
-      setIsUserMenuOpen(false);
-      
-      // Trigger auth change event
-      window.dispatchEvent(new Event('auth-change'));
-      
-      router.push('/');
-    }
+    await logout();
+    setIsUserMenuOpen(false);
+    router.push('/');
   };
 
   // Close mobile menu when clicking outside
@@ -155,19 +89,26 @@ export default function Header() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6 lg:gap-8">
               <nav className="flex gap-6 lg:gap-8">
-                {navigationItems.map((item, index) => (
-                  <Link
-                    key={index}
-                    href={item.href}
-                    className="relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 text-white hover:text-lime-300"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {navigationItems.map((item, index) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                        isActive
+                          ? 'text-lime-300 bg-lime-500/20'
+                          : 'text-white hover:text-lime-300'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </nav>
 
               {/* User Authentication Section */}
-              {user ? (
+              {isAuthenticated && user ? (
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -292,7 +233,7 @@ export default function Header() {
           </div>
 
           {/* User Info Section in Mobile */}
-          {user && (
+          {isAuthenticated && user && (
             <div className="px-6 py-4 border-b border-green-700">
               <div className="flex items-center space-x-3 space-x-reverse">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white font-bold">
@@ -320,25 +261,30 @@ export default function Header() {
             <div className="px-6 mb-4">
               <p className="text-green-200 text-sm font-medium">التنقل الرئيسي</p>
             </div>
-            {navigationItems.map((item, index) => (
-              <Link
-                key={index}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 text-white"
-              >
-                <span className="text-2xl ml-4">{item.icon}</span>
-                <div className="flex-1">
-                  <span className="block text-lg font-medium">{item.label}</span>
-                </div>
-                <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-            ))}
+            {navigationItems.map((item, index) => {
+              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={index}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center px-6 py-4 text-right transition-all duration-200 hover:bg-green-700 hover:border-r-4 hover:border-lime-400 ${
+                    isActive ? 'bg-green-700 border-r-4 border-lime-400' : 'text-white'
+                  }`}
+                >
+                  <span className="text-2xl ml-4">{item.icon}</span>
+                  <div className="flex-1">
+                    <span className="block text-lg font-medium">{item.label}</span>
+                  </div>
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
+              );
+            })}
 
             {/* User Options in Mobile Menu */}
-            {user && (
+            {isAuthenticated && user && (
               <>
                 <div className="px-6 mb-4 mt-8">
                   <p className="text-green-200 text-sm font-medium">حسابي</p>
@@ -376,7 +322,7 @@ export default function Header() {
             )}
 
             {/* Auth Links for Non-Logged Users */}
-            {!user && (
+            {!isAuthenticated && (
               <>
                 <div className="px-6 mb-4 mt-8">
                   <p className="text-green-200 text-sm font-medium">الحساب</p>

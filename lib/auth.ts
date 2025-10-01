@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User, UserRole, PrismaClient } from '@prisma/client';
+import { JWTUtils, JWTPayload } from './jwt-utils';
 
 const prisma = new PrismaClient();
 
@@ -18,17 +18,7 @@ export interface AuthUser {
   isActive: boolean;
 }
 
-export interface JWTPayload {
-  userId: string;
-  email: string;
-  role: UserRole;
-  iat?: number;
-  exp?: number;
-}
-
 export class AuthService {
-  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-  private static readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
   private static readonly BCRYPT_ROUNDS = 12;
 
   // Password hashing
@@ -41,29 +31,18 @@ export class AuthService {
   }
 
   // JWT token management
-  static generateToken(user: AuthUser): string {
+  static async generateToken(user: AuthUser): Promise<string> {
     const payload: JWTPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
     };
 
-    const secret = this.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not configured');
-    }
-
-    return jwt.sign(payload, secret as jwt.Secret, {
-      expiresIn: '7d',
-    });
+    return JWTUtils.generateToken(payload);
   }
 
-  static verifyToken(token: string): JWTPayload | null {
-    try {
-      return jwt.verify(token, this.JWT_SECRET) as JWTPayload;
-    } catch {
-      return null;
-    }
+  static verifyToken(token: string): Promise<JWTPayload | null> {
+    return JWTUtils.verifyToken(token);
   }
 
   // Token generation for email verification and password reset

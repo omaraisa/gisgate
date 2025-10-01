@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
-    const token = AuthService.generateToken(user);
+    const token = await AuthService.generateToken(user);
 
     // Create session
     const sessionToken = await AuthService.createSession(
@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
       request.headers.get('user-agent') || undefined
     );
 
-    // Return success response
-    return NextResponse.json({
+    // Create response with cookie
+    const response = NextResponse.json({
       message: 'Login successful',
       user: {
         id: user.id,
@@ -53,6 +53,26 @@ export async function POST(request: NextRequest) {
         sessionToken,
       },
     });
+
+    // Set HTTP-only cookie for middleware (server-side auth)
+    response.cookies.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+
+    // Set readable cookie for client-side JavaScript
+    response.cookies.set('auth-token-client', token, {
+      httpOnly: false, // Allow client-side access
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Login error:', error);
