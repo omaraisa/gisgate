@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { PayPalService } from '@/lib/paypal';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -19,39 +19,6 @@ const createOrderSchema = z.union([
     totalAmount: z.number().min(0, 'Total amount must be non-negative'),
   }),
 ]);
-
-async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const payload = await AuthService.verifyToken(token);
-
-  if (!payload) {
-    throw new Error('Invalid or expired token');
-  }
-
-  // Get the full user data
-  const user = await AuthService.getUserById(payload.userId);
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  return {
-    id: user.id,
-    email: user.email,
-    username: user.username || undefined,
-    firstName: user.firstName || undefined,
-    lastName: user.lastName || undefined,
-    fullNameArabic: user.fullNameArabic || undefined,
-    fullNameEnglish: user.fullNameEnglish || undefined,
-    role: user.role,
-    emailVerified: user.emailVerified,
-    isActive: user.isActive,
-  };
-}
 
 // POST /api/payments/create-order - Create PayPal order for course purchase
 export async function POST(request: NextRequest) {

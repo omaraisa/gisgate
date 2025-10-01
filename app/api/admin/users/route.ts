@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAdmin } from '@/lib/api-auth';
 import { UserRole, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
-// Middleware to check admin access
-async function requireAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user || user.role !== UserRole.ADMIN) {
-    throw new Error('Admin access required');
-  }
-
-  return user;
-}
 
 // GET /api/admin/users - List all users
 export async function GET(request: NextRequest) {

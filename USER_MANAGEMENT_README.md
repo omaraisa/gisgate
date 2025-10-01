@@ -139,9 +139,8 @@ const response = await fetch('/api/auth/login', {
 });
 
 const data = await response.json();
-// Store tokens
-localStorage.setItem('accessToken', data.tokens.accessToken);
-localStorage.setItem('sessionToken', data.tokens.sessionToken);
+// Store JWT token
+localStorage.setItem('token', data.token);
 ```
 
 ### Admin User Management

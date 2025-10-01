@@ -204,11 +204,11 @@ export const useCourseStore = create<CourseState>((set, get) => ({
     try {
       set({ loadingEnrollments: true, error: null });
 
-      const { sessionToken } = useAuthStore.getState();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const { token } = useAuthStore.getState();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/user/profile', {
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!response.ok) throw new Error('Failed to fetch enrollments');
@@ -230,14 +230,14 @@ export const useCourseStore = create<CourseState>((set, get) => ({
     try {
       set({ enrolling: true, error: null });
 
-      const { sessionToken } = useAuthStore.getState();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const { token } = useAuthStore.getState();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/courses/enroll', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ courseId }),
       });
@@ -269,14 +269,14 @@ export const useCourseStore = create<CourseState>((set, get) => ({
   // Progress actions
   updateLessonProgress: async (courseId: string, lessonId: string, watchedTime: number, isCompleted = false) => {
     try {
-      const { sessionToken } = useAuthStore.getState();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const { token } = useAuthStore.getState();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/courses/progress', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           courseId,

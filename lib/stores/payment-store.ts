@@ -5,11 +5,11 @@ import { CartItem } from './cart-store';
 // Helper function to get auth token from multiple sources
 const getAuthToken = (): string | null => {
   // Try Zustand store first
-  let token = useAuthStore.getState().sessionToken;
+  let token = useAuthStore.getState().token;
   
   // Fallback to localStorage if store hasn't hydrated yet
   if (!token && typeof window !== 'undefined') {
-    token = localStorage.getItem('sessionToken');
+    token = localStorage.getItem('token');
   }
   
   // Fallback to cookies as last resort
@@ -127,10 +127,22 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ creatingOrder: true, error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) {
-        throw new Error('Not authenticated - please log in again');
+      // Get auth token with multiple fallbacks
+      let token = getAuthToken();
+      
+      // If still no token, try to get it directly from the auth store
+      if (!token) {
+        token = useAuthStore.getState().token;
       }
+      
+      // Final check for authentication
+      if (!token) {
+        console.error('Authentication token not found in any storage location');
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      // Log token status for debugging (first 10 chars only)
+      console.log('Creating order with token:', token.substring(0, 10) + '...');
 
       // Calculate total amount from cart items
       const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -139,7 +151,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ 
           cartItems: cartItems.map(item => ({
@@ -153,6 +165,11 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('Payment order creation failed:', {
+          status: response.status,
+          error: error,
+          hasToken: !!token
+        });
         throw new Error(error.error || 'Failed to create payment order');
       }
 
@@ -160,7 +177,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 
       // Fetch the created order details
       const orderResponse = await fetch(`/api/payments/order/${data.paypalOrderId}`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (orderResponse.ok) {
@@ -186,11 +203,11 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ loadingOrders: true, error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/user/profile', {
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!response.ok) throw new Error('Failed to fetch payment orders');
@@ -212,11 +229,11 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`/api/payments/order/${orderId}`, {
-        headers: { Authorization: `Bearer ${sessionToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to fetch order');
@@ -239,8 +256,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ processingPayment: true, error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) {
+      const token = getAuthToken();
+      if (!token) {
         throw new Error('Not authenticated - please log in again');
       }
 
@@ -248,7 +265,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ orderId: paypalOrderId }),
       });
@@ -276,13 +293,13 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
 
       // Note: This would need a cancel endpoint
       const response = await fetch(`/api/payments/cancel/${orderId}`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${sessionToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to cancel payment');
@@ -302,14 +319,14 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/payments/refund', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ orderId, amount, reason }),
       });
@@ -334,11 +351,11 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const sessionToken = getAuthToken();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
 
       const response = await fetch('/api/user/profile', {
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!response.ok) throw new Error('Failed to fetch payment history');

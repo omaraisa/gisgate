@@ -1,26 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
-
-async function requireAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user) {
-    throw new Error('Invalid or expired token');
-  }
-
-  if (user.role !== 'ADMIN') {
-    throw new Error('Admin access required');
-  }
-
-  return user;
-}
 
 // GET /api/admin/payments - Get all payments (admin only)
 export async function GET(request: NextRequest) {

@@ -17,7 +17,7 @@ Allows access to /auth page
 /auth page.tsx loads (Client-side)
     ↓
 useAuthStore initializes:
-    - sessionToken: null
+    - token: null
     - isAuthenticated: false
     - user: null
     ↓
@@ -39,8 +39,7 @@ POST /api/auth/login
 Server validates credentials
     ↓
 Server generates:
-    - JWT accessToken
-    - sessionToken (for database)
+    - JWT token
     ↓
 Server sets HTTP-only cookie:
     - name: auth-token
@@ -50,21 +49,18 @@ Server sets HTTP-only cookie:
 Server returns JSON:
     {
       user: {...},
-      tokens: {
-        accessToken: "...",
-        sessionToken: "..."
-      }
+      token: "..."
     }
     ↓
 Client receives response
     ↓
 auth-store.login() called with:
-    - token: accessToken
+    - token: token
     - user: userData
     ↓
 Store updates:
     - Sets user data
-    - Sets sessionToken (accessToken)
+    - Sets token
     - Sets isAuthenticated: true
     - Stores in localStorage
     - Stores in cookie (client-side cookie)
@@ -147,7 +143,7 @@ Header displays correctly
 ### 1. Auth Store (`lib/stores/auth-store.ts`)
 - **Purpose:** Client-side state management
 - **Storage:** localStorage + cookies
-- **State:** user, sessionToken, isAuthenticated
+- **State:** user, token, isAuthenticated
 - **Actions:** login, logout, checkAuth, refreshUser
 
 ### 2. Middleware (`middleware.ts`)
@@ -179,11 +175,11 @@ Login API
 Generates JWT: eyJhbGc...
     ↓
     ├── Sets HTTP-only cookie: auth-token=JWT (for middleware)
-    └── Returns in JSON: accessToken=JWT (for client store)
+    └── Returns in JSON: token=JWT (for client store)
     ↓
 Client Store
     ↓
-    ├── localStorage: sessionToken=JWT (persistence)
+    ├── localStorage: token=JWT (persistence)
     └── document.cookie: auth-token=JWT (backup)
     ↓
 Middleware

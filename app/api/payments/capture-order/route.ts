@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { PayPalService } from '@/lib/paypal';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -7,22 +7,6 @@ import { z } from 'zod';
 const captureOrderSchema = z.object({
   orderId: z.string().min(1, 'Order ID is required'),
 });
-
-async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user) {
-    throw new Error('Invalid or expired token');
-  }
-
-  return user;
-}
 
 // POST /api/payments/capture-order - Capture PayPal order and complete payment
 export async function POST(request: NextRequest) {
@@ -82,7 +66,7 @@ export async function POST(request: NextRequest) {
       await prisma.paymentTransaction.create({
         data: {
           orderId: paymentOrder.id,
-          paypalTransactionId: captureResult.id,
+          paypalTransactionId: captureResult.id || orderId,
           amount: paymentOrder.amount,
           currency: paymentOrder.currency,
           status: 'COMPLETED' as any,

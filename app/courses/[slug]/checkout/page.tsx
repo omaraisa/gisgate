@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PayPalButton from '@/app/components/PayPalButton';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface Course {
   id: string;
@@ -28,44 +29,15 @@ export default function CheckoutPage() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Check authentication status using API
-    async function checkAuth() {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
-        setAuthChecked(true);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/auth/check', {
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated) {
-            setUser(data.user);
-            setIsAuthenticated(true);
-          } else {
-            // Token is invalid, redirect to auth
-            router.push('/auth');
-            return;
-          }
-        } else {
-          // Token is invalid, redirect to auth
-          router.push('/auth');
-          return;
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        router.push('/auth');
-        return;
-      } finally {
-        setAuthChecked(true);
-      }
+    // Check authentication status using auth store
+    const { token, user: authUser, isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
+    if (!authIsAuthenticated) {
+      router.push('/auth');
+      return;
     }
-
-    checkAuth();
+    setUser(authUser);
+    setIsAuthenticated(authIsAuthenticated);
+    setAuthChecked(true);
   }, [router]);
 
   useEffect(() => {

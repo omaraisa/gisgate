@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { CertificateService } from '@/lib/certificate-service';
 
 // GET /api/courses/progress/[lessonId] - Get lesson progress
 export async function GET(request: NextRequest, context: { params: Promise<{ lessonId: string }> }) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const user = await AuthService.validateSession(token);
-
-    if (!user?.id) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const params = await context.params;
     const lessonId = params.lessonId;
@@ -44,17 +34,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ les
 // POST /api/courses/progress/[lessonId] - Update lesson progress
 export async function POST(request: NextRequest, context: { params: Promise<{ lessonId: string }> }) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    const user = await AuthService.validateSession(token);
-
-    if (!user?.id) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
-    }
+    const user = await requireAuth(request);
 
     const params = await context.params;
     const lessonId = params.lessonId;

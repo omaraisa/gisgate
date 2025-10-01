@@ -28,12 +28,27 @@ export function withAuth(
       }
 
       const token = authHeader.substring(7);
-      const user = await AuthService.validateSession(token);
-
-      if (!user) {
+      
+      // Verify JWT token (not session token)
+      const payload = await AuthService.verifyToken(token);
+      
+      if (!payload) {
         if (options.requireAuth) {
           return NextResponse.json(
             { error: 'Invalid or expired token' },
+            { status: 401 }
+          );
+        }
+        return handler(request as AuthenticatedRequest, context);
+      }
+
+      // Get user from database using the userId from JWT
+      const user = await AuthService.getUserById(payload.userId);
+      
+      if (!user || !user.isActive) {
+        if (options.requireAuth) {
+          return NextResponse.json(
+            { error: 'User not found or inactive' },
             { status: 401 }
           );
         }
@@ -47,7 +62,18 @@ export function withAuth(
         );
       }
 
-      (request as AuthenticatedRequest).user = user;
+      (request as AuthenticatedRequest).user = {
+        id: user.id,
+        email: user.email,
+        username: user.username || undefined,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        fullNameArabic: user.fullNameArabic || undefined,
+        fullNameEnglish: user.fullNameEnglish || undefined,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        isActive: user.isActive,
+      };
       return handler(request as AuthenticatedRequest, context);
 
     } catch (error) {

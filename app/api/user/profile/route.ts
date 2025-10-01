@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 
@@ -17,22 +18,6 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
-
-async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user) {
-    throw new Error('Invalid or expired token');
-  }
-
-  return user;
-}
 
 // GET /api/user/profile - Get current user profile
 export async function GET(request: NextRequest) {

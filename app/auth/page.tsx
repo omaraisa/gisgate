@@ -111,8 +111,8 @@ export default function AuthPage() {
       }
 
       // Store tokens using auth store
-      if (data.tokens && data.user) {
-        login(data.tokens.accessToken, data.user);
+      if (data.token && data.user) {
+        login(data.token, data.user);
         
         // Force immediate redirect using window.location for hard navigation
         // This ensures middleware runs and processes the new cookie

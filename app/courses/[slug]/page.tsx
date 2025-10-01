@@ -139,12 +139,12 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     if (!enrollment) return;
 
     try {
-      const { sessionToken } = useAuthStore.getState();
+      const { token } = useAuthStore.getState();
       const response = await fetch('/api/certificates/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ 
           enrollmentId: enrollment.id,

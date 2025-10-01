@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Plus, Edit, Trash2, Eye, Star } from 'lucide-react';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface CertificateTemplate {
   id: string;
@@ -30,14 +31,14 @@ export default function CertificateTemplatesPage() {
 
   const fetchTemplates = async () => {
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
+      const token = useAuthStore.getState().token;
+      if (!token) {
         window.location.href = '/auth';
         return;
       }
 
       const response = await fetch('/api/admin/certificates/templates', {
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -57,10 +58,10 @@ export default function CertificateTemplatesPage() {
     if (!confirm('هل أنت متأكد من حذف هذا القالب؟')) return;
 
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/certificates/templates/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -75,12 +76,12 @@ export default function CertificateTemplatesPage() {
 
   const toggleDefault = async (id: string, currentIsDefault: boolean) => {
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/certificates/templates/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ isDefault: !currentIsDefault })
       });

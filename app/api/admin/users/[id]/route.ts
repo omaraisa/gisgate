@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-auth';
 import { AuthService } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
@@ -14,23 +15,6 @@ const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
   emailVerified: z.boolean().optional(),
 });
-
-// Middleware to check admin access
-async function requireAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user || user.role !== UserRole.ADMIN) {
-    throw new Error('Admin access required');
-  }
-
-  return user;
-}
 
 // GET /api/admin/users/[id] - Get user details
 export async function GET(

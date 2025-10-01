@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Save, Eye, Upload, Plus, Trash2, Move, Type, Image, QrCode } from 'lucide-react';
 import Footer from '../../../components/Footer';
 import AnimatedBackground from '../../../components/AnimatedBackground';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface CertificateField {
   id: string;
@@ -69,9 +70,9 @@ export default function CertificateBuilderPage() {
   const loadTemplate = async (templateId: string) => {
     try {
       setLoading(true);
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/certificates/templates/${templateId}`, {
-        headers: { Authorization: `Bearer ${sessionToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.ok) {
@@ -175,7 +176,7 @@ export default function CertificateBuilderPage() {
 
     try {
       setSaving(true);
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = useAuthStore.getState().token;
       
       const url = editingTemplate 
         ? `/api/admin/certificates/templates/${editingTemplate}`
@@ -187,7 +188,7 @@ export default function CertificateBuilderPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           name: template.name,

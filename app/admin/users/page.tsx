@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { UserRole } from '@prisma/client';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface User {
   id: string;
@@ -41,9 +42,10 @@ export default function AdminUsersPage() {
       if (roleFilter) params.append('role', roleFilter);
       if (statusFilter) params.append('status', statusFilter);
 
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/users?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -67,11 +69,12 @@ export default function AdminUsersPage() {
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ role: newRole }),
       });
@@ -93,11 +96,12 @@ export default function AdminUsersPage() {
 
   const handleStatusChange = async (userId: string, isActive: boolean) => {
     try {
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ isActive }),
       });
@@ -123,10 +127,11 @@ export default function AdminUsersPage() {
     }
 
     try {
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 

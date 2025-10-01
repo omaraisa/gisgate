@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
-
-async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user) {
-    throw new Error('Invalid or expired token');
-  }
-
-  return user;
-}
 
 // GET /api/payments/[id] - Get specific payment details
 export async function GET(

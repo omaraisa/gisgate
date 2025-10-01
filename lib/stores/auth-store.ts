@@ -21,7 +21,7 @@ export interface User {
 interface AuthState {
   // State
   user: User | null;
-  sessionToken: string | null;
+  token: string | null; // Renamed from sessionToken
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -68,12 +68,12 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => {
       // Get initial token from storage
-      const initialToken = typeof window !== 'undefined' ? (getTokenFromCookies() || localStorage.getItem('sessionToken')) : null;
+      const initialToken = typeof window !== 'undefined' ? (getTokenFromCookies() || localStorage.getItem('token')) : null;
 
       return {
         // Initial state - will be validated by checkAuth API call
         user: null,
-        sessionToken: initialToken,
+        token: initialToken,
         isAuthenticated: false,
         isLoading: false,
         error: null,
@@ -82,18 +82,18 @@ export const useAuthStore = create<AuthState>()(
         login: (token: string, user: User) => {
           set({
             user,
-            sessionToken: token,
+            token: token,
             isAuthenticated: true,
             error: null,
           });
           // Set in both cookies and localStorage for compatibility
           setTokenInCookies(token);
-          localStorage.setItem('sessionToken', token);
+          localStorage.setItem('token', token);
         },
 
         logout: async () => {
           try {
-            const token = get().sessionToken;
+            const token = get().token;
             if (token) {
               // Call server-side logout to clear HTTP-only cookies
               await fetch('/api/auth/logout', {
@@ -111,7 +111,7 @@ export const useAuthStore = create<AuthState>()(
           // Clear client-side state
           set({
             user: null,
-            sessionToken: null,
+            token: null,
             isAuthenticated: false,
             error: null,
           });
@@ -120,7 +120,7 @@ export const useAuthStore = create<AuthState>()(
           removeTokenFromCookies();
 
           // Clear all authentication-related localStorage items
-          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('token');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('user');
           localStorage.removeItem('auth-storage');
@@ -144,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
         },
 
         checkAuth: async () => {
-          const token = get().sessionToken;
+          const token = get().token;
           if (!token) {
             set({ isAuthenticated: false, user: null });
             return false;
@@ -172,7 +172,7 @@ export const useAuthStore = create<AuthState>()(
             // Auth failed - clear everything
             set({
               user: null,
-              sessionToken: null,
+              token: null,
               isAuthenticated: false,
               error: 'Session expired',
             });
@@ -193,7 +193,7 @@ export const useAuthStore = create<AuthState>()(
             
             removeTokenFromCookies();
             // Clear all authentication-related localStorage items
-            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('token');
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
             localStorage.removeItem('auth-storage');
@@ -202,7 +202,7 @@ export const useAuthStore = create<AuthState>()(
           } catch (error) {
             set({
               user: null,
-              sessionToken: null,
+              token: null,
               isAuthenticated: false,
               error: 'Authentication check failed',
             });
@@ -213,7 +213,7 @@ export const useAuthStore = create<AuthState>()(
         },
 
         refreshUser: async () => {
-          const token = get().sessionToken;
+          const token = get().token;
           if (!token) return;
 
           try {
@@ -243,7 +243,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        sessionToken: state.sessionToken,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

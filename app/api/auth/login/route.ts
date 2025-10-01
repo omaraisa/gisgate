@@ -27,13 +27,6 @@ export async function POST(request: NextRequest) {
     // Generate JWT token
     const token = await AuthService.generateToken(user);
 
-    // Create session
-    const sessionToken = await AuthService.createSession(
-      user.id,
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-      request.headers.get('user-agent') || undefined
-    );
-
     // Create response with cookie
     const response = NextResponse.json({
       message: 'Login successful',
@@ -48,10 +41,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         emailVerified: user.emailVerified,
       },
-      tokens: {
-        accessToken: token,
-        sessionToken,
-      },
+      token: token, // Only return JWT token
     });
 
     // Set HTTP-only cookie for middleware (server-side auth)

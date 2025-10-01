@@ -59,13 +59,6 @@ export async function POST(request: NextRequest) {
     };
     const token = await AuthService.generateToken(authUser);
 
-    // Create session
-    const sessionToken = await AuthService.createSession(
-      user.id,
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-      request.headers.get('user-agent') || undefined
-    );
-
     // Return success response
     return NextResponse.json({
       message: 'User registered successfully',
@@ -81,10 +74,7 @@ export async function POST(request: NextRequest) {
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
       },
-      tokens: {
-        accessToken: token,
-        sessionToken,
-      },
+      token,
     }, { status: 201 });
 
   } catch (error) {

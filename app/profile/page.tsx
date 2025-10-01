@@ -108,21 +108,21 @@ export default function ProfilePage() {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
+      const token = localStorage.getItem('token');
+      if (!token) {
         router.push('/auth');
         return;
       }
 
       const response = await fetch('/api/user/profile', {
         headers: {
-          'Authorization': `Bearer ${sessionToken}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('token');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('user');
           window.dispatchEvent(new Event('auth-change'));
@@ -165,12 +165,12 @@ export default function ProfilePage() {
     setSuccess(null);
 
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionToken}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...formData,
@@ -210,12 +210,12 @@ export default function ProfilePage() {
     }
 
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionToken}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(passwordData),
       });

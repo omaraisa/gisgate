@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Footer from '../../../../components/Footer';
 import AnimatedBackground from '../../../../components/AnimatedBackground';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface Lesson {
   id: string;
@@ -72,21 +73,10 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
   }, [params]);
 
   useEffect(() => {
-    // Check authentication status
-    const sessionToken = localStorage.getItem('sessionToken');
-    const userData = localStorage.getItem('user');
-
-    if (sessionToken && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (err) {
-        console.error('Failed to parse user data:', err);
-        localStorage.removeItem('sessionToken');
-        localStorage.removeItem('user');
-      }
-    }
+    // Check authentication status using auth store
+    const { token, user: authUser, isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
+    setUser(authUser);
+    setIsAuthenticated(authIsAuthenticated);
   }, []);
 
   useEffect(() => {
@@ -115,10 +105,10 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
 
         // Fetch enrollment and progress if authenticated
         if (isAuthenticated) {
-          const sessionToken = localStorage.getItem('sessionToken');
-          if (sessionToken) {
+          const token = useAuthStore.getState().token;
+          if (token) {
             const enrollmentResponse = await fetch('/api/courses/enroll', {
-              headers: { Authorization: `Bearer ${sessionToken}` }
+              headers: { Authorization: `Bearer ${token}` }
             });
 
             if (enrollmentResponse.ok) {
@@ -142,14 +132,14 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
     if (!currentLesson || !isAuthenticated) return;
 
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) return;
+      const token = useAuthStore.getState().token;
+      if (!token) return;
 
       const response = await fetch(`/api/courses/progress/${currentLesson.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           watchedTime: watchTime,

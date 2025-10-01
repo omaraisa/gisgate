@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-auth';
 import { PayPalService } from '@/lib/paypal';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -9,22 +9,6 @@ const refundOrderSchema = z.object({
   amount: z.number().min(0.01, 'Amount must be greater than 0'),
   reason: z.string().optional(),
 });
-
-async function requireAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No token provided');
-  }
-
-  const token = authHeader.substring(7);
-  const user = await AuthService.validateSession(token);
-
-  if (!user) {
-    throw new Error('Invalid or expired token');
-  }
-
-  return user;
-}
 
 // POST /api/payments/refund - Process refund for a payment order
 export async function POST(request: NextRequest) {
@@ -115,7 +99,7 @@ export async function POST(request: NextRequest) {
     const refund = await prisma.paymentRefund.create({
       data: {
         orderId: orderId,
-        paypalRefundId: refundResult.id,
+        paypalRefundId: refundResult.id || `refund-${Date.now()}`,
         amount: amount,
         currency: paymentOrder.currency,
         reason: reason,
