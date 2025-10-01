@@ -18,11 +18,6 @@ interface CartState {
   isOpen: boolean;
   isLoading: boolean;
 
-  // Computed properties
-  totalItems: number;
-  totalPrice: number;
-  subtotal: number;
-
   // Actions
   addToCart: (course: Course) => void;
   removeFromCart: (courseId: string) => void;
@@ -35,6 +30,9 @@ interface CartState {
   // Utility
   isInCart: (courseId: string) => boolean;
   getItemQuantity: (courseId: string) => number;
+  getTotalItems: () => number;
+  getTotalPrice: () => number;
+  getSubtotal: () => number;
   getCartSummary: () => {
     items: CartItem[];
     totalItems: number;
@@ -50,19 +48,6 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       isLoading: false,
-
-      // Computed properties
-      get totalItems() {
-        return get().items.reduce((total, item) => total + item.quantity, 0);
-      },
-
-      get totalPrice() {
-        return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
-      },
-
-      get subtotal() {
-        return get().totalPrice;
-      },
 
       // Actions
       addToCart: (course: Course) => {
@@ -95,7 +80,7 @@ export const useCartStore = create<CartState>()(
         }
 
         // Auto-open cart on mobile, keep closed on desktop for better UX
-        if (window.innerWidth < 768) {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
           get().openCart();
         }
       },
@@ -147,13 +132,25 @@ export const useCartStore = create<CartState>()(
         return item?.quantity || 0;
       },
 
+      getTotalItems: () => {
+        return get().items.reduce((total, item) => total + item.quantity, 0);
+      },
+
+      getTotalPrice: () => {
+        return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
+      },
+
+      getSubtotal: () => {
+        return get().getTotalPrice();
+      },
+
       getCartSummary: () => {
         const state = get();
         return {
           items: state.items,
-          totalItems: state.totalItems,
-          totalPrice: state.totalPrice,
-          subtotal: state.subtotal,
+          totalItems: state.getTotalItems(),
+          totalPrice: state.getTotalPrice(),
+          subtotal: state.getSubtotal(),
         };
       },
     }),

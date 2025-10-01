@@ -24,7 +24,8 @@ export default function PayPalButton({
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { createOrder, processPayment } = usePaymentStore();
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice, clearCart } = useCartStore();
+  const totalPrice = getTotalPrice();
 
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
@@ -55,7 +56,7 @@ export default function PayPalButton({
           createOrder={async () => {
             if (isCartCheckout) {
               // Handle cart checkout - create order for all cart items
-              const cartOrderId = await createOrder(items[0]?.courseId || ''); // For now, handle first item
+              const cartOrderId = await createOrder(items);
               if (!cartOrderId) {
                 throw new Error('Failed to create cart payment order');
               }

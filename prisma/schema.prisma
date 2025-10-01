@@ -247,7 +247,7 @@ model PaymentOrder {
   amount        Float
   currency      String            @default("USD")
   status        PaymentStatus     @default(PENDING)
-  paypalOrderId String?           @unique
+  paypalOrderId String?
   paypalPaymentId String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt

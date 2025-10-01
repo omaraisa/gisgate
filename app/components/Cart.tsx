@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,15 +10,32 @@ import { useUIStore } from '@/lib/stores/ui-store';
 
 export default function Cart() {
   const router = useRouter();
-  const { isOpen, closeCart, items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice } = useCartStore();
+  const { items, removeFromCart, clearCart, getTotalItems, getTotalPrice, isOpen, closeCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { addNotification } = useUIStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleQuantityChange = (courseId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    updateQuantity(courseId, newQuantity);
-  };
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
+
+  // Debug logging
+  console.log('Cart component render - items:', items.length, items);
+
+  useEffect(() => {
+    // Check localStorage directly
+    if (typeof window !== 'undefined') {
+      const cartData = localStorage.getItem('cart-storage');
+      console.log('Raw localStorage cart data:', cartData);
+      if (cartData) {
+        try {
+          const parsed = JSON.parse(cartData);
+          console.log('Parsed localStorage cart data:', parsed);
+        } catch (e) {
+          console.error('Error parsing cart data:', e);
+        }
+      }
+    }
+  }, []);
 
   const handleRemoveItem = (courseId: string, courseTitle: string) => {
     removeFromCart(courseId);
@@ -153,34 +170,10 @@ export default function Cart() {
                         <span className="text-lg font-bold text-green-600">
                           ${item.price}
                         </span>
+                        <span className="text-sm text-gray-600">
+                          الكمية: {item.quantity}
+                        </span>
                       </div>
-                    </div>
-
-                    {/* Quantity Controls */}
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <button
-                        onClick={() => handleQuantityChange(item.courseId, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
-                        aria-label="تقليل الكمية"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                        </svg>
-                      </button>
-
-                      <span className="w-8 text-center text-sm font-medium">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        onClick={() => handleQuantityChange(item.courseId, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
-                        aria-label="زيادة الكمية"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </button>
                     </div>
 
                     {/* Remove Button */}

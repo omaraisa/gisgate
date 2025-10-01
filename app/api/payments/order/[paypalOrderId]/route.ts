@@ -27,8 +27,8 @@ export async function GET(
     const user = await requireAuth(request);
     const { paypalOrderId } = await params;
 
-    // Find the payment order
-    const paymentOrder = await prisma.paymentOrder.findFirst({
+    // Find all payment orders with this PayPal order ID
+    const paymentOrders = await prisma.paymentOrder.findMany({
       where: {
         paypalOrderId: paypalOrderId,
         userId: user.id, // Ensure user can only access their own orders
@@ -38,7 +38,7 @@ export async function GET(
       },
     });
 
-    if (!paymentOrder) {
+    if (!paymentOrders || paymentOrders.length === 0) {
       return NextResponse.json(
         { error: 'Payment order not found' },
         { status: 404 }
@@ -46,18 +46,18 @@ export async function GET(
     }
 
     return NextResponse.json({
-      order: {
-        id: paymentOrder.id,
-        paypalOrderId: paymentOrder.paypalOrderId,
-        amount: paymentOrder.amount,
-        currency: paymentOrder.currency,
-        status: paymentOrder.status,
+      orders: paymentOrders.map(order => ({
+        id: order.id,
+        paypalOrderId: order.paypalOrderId,
+        amount: order.amount,
+        currency: order.currency,
+        status: order.status,
         course: {
-          id: paymentOrder.course.id,
-          title: paymentOrder.course.title,
-          titleEnglish: paymentOrder.course.titleEnglish,
+          id: order.course.id,
+          title: order.course.title,
+          titleEnglish: order.course.titleEnglish,
         },
-      },
+      })),
     });
 
   } catch (error) {

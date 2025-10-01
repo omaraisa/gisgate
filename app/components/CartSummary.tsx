@@ -4,8 +4,10 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { useRouter } from 'next/navigation';
 
 export default function CartSummary() {
-  const { totalItems, totalPrice, openCart } = useCartStore();
+  const { getTotalItems, getTotalPrice, openCart } = useCartStore();
   const router = useRouter();
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
 
   if (totalItems === 0) {
     return null;

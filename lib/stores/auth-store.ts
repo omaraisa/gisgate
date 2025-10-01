@@ -28,7 +28,7 @@ interface AuthState {
 
   // Actions
   login: (token: string, user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -58,7 +58,10 @@ const setTokenInCookies = (token: string) => {
 // Helper function to remove token from cookies
 const removeTokenFromCookies = () => {
   if (typeof document === 'undefined') return;
+  // Clear client-side readable cookie
   document.cookie = 'auth-token-client=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  // Clear server-side cookie
+  document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -88,15 +91,39 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('sessionToken', token);
         },
 
-        logout: () => {
+        logout: async () => {
+          try {
+            const token = get().sessionToken;
+            if (token) {
+              // Call server-side logout to clear HTTP-only cookies
+              await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+            }
+          } catch (error) {
+            console.error('Server logout failed:', error);
+            // Continue with client-side cleanup even if server logout fails
+          }
+
+          // Clear client-side state
           set({
             user: null,
             sessionToken: null,
             isAuthenticated: false,
             error: null,
           });
+
+          // Clear client-readable cookie (server clears HTTP-only cookie)
           removeTokenFromCookies();
+
+          // Clear all authentication-related localStorage items
           localStorage.removeItem('sessionToken');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('auth-storage');
         },
 
         updateUser: (userData: Partial<User>) => {
@@ -149,8 +176,27 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: false,
               error: 'Session expired',
             });
+            
+            // Try to call server logout to clear HTTP-only cookies
+            try {
+              if (token) {
+                await fetch('/api/auth/logout', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                });
+              }
+            } catch (error) {
+              console.error('Server logout failed during auth check:', error);
+            }
+            
             removeTokenFromCookies();
+            // Clear all authentication-related localStorage items
             localStorage.removeItem('sessionToken');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            localStorage.removeItem('auth-storage');
             return false;
 
           } catch (error) {

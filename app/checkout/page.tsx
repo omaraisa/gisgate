@@ -8,12 +8,12 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePaymentStore } from '@/lib/stores/payment-store';
 import { useUIStore } from '@/lib/stores/ui-store';
 import PayPalButton from '@/app/components/PayPalButton';
-import Header from '@/app/components/Header';
 import Cart from '@/app/components/Cart';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice, clearCart } = useCartStore();
+  const totalPrice = getTotalPrice();
   const { isAuthenticated, user } = useAuthStore();
   const { createOrder } = usePaymentStore();
   const { addNotification } = useUIStore();
@@ -44,7 +44,7 @@ export default function CheckoutPage() {
   const handlePaymentSuccess = async (paypalOrderId: string) => {
     setIsProcessing(true);
     try {
-      const success = await createOrder(items[0].courseId); // For now, handle single course
+      const success = await createOrder(items); // Pass all cart items
       if (success) {
         clearCart();
         router.push('/payment/success');
@@ -87,7 +87,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <Cart />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -98,8 +97,8 @@ export default function CheckoutPage() {
 
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4 space-x-reverse border-b border-gray-200 pb-4">
-                  <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                <div key={item.id} className="flex items-center border-b border-gray-200 pb-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 ml-4">
                     {item.course.featuredImage ? (
                       <Image
                         src={item.course.featuredImage}
@@ -137,7 +136,7 @@ export default function CheckoutPage() {
 
             <div className="mt-6 border-t border-gray-200 pt-4">
               <div className="flex justify-between items-center text-xl font-bold">
-                <span>المجموع الكلي:</span>
+                <span className="text-green-600">المجموع الكلي:</span>
                 <span className="text-green-600">${totalPrice.toFixed(2)}</span>
               </div>
             </div>
@@ -157,27 +156,6 @@ export default function CheckoutPage() {
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">البريد الإلكتروني:</span> {user?.email}
                 </p>
-              </div>
-            </div>
-
-            {/* Payment Method */}
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">طريقة الدفع</h3>
-              <div className="space-y-3">
-                <div className="flex items-center p-4 border-2 border-green-200 bg-green-50 rounded-lg">
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <span className="text-white font-bold text-lg">P</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">PayPal</p>
-                    <p className="text-sm text-gray-600">دفع آمن وسريع</p>
-                  </div>
-                  <div className="mr-auto">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
               </div>
             </div>
 

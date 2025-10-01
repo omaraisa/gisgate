@@ -1,5 +1,31 @@
 import { create } from 'zustand';
 import { useAuthStore } from './auth-store';
+import { CartItem } from './cart-store';
+
+// Helper function to get auth token from multiple sources
+const getAuthToken = (): string | null => {
+  // Try Zustand store first
+  let token = useAuthStore.getState().sessionToken;
+  
+  // Fallback to localStorage if store hasn't hydrated yet
+  if (!token && typeof window !== 'undefined') {
+    token = localStorage.getItem('sessionToken');
+  }
+  
+  // Fallback to cookies as last resort
+  if (!token && typeof document !== 'undefined') {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth-token-client') {
+        token = decodeURIComponent(value);
+        break;
+      }
+    }
+  }
+  
+  return token;
+};
 
 export interface PaymentOrder {
   id: string;
@@ -62,7 +88,7 @@ interface PaymentState {
 
   // Actions
   // Order management
-  createOrder: (courseId: string) => Promise<string | null>;
+  createOrder: (cartItems: CartItem[]) => Promise<string | null>;
   fetchOrders: () => Promise<void>;
   fetchOrder: (orderId: string) => Promise<PaymentOrder | null>;
   setCurrentOrder: (order: PaymentOrder | null) => void;
@@ -97,12 +123,17 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
   error: null,
 
   // Order management actions
-  createOrder: async (courseId: string) => {
+  createOrder: async (cartItems: CartItem[]) => {
     try {
       set({ creatingOrder: true, error: null });
 
-      const { sessionToken } = useAuthStore.getState();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const sessionToken = getAuthToken();
+      if (!sessionToken) {
+        throw new Error('Not authenticated - please log in again');
+      }
+
+      // Calculate total amount from cart items
+      const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
       const response = await fetch('/api/payments/create-order', {
         method: 'POST',
@@ -110,7 +141,14 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionToken}`,
         },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ 
+          cartItems: cartItems.map(item => ({
+            courseId: item.courseId,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          totalAmount 
+        }),
       });
 
       if (!response.ok) {
@@ -148,7 +186,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ loadingOrders: true, error: null });
 
-      const { sessionToken } = useAuthStore.getState();
+      const sessionToken = getAuthToken();
       if (!sessionToken) throw new Error('Not authenticated');
 
       const response = await fetch('/api/user/profile', {
@@ -174,7 +212,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const { sessionToken } = useAuthStore.getState();
+      const sessionToken = getAuthToken();
       if (!sessionToken) throw new Error('Not authenticated');
 
       const response = await fetch(`/api/payments/order/${orderId}`, {
@@ -201,8 +239,10 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ processingPayment: true, error: null });
 
-      const { sessionToken } = useAuthStore.getState();
-      if (!sessionToken) throw new Error('Not authenticated');
+      const sessionToken = getAuthToken();
+      if (!sessionToken) {
+        throw new Error('Not authenticated - please log in again');
+      }
 
       const response = await fetch('/api/payments/capture-order', {
         method: 'POST',
@@ -210,7 +250,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionToken}`,
         },
-        body: JSON.stringify({ paypalOrderId }),
+        body: JSON.stringify({ orderId: paypalOrderId }),
       });
 
       if (!response.ok) {
@@ -236,7 +276,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const { sessionToken } = useAuthStore.getState();
+      const sessionToken = getAuthToken();
       if (!sessionToken) throw new Error('Not authenticated');
 
       // Note: This would need a cancel endpoint
@@ -262,7 +302,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const { sessionToken } = useAuthStore.getState();
+      const sessionToken = getAuthToken();
       if (!sessionToken) throw new Error('Not authenticated');
 
       const response = await fetch('/api/payments/refund', {
@@ -294,7 +334,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     try {
       set({ error: null });
 
-      const { sessionToken } = useAuthStore.getState();
+      const sessionToken = getAuthToken();
       if (!sessionToken) throw new Error('Not authenticated');
 
       const response = await fetch('/api/user/profile', {

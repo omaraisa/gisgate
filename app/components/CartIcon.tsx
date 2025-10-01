@@ -8,7 +8,13 @@ interface CartIconProps {
 }
 
 export default function CartIcon({ className = '', onClick }: CartIconProps) {
-  const { totalItems, toggleCart } = useCartStore();
+  const { getTotalItems, toggleCart } = useCartStore();
+  const totalItems = getTotalItems();
+
+  // Don't render the cart icon if there are no items
+  if (totalItems === 0) {
+    return null;
+  }
 
   const handleClick = () => {
     if (onClick) {
@@ -22,7 +28,7 @@ export default function CartIcon({ className = '', onClick }: CartIconProps) {
     <button
       onClick={handleClick}
       className={`relative p-2 rounded-md text-white hover:text-lime-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-lime-300 ${className}`}
-      aria-label={`عربة التسوق ${totalItems > 0 ? `(${totalItems} عنصر)` : ''}`}
+      aria-label={`عربة التسوق (${totalItems} عنصر)`}
     >
       <svg
         className="w-6 h-6"
@@ -38,11 +44,9 @@ export default function CartIcon({ className = '', onClick }: CartIconProps) {
         />
       </svg>
 
-      {totalItems > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
-          {totalItems > 99 ? '99+' : totalItems}
-        </span>
-      )}
+      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
+        {totalItems > 99 ? '99+' : totalItems}
+      </span>
     </button>
   );
 }
