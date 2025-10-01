@@ -5,6 +5,7 @@ import {
   PaymentsController,
   CheckoutPaymentIntent,
   OrderApplicationContextUserAction,
+  OrderApplicationContextShippingPreference,
   ApiError
 } from '@paypal/paypal-server-sdk';
 
@@ -56,6 +57,7 @@ export class PayPalService {
           userAction: OrderApplicationContextUserAction.PayNow,
           brandName: 'GIS Gate',
           locale: 'ar-SA',
+          shippingPreference: OrderApplicationContextShippingPreference.NoShipping, // Disable shipping address collection for digital courses
         },
       };
 

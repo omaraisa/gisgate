@@ -57,6 +57,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const [slug, setSlug] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     async function initializeParams() {
@@ -67,21 +68,45 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   }, [params]);
 
   useEffect(() => {
-    // Check authentication status
-    const sessionToken = localStorage.getItem('sessionToken');
-    const userData = localStorage.getItem('user');
+    // Check authentication status using API
+    async function checkAuth() {
+      const sessionToken = localStorage.getItem('sessionToken');
+      if (!sessionToken) {
+        setAuthChecked(true);
+        return;
+      }
 
-    if (sessionToken && userData) {
       try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
+        const response = await fetch('/api/auth/check', {
+          headers: { Authorization: `Bearer ${sessionToken}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authenticated) {
+            setUser(data.user);
+            setIsAuthenticated(true);
+          } else {
+            // Token is invalid, clear localStorage
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('user');
+          }
+        } else {
+          // Token is invalid, clear localStorage
+          localStorage.removeItem('sessionToken');
+          localStorage.removeItem('user');
+        }
       } catch (err) {
-        console.error('Failed to parse user data:', err);
+        console.error('Auth check failed:', err);
+        // Clear potentially invalid tokens
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('user');
+      } finally {
+        setAuthChecked(true);
       }
     }
+
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -103,7 +128,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
 
     async function fetchEnrollment() {
-      if (!isAuthenticated) return;
+      if (!authChecked || !isAuthenticated) return;
 
       try {
         const sessionToken = localStorage.getItem('sessionToken');
@@ -125,10 +150,10 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
     }
 
     fetchCourse();
-    if (isAuthenticated) {
+    if (authChecked && isAuthenticated) {
       fetchEnrollment();
     }
-  }, [slug, isAuthenticated, course?.id]);
+  }, [slug, authChecked, isAuthenticated, course?.id]);
 
   const handleEnroll = async () => {
     if (!course) return;
@@ -362,22 +387,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                       </div>
                     </div>
 
-                    {isAuthenticated ? (
-                      <PayPalButton
-                        courseId={course.id}
-                        amount={course.price || 0}
-                        currency={course.currency || 'USD'}
-                        courseTitle={course.title}
-                        onSuccess={(orderId) => {
-                          console.log('Payment successful for order:', orderId);
-                          // The success page will handle enrollment
-                        }}
-                        onError={(error) => {
-                          console.error('Payment error:', error);
-                          alert('حدث خطأ في عملية الدفع: ' + error);
-                        }}
-                      />
-                    ) : (
+                    {authChecked && !isAuthenticated ? (
                       <div className="text-center space-y-3">
                         <div className="text-white/80 mb-4">
                           يجب تسجيل الدخول أولاً لشراء الدورة
@@ -389,7 +399,14 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                           تسجيل الدخول / إنشاء حساب
                         </Link>
                       </div>
-                    )}
+                    ) : authChecked && isAuthenticated ? (
+                      <Link
+                        href={`/courses/${course.slug}/checkout`}
+                        className="inline-block bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300 text-center"
+                      >
+                        شراء الدورة
+                      </Link>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -160,7 +160,6 @@ export async function GET(request: NextRequest) {
     }, 0);
 
     // Format enrolled courses with progress
-    // Format enrolled courses with progress
     const enrolledCourses = enrollments.map((enrollment: any) => {
       const completedLessons = enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
       const totalLessons = enrollment.course.totalLessons || enrollment.lessonProgress.length;
@@ -205,6 +204,22 @@ export async function GET(request: NextRequest) {
         })),
       };
     });
+
+    // Calculate learning statistics
+    const totalEnrolledCourses = enrollments.length;
+    const completedCourses = enrollments.filter((e: any) => e.isCompleted).length;
+    const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
+    }, 0);
+    const totalLessonsWatched = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.length;
+    }, 0);
+    const totalWatchTime = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.lessonProgress.reduce((sum: number, lp: any) => sum + lp.watchedTime, 0);
+    }, 0);
+    const certificatesEarned = enrollments.reduce((total: number, enrollment: any) => {
+      return total + enrollment.certificates.length;
+    }, 0);
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = fullUser; // eslint-disable-line @typescript-eslint/no-unused-vars
 
