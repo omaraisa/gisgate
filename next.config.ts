@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/static/image/**',
       },
+      {
+        protocol: 'http',
+        hostname: '13.61.185.194',
+        port: '9000',
+        pathname: '/images/**',
+      },
     ],
   },
 };

@@ -9,27 +9,8 @@ import { ar } from 'date-fns/locale';
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
-
-interface Course {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  excerpt: string;
-  featuredImage?: string;
-  category?: string;
-  level: string;
-  language: string;
-  price?: number;
-  currency?: string;
-  isFree: boolean;
-  duration?: string;
-  totalLessons: number;
-  publishedAt?: string;
-  authorName?: string;
-  authorAvatar?: string;
-  enrollmentCount: number;
-}
+import AddToCartButton from '../components/AddToCartButton';
+import { Course } from '@/lib/stores/course-store';
 
 interface CoursesResponse {
   courses: Course[];
@@ -216,9 +197,9 @@ export default function CoursesPage() {
               {data.courses.map((course, index) => (
                 <MotionCard key={index} delay={index * 0.1}>
                   <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 overflow-hidden">
-                    <Link href={`/courses/${course.slug}`}>
-                      {/* Featured Image */}
-                      {course.featuredImage && (
+                    {/* Featured Image - Clickable */}
+                    {course.featuredImage && (
+                      <Link href={`/courses/${course.slug}`}>
                         <div className="relative h-48 overflow-hidden rounded-t-2xl">
                           <motion.img
                             src={course.featuredImage}
@@ -245,9 +226,11 @@ export default function CoursesPage() {
                             </div>
                           )}
                         </div>
-                      )}
+                      </Link>
+                    )}
 
-                      {/* Content */}
+                    {/* Content - Clickable */}
+                    <Link href={`/courses/${course.slug}`}>
                       <div className="p-6">
                         <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-secondary-300 transition-colors">
                           {course.title}
@@ -271,18 +254,22 @@ export default function CoursesPage() {
                           </div>
 
                           <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            <span>{course.enrollmentCount}</span>
+                            <Clock className="w-4 h-4" />
+                            <span>{course.duration || 'غير محدد'}</span>
                           </div>
                         </div>
-
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileHover={{ width: "100%" }}
-                          className="h-1 bg-gradient-to-r from-primary-400 to-secondary-400 rounded-full mt-4"
-                        />
                       </div>
                     </Link>
+
+                    {/* Add to Cart Button - Outside Link */}
+                    <div className="px-6 pb-6">
+                      <AddToCartButton
+                        course={course}
+                        variant="primary"
+                        size="sm"
+                        className="w-full"
+                      />
+                    </div>
                   </FloatingCard>
                 </MotionCard>
               ))}

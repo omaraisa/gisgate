@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import CartIcon from './CartIcon';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -109,59 +110,62 @@ export default function Header() {
 
               {/* User Authentication Section */}
               {isAuthenticated && user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 space-x-reverse text-white hover:text-lime-300 transition-colors duration-200 focus:outline-none"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold">
-                      {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="hidden lg:inline text-sm">
-                      {user.fullNameArabic || user.fullNameEnglish || 'المستخدم'}
-                    </span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* User Dropdown Menu */}
-                  {isUserMenuOpen && (
-                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
-                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                        <p className="font-medium">{user.fullNameArabic || user.fullNameEnglish}</p>
-                        <p className="text-gray-500">{user.email}</p>
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <CartIcon />
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center space-x-2 space-x-reverse text-white hover:text-lime-300 transition-colors duration-200 focus:outline-none"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold">
+                        {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
                       </div>
-                      
-                      <Link
-                        href="/profile"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                      >
-                        <span className="ml-2">👤</span>
-                        الملف الشخصي
-                      </Link>
-                      
-                      {user.role === 'ADMIN' && (
+                      <span className="hidden lg:inline text-sm">
+                        {user.fullNameArabic || user.fullNameEnglish || 'المستخدم'}
+                      </span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* User Dropdown Menu */}
+                    {isUserMenuOpen && (
+                      <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                        <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                          <p className="font-medium">{user.fullNameArabic || user.fullNameEnglish}</p>
+                          <p className="text-gray-500">{user.email}</p>
+                        </div>
+
                         <Link
-                          href="/admin"
+                          href="/profile"
                           onClick={() => setIsUserMenuOpen(false)}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <span className="ml-2">⚙️</span>
-                          لوحة التحكم
+                          <span className="ml-2">👤</span>
+                          الملف الشخصي
                         </Link>
-                      )}
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
-                      >
-                        <span className="ml-2">🚪</span>
-                        تسجيل الخروج
-                      </button>
-                    </div>
-                  )}
+
+                        {user.role === 'ADMIN' && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          >
+                            <span className="ml-2">⚙️</span>
+                            لوحة التحكم
+                          </Link>
+                        )}
+
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                        >
+                          <span className="ml-2">🚪</span>
+                          تسجيل الخروج
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center space-x-4 space-x-reverse">

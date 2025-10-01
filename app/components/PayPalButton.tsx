@@ -4,12 +4,14 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePaymentStore } from '@/lib/stores/payment-store';
+import { useCartStore } from '@/lib/stores/cart-store';
 
 interface PayPalButtonProps {
-  courseId: string;
-  amount: number;
+  courseId?: string; // Made optional for cart checkout
+  amount?: number; // Made optional for cart checkout
   currency?: string;
-  courseTitle: string;
+  courseTitle?: string; // Made optional for cart checkout
+  isCartCheckout?: boolean; // New prop to indicate cart checkout
 }
 
 export default function PayPalButton({
@@ -17,10 +19,12 @@ export default function PayPalButton({
   amount,
   currency = 'USD',
   courseTitle,
+  isCartCheckout = false,
 }: PayPalButtonProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const { createOrder, processPayment, setCurrentOrder } = usePaymentStore();
+  const { createOrder, processPayment } = usePaymentStore();
+  const { items, totalPrice, clearCart } = useCartStore();
 
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
@@ -49,15 +53,28 @@ export default function PayPalButton({
             height: 40,
           }}
           createOrder={async () => {
-            const paypalOrderId = await createOrder(courseId);
-            if (!paypalOrderId) {
-              throw new Error('Failed to create payment order');
+            if (isCartCheckout) {
+              // Handle cart checkout - create order for all cart items
+              const cartOrderId = await createOrder(items[0]?.courseId || ''); // For now, handle first item
+              if (!cartOrderId) {
+                throw new Error('Failed to create cart payment order');
+              }
+              return cartOrderId;
+            } else {
+              // Handle single course purchase
+              const paypalOrderId = await createOrder(courseId || '');
+              if (!paypalOrderId) {
+                throw new Error('Failed to create payment order');
+              }
+              return paypalOrderId;
             }
-            return paypalOrderId;
           }}
           onApprove={async (data: any) => {
             const success = await processPayment(data.orderID);
             if (success) {
+              if (isCartCheckout) {
+                clearCart();
+              }
               router.push(`/payment/success?orderId=${data.orderID}`);
             } else {
               router.push('/payment/error');

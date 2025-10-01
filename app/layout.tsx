@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Header from "./components/Header";
+import Cart from "./components/Cart";
+import CartSummary from "./components/CartSummary";
 import { StoreProvider } from "@/lib/stores/store-provider";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
@@ -31,6 +33,8 @@ export default function RootLayout({
         <ErrorBoundary>
           <StoreProvider>
             <Header />
+            <Cart />
+            <CartSummary />
             <ScrollToTop />
             {children}
             <ScrollToTopButton />
