@@ -164,13 +164,35 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        let errorMessage = 'Failed to create payment order';
+        let errorDetails = {};
+
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+          errorDetails = error;
+        } catch (parseError) {
+          // If response is not JSON, try to get text
+          try {
+            const textResponse = await response.text();
+            errorMessage = textResponse || errorMessage;
+            errorDetails = { textResponse };
+          } catch (textError) {
+            errorDetails = {
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
+              textError: textError instanceof Error ? textError.message : String(textError)
+            };
+          }
+        }
+
         console.error('Payment order creation failed:', {
           status: response.status,
-          error: error,
-          hasToken: !!token
+          statusText: response.statusText,
+          error: errorDetails,
+          hasToken: !!token,
+          tokenPreview: token ? token.substring(0, 20) + '...' : 'no token'
         });
-        throw new Error(error.error || 'Failed to create payment order');
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

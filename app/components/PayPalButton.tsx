@@ -60,11 +60,14 @@ export default function PayPalButton({
               throw new Error('Authentication required. Please log in again.');
             }
 
+            console.log('PayPal Button - Creating order with token:', currentToken.substring(0, 20) + '...');
+
             if (isCartCheckout) {
               // Handle cart checkout - create order for all cart items
               if (items.length === 0) {
                 throw new Error('Cart is empty');
               }
+              console.log('PayPal Button - Cart items:', items);
               const cartOrderId = await createOrder(items);
               if (!cartOrderId) {
                 throw new Error('Failed to create cart payment order');
@@ -82,6 +85,7 @@ export default function PayPalButton({
                 price: amount || 0,
                 currency: currency
               }] as any;
+              console.log('PayPal Button - Single course item:', singleCourseItem);
               const paypalOrderId = await createOrder(singleCourseItem);
               if (!paypalOrderId) {
                 throw new Error('Failed to create payment order');
