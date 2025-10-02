@@ -37,6 +37,30 @@ export async function POST(request: NextRequest) {
       cartItems = parsedBody.cartItems;
       totalAmount = parsedBody.totalAmount;
 
+      // Clear any stale pending/processing orders for these cart items (user-scoped)
+      try {
+        for (const item of cartItems) {
+          const staleOrders = await prisma.paymentOrder.findMany({
+            where: {
+              userId: user.id,
+              courseId: item.courseId,
+              status: { in: ['PENDING', 'PROCESSING'] },
+            }
+          });
+
+          if (staleOrders.length > 0) {
+            const staleIds = staleOrders.map(o => o.id);
+            // Delete related transactions first (if any)
+            await prisma.paymentTransaction.deleteMany({ where: { orderId: { in: staleIds } } });
+            // Delete the stale orders
+            await prisma.paymentOrder.deleteMany({ where: { id: { in: staleIds } } });
+            console.log(`Cleared ${staleIds.length} stale pending orders for user ${user.id} and course ${item.courseId}`);
+          }
+        }
+      } catch (cleanupErr) {
+        console.error('Failed to cleanup stale pending orders for cart checkout:', cleanupErr);
+      }
+
       // Validate all courses exist and user is not already enrolled
       for (const item of cartItems) {
         const course = await prisma.course.findUnique({
@@ -81,9 +105,8 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-
-        // Check if there's already a pending payment for this course
-        const existingOrder = await prisma.paymentOrder.findFirst({
+        // Clear any previous pending/processing payments for this user+course
+        const previousPending = await prisma.paymentOrder.findMany({
           where: {
             userId: user.id,
             courseId: course.id,
@@ -91,11 +114,21 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        if (existingOrder) {
-          return NextResponse.json(
-            { error: `You already have a pending payment for course: ${course.title}` },
-            { status: 400 }
-          );
+        if (previousPending.length > 0) {
+          const idsToRemove = previousPending.map(o => o.id);
+
+          // Remove related transactions and refunds first
+          await prisma.paymentTransaction.deleteMany({
+            where: { orderId: { in: idsToRemove } },
+          });
+          await prisma.paymentRefund.deleteMany({
+            where: { orderId: { in: idsToRemove } },
+          });
+
+          // Delete the stale payment orders
+          await prisma.paymentOrder.deleteMany({
+            where: { id: { in: idsToRemove } },
+          });
         }
       }
 
@@ -103,6 +136,25 @@ export async function POST(request: NextRequest) {
     } else {
       // Handle single course purchase (backward compatibility)
       const courseId = parsedBody.courseId;
+
+      // Clear any stale pending/processing orders for this user+course before validation
+      try {
+        const staleOrders = await prisma.paymentOrder.findMany({
+          where: {
+            userId: user.id,
+            courseId,
+            status: { in: ['PENDING', 'PROCESSING'] },
+          }
+        });
+        if (staleOrders.length > 0) {
+          const staleIds = staleOrders.map(o => o.id);
+          await prisma.paymentTransaction.deleteMany({ where: { orderId: { in: staleIds } } });
+          await prisma.paymentOrder.deleteMany({ where: { id: { in: staleIds } } });
+          console.log(`Cleared ${staleIds.length} stale pending orders for user ${user.id} and course ${courseId}`);
+        }
+      } catch (cleanupErr) {
+        console.error('Failed to cleanup stale pending orders for single course purchase:', cleanupErr);
+      }
 
       const course = await prisma.course.findUnique({
         where: { id: courseId },
@@ -155,7 +207,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if there's already a pending payment for this course
-      const existingOrder = await prisma.paymentOrder.findFirst({
+      // Clear any previous pending/processing payments for this user+course (single-course flow)
+      const previousPendingSingle = await prisma.paymentOrder.findMany({
         where: {
           userId: user.id,
           courseId: course.id,
@@ -163,11 +216,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (existingOrder) {
-        return NextResponse.json(
-          { error: 'You already have a pending payment for this course' },
-          { status: 400 }
-        );
+      if (previousPendingSingle.length > 0) {
+        const idsToRemove = previousPendingSingle.map(o => o.id);
+
+        await prisma.paymentTransaction.deleteMany({
+          where: { orderId: { in: idsToRemove } },
+        });
+        await prisma.paymentRefund.deleteMany({
+          where: { orderId: { in: idsToRemove } },
+        });
+        await prisma.paymentOrder.deleteMany({
+          where: { id: { in: idsToRemove } },
+        });
       }
 
       cartItems = [{ courseId, quantity: 1, price: course.price }];
