@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { UserRole } from '@prisma/client';
+import Link from 'next/link';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface User {
@@ -18,6 +19,10 @@ interface User {
   lastLogin?: string;
   createdAt: string;
   wordpressId?: number;
+  _count?: {
+    enrollments: number;
+    certificates: number;
+  };
 }
 
 export default function AdminUsersPage() {
@@ -260,6 +265,12 @@ export default function AdminUsersPage() {
                     الحالة
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    التسجيلات
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الشهادات
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     آخر دخول
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -324,11 +335,23 @@ export default function AdminUsersPage() {
                         {user.isActive ? 'نشط' : 'غير نشط'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                      {user._count?.enrollments || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                      {user._count?.certificates || 0}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('en-US') : 'لم يدخل بعد'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
+                        <Link
+                          href={`/admin/users/${user.id}`}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          تفاصيل
+                        </Link>
                         <button
                           onClick={() => handleStatusChange(user.id, !user.isActive)}
                           className={`px-3 py-1 rounded text-xs ${

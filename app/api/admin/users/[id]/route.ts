@@ -35,8 +35,11 @@ export async function GET(
       );
     }
 
+    // Get user with enrollments and certificates
+    const userWithDetails = await AuthService.getUserWithDetails(userId);
+
     // Don't return sensitive information
-    const { password, emailVerificationToken, passwordResetToken, ...safeUser } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { password, emailVerificationToken, passwordResetToken, ...safeUser } = userWithDetails; // eslint-disable-line @typescript-eslint/no-unused-vars
 
     return NextResponse.json({ user: safeUser });
 

@@ -346,7 +346,7 @@ export default function AdminPage() {
 
         {/* Content Type Navigation */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex gap-4 mb-4">
+          <div className="flex gap-4 mb-4 flex-wrap">
             <button
               onClick={() => {
                 setContentType('articles')
@@ -389,6 +389,18 @@ export default function AdminPage() {
             >
               إدارة الكورسات ({courses.length})
             </button>
+            <Link
+              href="/admin/users"
+              className="px-6 py-2 rounded-lg font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+            >
+              إدارة المستخدمين
+            </Link>
+            <Link
+              href="/admin/certificates"
+              className="px-6 py-2 rounded-lg font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+            >
+              إدارة الشهادات
+            </Link>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">

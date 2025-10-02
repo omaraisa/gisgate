@@ -59,6 +59,12 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           wordpressId: true,
+          _count: {
+            select: {
+              enrollments: true,
+              certificates: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,

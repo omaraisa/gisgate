@@ -275,6 +275,72 @@ export class AuthService {
     return prisma.user.findUnique({ where: { id } });
   }
 
+  static async getUserWithDetails(id: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        enrollments: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                titleEnglish: true,
+                slug: true,
+                price: true,
+                currency: true,
+                isFree: true,
+              },
+            },
+            certificates: {
+              select: {
+                id: true,
+                certificateId: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+        certificates: {
+          include: {
+            enrollment: {
+              include: {
+                course: {
+                  select: {
+                    id: true,
+                    title: true,
+                    titleEnglish: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+            template: {
+              select: {
+                name: true,
+                language: true,
+              },
+            },
+          },
+        },
+        payments: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                titleEnglish: true,
+                price: true,
+                currency: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+  }
+
   static async getUserByEmail(email: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   }
