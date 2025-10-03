@@ -214,6 +214,8 @@ model CertificateTemplate {
   name            String        // "Arabic Certificate", "English Certificate"
   language        String        // "ar", "en"
   backgroundImage String        // URL to uploaded background image
+  backgroundWidth Int           @default(2480) // Image width in pixels
+  backgroundHeight Int          @default(3508) // Image height in pixels
   fields          Json          // Array of field configurations
   isActive        Boolean       @default(true)
   isDefault       Boolean       @default(false)

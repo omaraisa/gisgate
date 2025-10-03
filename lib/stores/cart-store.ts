@@ -54,30 +54,25 @@ export const useCartStore = create<CartState>()(
         const existingItem = get().items.find(item => item.courseId === course.id);
 
         if (existingItem) {
-          // Update quantity if already in cart
-          set((state) => ({
-            items: state.items.map(item =>
-              item.courseId === course.id
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-            ),
-          }));
-        } else {
-          // Add new item to cart
-          const cartItem: CartItem = {
-            id: `${course.id}-${Date.now()}`,
-            courseId: course.id,
-            course,
-            quantity: 1,
-            addedAt: new Date().toISOString(),
-            price: course.price || 0,
-            currency: course.currency || 'USD',
-          };
-
-          set((state) => ({
-            items: [...state.items, cartItem],
-          }));
+          // Course already in cart - don't add duplicates
+          // For courses, we only allow one instance per course
+          return;
         }
+        
+        // Add new item to cart
+        const cartItem: CartItem = {
+          id: `${course.id}-${Date.now()}`,
+          courseId: course.id,
+          course,
+          quantity: 1,
+          addedAt: new Date().toISOString(),
+          price: course.price || 0,
+          currency: course.currency || 'USD',
+        };
+
+        set((state) => ({
+          items: [...state.items, cartItem],
+        }));
 
         // Auto-open cart on mobile, keep closed on desktop for better UX
         if (typeof window !== 'undefined' && window.innerWidth < 768) {

@@ -32,6 +32,16 @@ export default function AddToCartButton({
   const isFree = course.isFree || (course.price || 0) === 0;
 
   const handleAddToCart = async () => {
+    // Prevent adding if already in cart
+    if (isCourseInCart) {
+      addNotification({
+        type: 'info',
+        title: 'الدورة موجودة بالفعل',
+        message: 'هذه الدورة موجودة بالفعل في عربة التسوق',
+      });
+      return;
+    }
+
     if (!isAuthenticated) {
       addNotification({
         type: 'warning',
@@ -100,7 +110,7 @@ export default function AddToCartButton({
   return (
     <button
       onClick={handleAddToCart}
-      disabled={disabled || isAdding}
+      disabled={disabled || isAdding || isCourseInCart}
       className={buttonClasses}
     >
       {isAdding ? (

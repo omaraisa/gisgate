@@ -35,7 +35,7 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
     }
 
     const resolvedParams = await params;
-    const { name, language, backgroundImage, fields, isActive } = await request.json();
+    const { name, language, backgroundImage, backgroundWidth, backgroundHeight, fields, isActive } = await request.json();
 
     const template = await prisma.certificateTemplate.update({
       where: { id: resolvedParams.id },
@@ -43,6 +43,8 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
         name,
         language,
         backgroundImage,
+        backgroundWidth: backgroundWidth || 2480,
+        backgroundHeight: backgroundHeight || 3508,
         fields: fields,
         isActive,
         updatedAt: new Date()

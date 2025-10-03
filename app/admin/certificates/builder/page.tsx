@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, Upload, Plus, Trash2, Move, Type, Image, QrCode } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, Plus, Trash2, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import CertificateCanvas from './CertificateCanvas';
 import Footer from '../../../components/Footer';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -29,32 +30,39 @@ interface CertificateTemplate {
   name: string;
   language: string;
   backgroundImage: string;
+  backgroundWidth: number;  // Actual image dimensions
+  backgroundHeight: number;
   fields: CertificateField[];
 }
 
 const FIELD_TYPES = [
-  { type: 'STUDENT_NAME', label: 'اسم الطالب', icon: Type, defaultText: 'محمد أحمد علي' },
-  { type: 'COURSE_TITLE', label: 'عنوان الدورة', icon: Type, defaultText: 'مقدمة في نظم المعلومات الجغرافية' },
-  { type: 'COMPLETION_DATE', label: 'تاريخ الإكمال', icon: Type, defaultText: '15 سبتمبر 2025' },
-  { type: 'DURATION', label: 'مدة الدورة', icon: Type, defaultText: '8 ساعات' },
-  { type: 'INSTRUCTOR', label: 'المدرب', icon: Type, defaultText: 'عمر الهادي' },
-  { type: 'CERTIFICATE_ID', label: 'رقم الشهادة', icon: Type, defaultText: 'CERT-2025-ABC123' },
-  { type: 'QR_CODE', label: 'رمز QR', icon: QrCode, defaultText: '[QR CODE]' }
+  { type: 'STUDENT_NAME', label: 'اسم الطالب', defaultText: 'محمد أحمد علي' },
+  { type: 'COURSE_TITLE', label: 'عنوان الدورة', defaultText: 'مقدمة في نظم المعلومات الجغرافية' },
+  { type: 'COMPLETION_DATE', label: 'تاريخ الإكمال', defaultText: '15 سبتمبر 2025' },
+  { type: 'DURATION', label: 'مدة الدورة', defaultText: '8 ساعات' },
+  { type: 'INSTRUCTOR', label: 'المدرب', defaultText: 'عمر الهادي' },
+  { type: 'CERTIFICATE_ID', label: 'رقم الشهادة', defaultText: 'CERT-2025-ABC123' },
+  { type: 'QR_CODE', label: 'رمز QR', defaultText: '[QR]' }
 ];
+
+// Default certificate dimensions (A4 at 300 DPI)
+const DEFAULT_CERT_WIDTH = 2480;
+const DEFAULT_CERT_HEIGHT = 3508;
 
 export default function CertificateBuilderPage() {
   const [template, setTemplate] = useState<CertificateTemplate>({
     name: '',
     language: 'ar',
     backgroundImage: '',
+    backgroundWidth: DEFAULT_CERT_WIDTH,
+    backgroundHeight: DEFAULT_CERT_HEIGHT,
     fields: []
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [draggedField, setDraggedField] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load template for editing if edit parameter is provided
@@ -77,7 +85,13 @@ export default function CertificateBuilderPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setTemplate(data.template);
+        const loadedTemplate = data.template;
+        
+        // Ensure dimensions are set
+        if (!loadedTemplate.backgroundWidth) loadedTemplate.backgroundWidth = DEFAULT_CERT_WIDTH;
+        if (!loadedTemplate.backgroundHeight) loadedTemplate.backgroundHeight = DEFAULT_CERT_HEIGHT;
+        
+        setTemplate(loadedTemplate);
       } else {
         throw new Error('Failed to load template');
       }
@@ -93,38 +107,35 @@ export default function CertificateBuilderPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setTemplate(prev => ({
-          ...prev,
-          backgroundImage: e.target?.result as string
-        }));
+        const img = new Image();
+        img.onload = () => {
+          setTemplate(prev => ({
+            ...prev,
+            backgroundImage: e.target?.result as string,
+            backgroundWidth: img.width,
+            backgroundHeight: img.height
+          }));
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
 
   const addField = (fieldType: string) => {
-    const getDefaultMaxWidth = (type: string) => {
-      switch (type) {
-        case 'COURSE_TITLE': return 700; // Wider for course titles
-        case 'STUDENT_NAME': return 500;
-        case 'QR_CODE': return undefined;
-        default: return 400;
-      }
-    };
-
     const newField: CertificateField = {
       id: `field-${Date.now()}`,
       type: fieldType as CertificateField['type'],
-      x: 400,
-      y: 200,
-      fontSize: 24,
-      fontFamily: template.language === 'ar' ? 'Kufi' : 'Kufi',
+      x: template.backgroundWidth / 2,
+      y: template.backgroundHeight / 2,
+      fontSize: 48,
+      fontFamily: template.language === 'ar' ? 'Arial' : 'Arial',
       color: '#000000',
       textAlign: 'center',
-      maxWidth: getDefaultMaxWidth(fieldType),
-      width: fieldType === 'QR_CODE' ? 120 : undefined,
-      height: fieldType === 'QR_CODE' ? 120 : undefined,
-      fontWeight: 'normal'
+      width: fieldType === 'QR_CODE' ? 150 : undefined,
+      height: fieldType === 'QR_CODE' ? 150 : undefined,
+      fontWeight: 'bold',
+      rotation: 0
     };
 
     setTemplate(prev => ({
@@ -137,7 +148,7 @@ export default function CertificateBuilderPage() {
   const updateField = (fieldId: string, updates: Partial<CertificateField>) => {
     setTemplate(prev => ({
       ...prev,
-      fields: (Array.isArray(prev.fields) ? prev.fields : []).map(field =>
+      fields: prev.fields.map(field =>
         field.id === fieldId ? { ...field, ...updates } : field
       )
     }));
@@ -146,15 +157,11 @@ export default function CertificateBuilderPage() {
   const deleteField = (fieldId: string) => {
     setTemplate(prev => ({
       ...prev,
-      fields: (Array.isArray(prev.fields) ? prev.fields : []).filter(field => field.id !== fieldId)
+      fields: prev.fields.filter(field => field.id !== fieldId)
     }));
     if (selectedField === fieldId) {
       setSelectedField(null);
     }
-  };
-
-  const handleFieldDrag = (fieldId: string, x: number, y: number) => {
-    updateField(fieldId, { x, y });
   };
 
   const saveTemplate = async () => {
@@ -168,8 +175,7 @@ export default function CertificateBuilderPage() {
       return;
     }
 
-    const fields = Array.isArray(template.fields) ? template.fields : [];
-    if (fields.length === 0) {
+    if (template.fields.length === 0) {
       alert('يرجى إضافة حقل واحد على الأقل');
       return;
     }
@@ -194,6 +200,8 @@ export default function CertificateBuilderPage() {
           name: template.name,
           language: template.language,
           backgroundImage: template.backgroundImage,
+          backgroundWidth: template.backgroundWidth,
+          backgroundHeight: template.backgroundHeight,
           fields: template.fields
         })
       });
@@ -202,10 +210,11 @@ export default function CertificateBuilderPage() {
         alert('تم حفظ القالب بنجاح');
         window.location.href = '/admin/certificates';
       } else {
-        throw new Error('Failed to save template');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save template');
       }
     } catch (err) {
-      alert('فشل في حفظ القالب');
+      alert('فشل في حفظ القالب: ' + (err instanceof Error ? err.message : 'خطأ غير معروف'));
     } finally {
       setSaving(false);
     }
@@ -250,8 +259,13 @@ export default function CertificateBuilderPage() {
                 {editingTemplate ? 'تحرير قالب الشهادة' : 'منشئ قالب الشهادة'}
               </h1>
               <p className="text-white/80 text-sm">
-                قم بإنشاء وتخصيص قوالب الشهادات بسحب وإفلات الحقول
+                محرر دقيق بتقنية Canvas - الإحداثيات المحفوظة = PDF النهائي
               </p>
+              {template.backgroundImage && (
+                <p className="text-white/60 text-xs mt-1">
+                  أبعاد الخلفية: {template.backgroundWidth} × {template.backgroundHeight} بكسل
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -266,10 +280,10 @@ export default function CertificateBuilderPage() {
             </div>
           </div>
 
-          {/* Template Settings */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
-            {/* Left Panel - Settings */}
-            <div className="lg:col-span-1 space-y-3">
+          {/* Main Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_280px] gap-4">
+            {/* Left Panel - Template Settings & Field Types */}
+            <div className="space-y-3">
               {/* Template Info */}
               <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3">
                 <h3 className="text-sm font-semibold text-white mb-3">إعدادات القالب</h3>
@@ -329,264 +343,393 @@ export default function CertificateBuilderPage() {
                 <h3 className="text-sm font-semibold text-white mb-2">أنواع الحقول</h3>
                 
                 <div className="space-y-1">
-                  {FIELD_TYPES.map(fieldType => {
-                    const Icon = fieldType.icon;
-                    return (
-                      <button
-                        key={fieldType.type}
-                        onClick={() => addField(fieldType.type)}
-                        className="w-full flex items-center gap-2 px-2 py-1 text-white/80 hover:bg-white/10 rounded transition-colors text-xs"
-                      >
-                        <Icon className="w-3 h-3" />
-                        {fieldType.label}
-                      </button>
-                    );
-                  })}
+                  {FIELD_TYPES.map(fieldType => (
+                    <button
+                      key={fieldType.type}
+                      onClick={() => addField(fieldType.type)}
+                      className="w-full flex items-center gap-2 px-2 py-1 text-white/80 hover:bg-white/10 rounded transition-colors text-xs"
+                    >
+                      <Plus className="w-3 h-3" />
+                      {fieldType.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Field Properties */}
-              {selectedField && (
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">خصائص الحقل</h3>
-                  
-                  {(() => {
-                    const fields = Array.isArray(template.fields) ? template.fields : [];
-                    const field = fields.find(f => f.id === selectedField);
-                    if (!field) return null;
+              {selectedField && (() => {
+                const field = template.fields.find(f => f.id === selectedField);
+                if (!field) return null;
 
-                    return (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-white/60 mb-1">X</label>
-                            <input
-                              type="number"
-                              value={field.x}
-                              onChange={(e) => updateField(field.id, { x: parseInt(e.target.value) })}
-                              className="w-full px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-white/60 mb-1">Y</label>
-                            <input
-                              type="number"
-                              value={field.y}
-                              onChange={(e) => updateField(field.id, { y: parseInt(e.target.value) })}
-                              className="w-full px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white"
-                            />
-                          </div>
+                return (
+                  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3">
+                    <h3 className="text-sm font-semibold text-white mb-3">خصائص الحقل</h3>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1">النوع</label>
+                        <div className="text-xs text-white/80 bg-white/10 px-2 py-1 rounded">
+                          {FIELD_TYPES.find(ft => ft.type === field.type)?.label}
                         </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-xs font-medium text-white/60 mb-1">حجم الخط</label>
+                          <label className="block text-xs font-medium text-white/60 mb-1">X</label>
                           <input
                             type="number"
-                            value={field.fontSize || 16}
-                            onChange={(e) => updateField(field.id, { fontSize: parseInt(e.target.value) || 16 })}
-                            className="w-full px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white"
+                            value={Math.round(field.x)}
+                            onChange={(e) => updateField(field.id, { x: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                           />
                         </div>
-
                         <div>
-                          <label className="block text-xs font-medium text-white/60 mb-1">اللون</label>
+                          <label className="block text-xs font-medium text-white/60 mb-1">Y</label>
                           <input
-                            type="color"
-                            value={field.color || '#000000'}
-                            onChange={(e) => updateField(field.id, { color: e.target.value })}
-                            className="w-full h-8 bg-white/10 border border-white/20 rounded"
+                            type="number"
+                            value={Math.round(field.y)}
+                            onChange={(e) => updateField(field.id, { y: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                           />
                         </div>
+                      </div>
 
-                        {field.type !== 'QR_CODE' && (
+                      {field.type !== 'QR_CODE' && (
+                        <>
                           <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-xs font-medium text-white/60">عرض النص الأقصى</label>
-                              <button
-                                onClick={() => updateField(field.id, { maxWidth: 900 })}
-                                className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                              >
-                                عرض كامل
-                              </button>
-                            </div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">حجم الخط</label>
                             <input
                               type="number"
-                              value={field.maxWidth || 400}
-                              onChange={(e) => updateField(field.id, { maxWidth: parseInt(e.target.value) })}
-                              className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
-                              placeholder="400"
+                              value={field.fontSize}
+                              onChange={(e) => updateField(field.id, { fontSize: parseInt(e.target.value) || 16 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              min="12"
+                              max="200"
                             />
-                            <div className="flex gap-1 mt-1">
-                              <button
-                                onClick={() => updateField(field.id, { maxWidth: 300 })}
-                                className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                              >
-                                صغير
-                              </button>
-                              <button
-                                onClick={() => updateField(field.id, { maxWidth: 500 })}
-                                className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                              >
-                                متوسط
-                              </button>
-                              <button
-                                onClick={() => updateField(field.id, { maxWidth: 700 })}
-                                className="flex-1 px-1 py-0.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                              >
-                                كبير
-                              </button>
-                            </div>
                           </div>
-                        )}
 
-                        <div className="grid grid-cols-2 gap-2">
                           <div>
                             <label className="block text-xs font-medium text-white/60 mb-1">نوع الخط</label>
                             <select
-                              value={field.fontFamily || 'Kufi'}
+                              value={field.fontFamily}
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
-                              className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
-                              <option value="Kufi">كوفي</option>
                               <option value="Arial">Arial</option>
-                              <option value="Times New Roman">Times</option>
-                              <option value="Calibri">Calibri</option>
+                              <option value="Times New Roman">Times New Roman</option>
+                              <option value="Courier New">Courier New</option>
+                              <option value="Georgia">Georgia</option>
+                              <option value="Verdana">Verdana</option>
                             </select>
                           </div>
+
                           <div>
                             <label className="block text-xs font-medium text-white/60 mb-1">سماكة الخط</label>
                             <select
-                              value={field.fontWeight || 'normal'}
+                              value={field.fontWeight}
                               onChange={(e) => updateField(field.id, { fontWeight: e.target.value as 'normal' | 'bold' })}
-                              className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
                               <option value="normal">عادي</option>
                               <option value="bold">عريض</option>
                             </select>
                           </div>
-                        </div>
 
-                        <div>
-                          <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
-                          <select
-                            value={field.textAlign || 'left'}
-                            onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
-                            className="w-full px-1 py-0.5 text-xs bg-white/10 border border-white/20 rounded text-white"
-                          >
-                            <option value="left">يسار</option>
-                            <option value="center">وسط</option>
-                            <option value="right">يمين</option>
-                          </select>
-                        </div>
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">اللون</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={field.color}
+                                onChange={(e) => updateField(field.id, { color: e.target.value })}
+                                className="w-12 h-8 bg-white/10 border border-white/20 rounded cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={field.color}
+                                onChange={(e) => updateField(field.id, { color: e.target.value })}
+                                className="flex-1 px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              />
+                            </div>
+                          </div>
 
-                        <button
-                          onClick={() => deleteField(field.id)}
-                          className="w-full flex items-center justify-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          حذف الحقل
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
+                            <select
+                              value={field.textAlign}
+                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            >
+                              <option value="left">يسار</option>
+                              <option value="center">وسط</option>
+                              <option value="right">يمين</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">دوران (درجة)</label>
+                            <input
+                              type="number"
+                              value={field.rotation || 0}
+                              onChange={(e) => updateField(field.id, { rotation: parseFloat(e.target.value) || 0 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              min="-180"
+                              max="180"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {field.type === 'QR_CODE' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">العرض</label>
+                            <input
+                              type="number"
+                              value={field.width || 150}
+                              onChange={(e) => updateField(field.id, { width: parseInt(e.target.value) || 150 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">الارتفاع</label>
+                            <input
+                              type="number"
+                              value={field.height || 150}
+                              onChange={(e) => updateField(field.id, { height: parseInt(e.target.value) || 150 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => deleteField(field.id)}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        حذف الحقل
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
-            {/* Main Canvas */}
-            <div className="lg:col-span-3">
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">معاينة الشهادة</h3>
+            {/* Center - Canvas */}
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">معاينة الشهادة</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setZoom(Math.max(0.25, zoom - 0.1))}
+                      className="p-1 bg-white/10 hover:bg-white/20 rounded transition-colors"
+                      title="تصغير"
+                    >
+                      <ZoomOut className="w-4 h-4 text-white" />
+                    </button>
+                    <span className="text-xs text-white/80 min-w-[60px] text-center">
+                      {Math.round(zoom * 100)}%
+                    </span>
+                    <button
+                      onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+                      className="p-1 bg-white/10 hover:bg-white/20 rounded transition-colors"
+                      title="تكبير"
+                    >
+                      <ZoomIn className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                </div>
                 
-                <div 
-                  ref={canvasRef}
-                  className="relative w-full aspect-[4/3] bg-white border border-gray-300 rounded-lg overflow-hidden"
-                  style={{
-                    backgroundImage: template.backgroundImage ? `url(${template.backgroundImage})` : undefined,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  {!template.backgroundImage && (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                <div className="bg-gray-100 rounded-lg overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+                  {template.backgroundImage ? (
+                    <CertificateCanvas
+                      backgroundImage={template.backgroundImage}
+                      backgroundWidth={template.backgroundWidth}
+                      backgroundHeight={template.backgroundHeight}
+                      fields={template.fields}
+                      selectedFieldId={selectedField}
+                      onSelectField={setSelectedField}
+                      onUpdateField={updateField}
+                      getFieldDisplayText={getFieldDisplayText}
+                      zoom={zoom}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-96 text-gray-400">
                       <div className="text-center">
                         <Upload className="w-12 h-12 mx-auto mb-2" />
                         <p>قم برفع صورة خلفية للشهادة</p>
                       </div>
                     </div>
                   )}
-
-                  {(Array.isArray(template.fields) ? template.fields : []).map(field => (
-                    <div
-                      key={field.id}
-                      className={`absolute cursor-move select-none ${
-                        selectedField === field.id ? 'ring-2 ring-blue-500' : ''
-                      }`}
-                      style={{
-                        left: `${(field.x / 1000) * 100}%`,
-                        top: `${(field.y / 600) * 100}%`,
-                        fontSize: `${(field.fontSize || 16) * 0.8}px`,
-                        color: field.color || '#000000',
-                        textAlign: field.textAlign || 'left',
-                        maxWidth: field.type !== 'QR_CODE' && field.maxWidth ? `${Math.min(field.maxWidth * 0.8, 720)}px` : 'auto',
-                        fontFamily: field.fontFamily || 'Kufi',
-                        fontWeight: field.fontWeight || 'normal',
-                        transform: field.rotation ? `rotate(${field.rotation}deg)` : undefined,
-                        whiteSpace: field.type !== 'QR_CODE' ? 'nowrap' : 'normal',
-                        overflow: field.type !== 'QR_CODE' ? 'visible' : 'hidden'
-                      }}
-                      onClick={() => setSelectedField(field.id)}
-                      onMouseDown={(e) => {
-                        const canvas = canvasRef.current;
-                        if (!canvas) return;
-
-                        const rect = canvas.getBoundingClientRect();
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const startFieldX = field.x;
-                        const startFieldY = field.y;
-
-                        const handleMouseMove = (moveEvent: MouseEvent) => {
-                          const deltaX = moveEvent.clientX - startX;
-                          const deltaY = moveEvent.clientY - startY;
-                          
-                          const newX = Math.max(0, Math.min(1000, startFieldX + (deltaX / rect.width) * 1000));
-                          const newY = Math.max(0, Math.min(600, startFieldY + (deltaY / rect.height) * 600));
-                          
-                          handleFieldDrag(field.id, newX, newY);
-                        };
-
-                        const handleMouseUp = () => {
-                          document.removeEventListener('mousemove', handleMouseMove);
-                          document.removeEventListener('mouseup', handleMouseUp);
-                        };
-
-                        document.addEventListener('mousemove', handleMouseMove);
-                        document.addEventListener('mouseup', handleMouseUp);
-                      }}
-                    >
-                      {field.type === 'QR_CODE' ? (
-                        <div 
-                          className="bg-black/20 border-2 border-dashed border-gray-400 flex items-center justify-center text-xs font-bold"
-                          style={{
-                            width: field.width ? `${field.width * 0.8}px` : '96px',
-                            height: field.height ? `${field.height * 0.8}px` : '96px'
-                          }}
-                        >
-                          QR
-                        </div>
-                      ) : (
-                        <span style={{ 
-                          fontFamily: field.fontFamily || 'Kufi',
-                          fontWeight: field.fontWeight || 'normal'
-                        }}>
-                          {getFieldDisplayText(field)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
                 </div>
               </div>
+
+            {/* Right Panel - Field Properties */}
+            <div className="space-y-3">
+              {selectedField && (() => {
+                const field = template.fields.find(f => f.id === selectedField);
+                if (!field) return (
+                  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-6 text-center">
+                    <p className="text-white/60 text-sm">
+                      اختر حقلاً لتعديل خصائصه
+                    </p>
+                  </div>
+                );
+
+                return (
+                  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-3">
+                    <h3 className="text-sm font-semibold text-white mb-3">خصائص الحقل</h3>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-white/60 mb-1">النوع</label>
+                        <div className="text-xs text-white/80 bg-white/10 px-2 py-1 rounded">
+                          {FIELD_TYPES.find(ft => ft.type === field.type)?.label}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-white/60 mb-1">X</label>
+                          <input
+                            type="number"
+                            value={Math.round(field.x)}
+                            onChange={(e) => updateField(field.id, { x: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-white/60 mb-1">Y</label>
+                          <input
+                            type="number"
+                            value={Math.round(field.y)}
+                            onChange={(e) => updateField(field.id, { y: parseFloat(e.target.value) || 0 })}
+                            className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {field.type !== 'QR_CODE' && (
+                        <>
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">حجم الخط</label>
+                            <input
+                              type="number"
+                              value={field.fontSize}
+                              onChange={(e) => updateField(field.id, { fontSize: parseInt(e.target.value) || 16 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              min="12"
+                              max="200"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">نوع الخط</label>
+                            <select
+                              value={field.fontFamily}
+                              onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            >
+                              <option value="Arial">Arial</option>
+                              <option value="Times New Roman">Times New Roman</option>
+                              <option value="Courier New">Courier New</option>
+                              <option value="Georgia">Georgia</option>
+                              <option value="Verdana">Verdana</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">سماكة الخط</label>
+                            <select
+                              value={field.fontWeight}
+                              onChange={(e) => updateField(field.id, { fontWeight: e.target.value as 'normal' | 'bold' })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            >
+                              <option value="normal">عادي</option>
+                              <option value="bold">عريض</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">اللون</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={field.color}
+                                onChange={(e) => updateField(field.id, { color: e.target.value })}
+                                className="w-12 h-8 bg-white/10 border border-white/20 rounded cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={field.color}
+                                onChange={(e) => updateField(field.id, { color: e.target.value })}
+                                className="flex-1 px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
+                            <select
+                              value={field.textAlign}
+                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            >
+                              <option value="left">يسار</option>
+                              <option value="center">وسط</option>
+                              <option value="right">يمين</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">دوران (درجة)</label>
+                            <input
+                              type="number"
+                              value={field.rotation || 0}
+                              onChange={(e) => updateField(field.id, { rotation: parseFloat(e.target.value) || 0 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                              min="-180"
+                              max="180"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {field.type === 'QR_CODE' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">العرض</label>
+                            <input
+                              type="number"
+                              value={field.width || 150}
+                              onChange={(e) => updateField(field.id, { width: parseInt(e.target.value) || 150 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-white/60 mb-1">الارتفاع</label>
+                            <input
+                              type="number"
+                              value={field.height || 150}
+                              onChange={(e) => updateField(field.id, { height: parseInt(e.target.value) || 150 })}
+                              className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => deleteField(field.id)}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        حذف الحقل
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
