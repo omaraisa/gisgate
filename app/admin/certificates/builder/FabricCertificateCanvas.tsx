@@ -107,12 +107,26 @@ export default function FabricCertificateCanvas({
           updates.fontSize = (textObj.fontSize || 16) / actualScale;
         }
 
-        if (target.type === 'rect' && target.data?.fieldType === 'QR_CODE') {
+        if (target.data?.fieldType === 'QR_CODE') {
           updates.width = (target.width || 150) * (target.scaleX || 1) / actualScale;
           updates.height = (target.height || 150) * (target.scaleY || 1) / actualScale;
+          
+          // Also update the QR text position
+          const qrText = canvas.getObjects().find((obj: any) => obj.data?.parentId === target.data.fieldId);
+          if (qrText) {
+            const qrWidth = (target.width || 150) * (target.scaleX || 1);
+            const qrHeight = (target.height || 150) * (target.scaleY || 1);
+            qrText.set({
+              left: (target.left || 0) + qrWidth / 2,
+              top: (target.top || 0) + qrHeight / 2,
+              angle: target.angle || 0
+            });
+            qrText.setCoords();
+          }
         }
 
         onUpdateField(target.data.fieldId, updates);
+        canvas.renderAll();
       }
     });
 
@@ -162,7 +176,7 @@ export default function FabricCertificateCanvas({
     const canvas = fabricCanvasRef.current;
     
     // Remove existing field objects (but keep background)
-    const objects = canvas.getObjects().filter((obj: any) => obj.data?.fieldId);
+    const objects = canvas.getObjects().filter((obj: any) => obj.data?.fieldId || obj.data?.parentId);
     objects.forEach((obj: any) => canvas.remove(obj));
 
     // Calculate the actual scale for positioning fields
@@ -171,12 +185,15 @@ export default function FabricCertificateCanvas({
     // Add field objects
     fields.forEach(field => {
       if (field.type === 'QR_CODE') {
+        const qrWidth = (field.width || 150) * actualScale;
+        const qrHeight = (field.height || 150) * actualScale;
+        
         // Create QR placeholder as rectangle
         const qrRect = new fabric.Rect({
           left: field.x * actualScale,
           top: field.y * actualScale,
-          width: (field.width || 150) * actualScale,
-          height: (field.height || 150) * actualScale,
+          width: qrWidth,
+          height: qrHeight,
           fill: 'rgba(0, 0, 0, 0.1)',
           stroke: '#000',
           strokeWidth: 2,
@@ -184,11 +201,11 @@ export default function FabricCertificateCanvas({
           data: { fieldId: field.id, fieldType: 'QR_CODE' }
         });
 
-        // Add QR text label
+        // Add QR text label centered in the rectangle
         const qrText = new fabric.Text('[QR]', {
-          left: field.x * actualScale,
-          top: field.y * actualScale + ((field.height || 150) * actualScale / 2) - 10,
-          fontSize: 20,
+          left: field.x * actualScale + qrWidth / 2,
+          top: field.y * actualScale + qrHeight / 2,
+          fontSize: Math.min(qrWidth, qrHeight) * 0.15,
           fontFamily: 'Arial',
           fill: '#666',
           textAlign: 'center',
@@ -196,7 +213,7 @@ export default function FabricCertificateCanvas({
           originY: 'center',
           selectable: false,
           evented: false,
-          data: { parentId: field.id }
+          data: { fieldId: field.id, fieldType: 'QR_TEXT', parentId: field.id }
         });
 
         canvas.add(qrRect);
@@ -262,17 +279,34 @@ export default function FabricCertificateCanvas({
           // Add fields at actual coordinates
           fields.forEach(field => {
             if (field.type === 'QR_CODE') {
+              const qrWidth = field.width || 150;
+              const qrHeight = field.height || 150;
+              
               const qrRect = new fabric.Rect({
                 left: field.x,
                 top: field.y,
-                width: field.width || 150,
-                height: field.height || 150,
+                width: qrWidth,
+                height: qrHeight,
                 fill: 'rgba(0, 0, 0, 0.1)',
                 stroke: '#000',
                 strokeWidth: 2,
                 angle: field.rotation || 0
               });
+
+              const qrText = new fabric.Text('[QR]', {
+                left: field.x + qrWidth / 2,
+                top: field.y + qrHeight / 2,
+                fontSize: Math.min(qrWidth, qrHeight) * 0.15,
+                fontFamily: 'Arial',
+                fill: '#666',
+                textAlign: 'center',
+                originX: 'center',
+                originY: 'center',
+                angle: field.rotation || 0
+              });
+
               tempCanvas.add(qrRect);
+              tempCanvas.add(qrText);
             } else {
               const text = new fabric.Textbox(getFieldDisplayText(field), {
                 left: field.x,
