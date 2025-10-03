@@ -46,15 +46,16 @@ export default function FabricCertificateCanvas({
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isCanvasReady, setIsCanvasReady] = useState(false);
   
+  // Fixed certificate dimensions (your template size)
+  const CERT_WIDTH = 2000;
+  const CERT_HEIGHT = 1414;
+  
   // Fixed canvas display size (fits in viewport)
   const CANVAS_DISPLAY_WIDTH = 800;
-  const CANVAS_DISPLAY_HEIGHT = 600;
+  const CANVAS_DISPLAY_HEIGHT = 565; // Maintaining 2000:1414 aspect ratio
   
-  // Calculate scale factor to fit the background image in the display canvas
-  const scaleToFitCanvas = Math.min(
-    CANVAS_DISPLAY_WIDTH / backgroundWidth,
-    CANVAS_DISPLAY_HEIGHT / backgroundHeight
-  );
+  // Calculate scale factor to display the certificate in the canvas
+  const displayScale = CANVAS_DISPLAY_WIDTH / CERT_WIDTH;
 
   // Initialize Fabric.js canvas
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function FabricCertificateCanvas({
       const target = e.target;
       if (target && target.data?.fieldId) {
         // Convert canvas coordinates back to actual image coordinates
-        const actualScale = scaleToFitCanvas * zoom;
+        const actualScale = displayScale * zoom;
         const updates: Partial<CertificateField> = {
           x: (target.left || 0) / actualScale,
           y: (target.top || 0) / actualScale,
@@ -138,7 +139,7 @@ export default function FabricCertificateCanvas({
 
     fabric.Image.fromURL(backgroundImage, (img: any) => {
       // Scale the image to fit the fixed canvas size
-      const imageScale = scaleToFitCanvas * zoom;
+      const imageScale = displayScale * zoom;
       
       img.set({
         left: 0,
@@ -152,7 +153,7 @@ export default function FabricCertificateCanvas({
 
       canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
     });
-  }, [backgroundImage, zoom, isCanvasReady, scaleToFitCanvas]);
+  }, [backgroundImage, zoom, isCanvasReady, displayScale]);
 
   // Update fields on canvas
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function FabricCertificateCanvas({
     objects.forEach((obj: any) => canvas.remove(obj));
 
     // Calculate the actual scale for positioning fields
-    const actualScale = scaleToFitCanvas * zoom;
+    const actualScale = displayScale * zoom;
 
     // Add field objects
     fields.forEach(field => {
@@ -228,7 +229,7 @@ export default function FabricCertificateCanvas({
     }
 
     canvas.renderAll();
-  }, [fields, selectedFieldId, zoom, isCanvasReady, getFieldDisplayText, scaleToFitCanvas]);
+  }, [fields, selectedFieldId, zoom, isCanvasReady, getFieldDisplayText, displayScale]);
 
   // Export canvas as image for PDF generation
   const exportCanvasImage = () => {
@@ -236,20 +237,23 @@ export default function FabricCertificateCanvas({
     
     const canvas = fabricCanvasRef.current;
     
-    // Create a temporary canvas with actual image dimensions
+    // Create a temporary canvas with fixed certificate dimensions
     const tempCanvas = new fabric.Canvas(document.createElement('canvas'), {
-      width: backgroundWidth,
-      height: backgroundHeight
+      width: CERT_WIDTH,
+      height: CERT_HEIGHT
     });
     
     // Load background at full resolution
     if (backgroundImage) {
       fabric.Image.fromURL(backgroundImage, (img: any) => {
+        // Scale image to fit certificate dimensions
+        const imgScale = Math.min(CERT_WIDTH / img.width, CERT_HEIGHT / img.height);
+        
         img.set({
           left: 0,
           top: 0,
-          scaleX: 1,
-          scaleY: 1,
+          scaleX: imgScale,
+          scaleY: imgScale,
           selectable: false,
           evented: false
         });
@@ -290,11 +294,12 @@ export default function FabricCertificateCanvas({
       });
     }
     
-    // For now, return the display canvas - in production you'd wait for the temp canvas
+    // For now, return the display canvas with proper scaling
+    const multiplier = CERT_WIDTH / CANVAS_DISPLAY_WIDTH;
     const dataURL = canvas.toDataURL({
       format: 'png',
       quality: 1.0,
-      multiplier: backgroundWidth / (CANVAS_DISPLAY_WIDTH * zoom)
+      multiplier: multiplier
     });
     
     return dataURL;

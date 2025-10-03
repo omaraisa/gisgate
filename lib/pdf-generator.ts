@@ -116,15 +116,20 @@ export async function generateCertificatePDF(
 
 export async function generateCertificateFromCanvas(
   canvasImageDataUrl: string,
-  backgroundWidth: number,
-  backgroundHeight: number
+  backgroundWidth?: number,
+  backgroundHeight?: number
 ): Promise<Uint8Array> {
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
   
+  // Use fixed certificate dimensions (2000x1414)
+  const certWidth = 2000;
+  const certHeight = 1414;
+  
   // Calculate page dimensions (convert pixels to points - 72 points per inch)
-  const pageWidth = (backgroundWidth * 72) / 300; // Assuming 300 DPI
-  const pageHeight = (backgroundHeight * 72) / 300;
+  // Assuming 300 DPI for high quality
+  const pageWidth = (certWidth * 72) / 300;
+  const pageHeight = (certHeight * 72) / 300;
   
   // Add a page with exact dimensions
   const page = pdfDoc.addPage([pageWidth, pageHeight]);

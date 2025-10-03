@@ -55,9 +55,9 @@ const FIELD_TYPES = [
   { type: 'QR_CODE', label: 'رمز QR', defaultText: '[QR]' }
 ];
 
-// Default certificate dimensions (A4 at 300 DPI)
-const DEFAULT_CERT_WIDTH = 2480;
-const DEFAULT_CERT_HEIGHT = 3508;
+// Default certificate dimensions (fixed for your template)
+const DEFAULT_CERT_WIDTH = 2000;
+const DEFAULT_CERT_HEIGHT = 1414;
 
 export default function CertificateBuilderPage() {
   const [template, setTemplate] = useState<CertificateTemplate>({
@@ -118,16 +118,13 @@ export default function CertificateBuilderPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          setTemplate(prev => ({
-            ...prev,
-            backgroundImage: e.target?.result as string,
-            backgroundWidth: img.width,
-            backgroundHeight: img.height
-          }));
-        };
-        img.src = e.target?.result as string;
+        // Always use fixed certificate dimensions regardless of uploaded image size
+        setTemplate(prev => ({
+          ...prev,
+          backgroundImage: e.target?.result as string,
+          backgroundWidth: DEFAULT_CERT_WIDTH,
+          backgroundHeight: DEFAULT_CERT_HEIGHT
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -251,11 +248,9 @@ export default function CertificateBuilderPage() {
         throw new Error('Failed to export canvas');
       }
 
-      // Generate PDF
+      // Generate PDF with fixed dimensions
       const pdfBytes = await generateCertificateFromCanvas(
-        canvasImageDataUrl,
-        template.backgroundWidth,
-        template.backgroundHeight
+        canvasImageDataUrl
       );
 
       // Download PDF
