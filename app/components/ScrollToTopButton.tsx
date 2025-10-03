@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUpIcon } from '@heroicons/react/24/outline';
 
 export default function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
@@ -41,7 +41,7 @@ export default function ScrollToTopButton() {
           className="fixed bottom-8 left-8 z-50 p-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-primary-300"
           aria-label="Scroll to top"
         >
-          <ChevronUp className="w-6 h-6" />
+          <ChevronUpIcon className="w-6 h-6" />
         </motion.button>
       )}
     </AnimatePresence>

@@ -3,11 +3,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Save, Eye, Upload, Plus, Trash2, Download, ZoomIn, ZoomOut } from 'lucide-react';
-import CertificateCanvas from './CertificateCanvas';
+import { 
+  ArrowLeftIcon, 
+  DocumentArrowDownIcon, 
+  EyeIcon, 
+  CloudArrowUpIcon, 
+  PlusIcon, 
+  TrashIcon,
+  MagnifyingGlassPlusIcon,
+  MagnifyingGlassMinusIcon
+} from '@heroicons/react/24/outline';
+import FabricCertificateCanvas from './FabricCertificateCanvas';
 import Footer from '../../../components/Footer';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { generateCertificateFromCanvas } from '@/lib/pdf-generator';
 
 interface CertificateField {
   id: string;
@@ -63,6 +73,7 @@ export default function CertificateBuilderPage() {
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load template for editing if edit parameter is provided
@@ -225,6 +236,45 @@ export default function CertificateBuilderPage() {
     return fieldType?.defaultText || field.type;
   };
 
+  const exportAsPDF = async () => {
+    if (!template.backgroundImage) {
+      alert('يرجى رفع صورة خلفية للشهادة');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      
+      // Get canvas image from the Fabric canvas
+      const canvasImageDataUrl = (window as any).exportCertificateCanvas?.();
+      if (!canvasImageDataUrl) {
+        throw new Error('Failed to export canvas');
+      }
+
+      // Generate PDF
+      const pdfBytes = await generateCertificateFromCanvas(
+        canvasImageDataUrl,
+        template.backgroundWidth,
+        template.backgroundHeight
+      );
+
+      // Download PDF
+      const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${template.name || 'certificate'}-template.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('فشل في تصدير الشهادة: ' + (err instanceof Error ? err.message : 'خطأ غير معروف'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
@@ -249,7 +299,7 @@ export default function CertificateBuilderPage() {
             href="/admin/certificates"
             className="inline-flex items-center gap-2 text-secondary-400 hover:text-secondary-300 transition-colors mb-4"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeftIcon className="w-4 h-4" />
             العودة إلى قوالب الشهادات
           </Link>
 
@@ -270,11 +320,19 @@ export default function CertificateBuilderPage() {
 
             <div className="flex gap-2">
               <button
+                onClick={exportAsPDF}
+                disabled={isExporting || !template.backgroundImage}
+                className="inline-flex items-center gap-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-green-700 transition-all duration-300 disabled:opacity-50"
+              >
+                <DocumentArrowDownIcon className="w-4 h-4" />
+                {isExporting ? 'جاري التصدير...' : 'تصدير PDF'}
+              </button>
+              <button
                 onClick={saveTemplate}
                 disabled={saving}
                 className="inline-flex items-center gap-1 bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-primary-500/25 transition-all duration-300 disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
+                <CloudArrowUpIcon className="w-4 h-4" />
                 {saving ? 'جاري الحفظ...' : 'حفظ القالب'}
               </button>
             </div>
@@ -331,7 +389,7 @@ export default function CertificateBuilderPage() {
                       onClick={() => fileInputRef.current?.click()}
                       className="w-full flex items-center gap-1 px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white hover:bg-white/20 transition-colors"
                     >
-                      <Upload className="w-3 h-3" />
+                      <CloudArrowUpIcon className="w-3 h-3" />
                       {template.backgroundImage ? 'تغيير الصورة' : 'رفع صورة'}
                     </button>
                   </div>
@@ -349,7 +407,7 @@ export default function CertificateBuilderPage() {
                       onClick={() => addField(fieldType.type)}
                       className="w-full flex items-center gap-2 px-2 py-1 text-white/80 hover:bg-white/10 rounded transition-colors text-xs"
                     >
-                      <Plus className="w-3 h-3" />
+                      <PlusIcon className="w-3 h-3" />
                       {fieldType.label}
                     </button>
                   ))}
@@ -507,7 +565,7 @@ export default function CertificateBuilderPage() {
                         onClick={() => deleteField(field.id)}
                         className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <TrashIcon className="w-3 h-3" />
                         حذف الحقل
                       </button>
                     </div>
@@ -526,7 +584,7 @@ export default function CertificateBuilderPage() {
                       className="p-1 bg-white/10 hover:bg-white/20 rounded transition-colors"
                       title="تصغير"
                     >
-                      <ZoomOut className="w-4 h-4 text-white" />
+                      <MagnifyingGlassMinusIcon className="w-4 h-4 text-white" />
                     </button>
                     <span className="text-xs text-white/80 min-w-[60px] text-center">
                       {Math.round(zoom * 100)}%
@@ -536,14 +594,14 @@ export default function CertificateBuilderPage() {
                       className="p-1 bg-white/10 hover:bg-white/20 rounded transition-colors"
                       title="تكبير"
                     >
-                      <ZoomIn className="w-4 h-4 text-white" />
+                      <MagnifyingGlassPlusIcon className="w-4 h-4 text-white" />
                     </button>
                   </div>
                 </div>
                 
-                <div className="bg-gray-100 rounded-lg overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+                <div className="bg-gray-100 rounded-lg flex items-center justify-center" style={{ height: '650px' }}>
                   {template.backgroundImage ? (
-                    <CertificateCanvas
+                    <FabricCertificateCanvas
                       backgroundImage={template.backgroundImage}
                       backgroundWidth={template.backgroundWidth}
                       backgroundHeight={template.backgroundHeight}
@@ -557,7 +615,7 @@ export default function CertificateBuilderPage() {
                   ) : (
                     <div className="flex items-center justify-center h-96 text-gray-400">
                       <div className="text-center">
-                        <Upload className="w-12 h-12 mx-auto mb-2" />
+                        <CloudArrowUpIcon className="w-12 h-12 mx-auto mb-2" />
                         <p>قم برفع صورة خلفية للشهادة</p>
                       </div>
                     </div>
@@ -723,7 +781,7 @@ export default function CertificateBuilderPage() {
                         onClick={() => deleteField(field.id)}
                         className="w-full flex items-center justify-center gap-1 px-2 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <TrashIcon className="w-3 h-3" />
                         حذف الحقل
                       </button>
                     </div>
