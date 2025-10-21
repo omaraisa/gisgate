@@ -107,14 +107,30 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
         if (isAuthenticated) {
           const token = useAuthStore.getState().token;
           if (token) {
-            const enrollmentResponse = await fetch('/api/courses/enroll', {
+            // Use the profile API which includes detailed enrollment data
+            const profileResponse = await fetch('/api/user/profile', {
               headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (enrollmentResponse.ok) {
-              const enrollmentData = await enrollmentResponse.json();
-              const userEnrollment = enrollmentData.enrollments?.find((e: any) => e.course.id === courseData.id);
-              setEnrollment(userEnrollment || null);
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: any) => e.id === courseData.id);
+              
+              if (userEnrollment) {
+                // Transform the data to match our interface
+                const enrollment = {
+                  id: userEnrollment.id,
+                  progress: userEnrollment.progress?.percentage || 0,
+                  isCompleted: userEnrollment.isCompleted || false,
+                  lessonProgress: userEnrollment.lessons?.map((lesson: any) => ({
+                    lessonId: lesson.id,
+                    isCompleted: lesson.isCompleted || false,
+                    watchedTime: lesson.watchedTime || 0,
+                    completedAt: lesson.completedAt
+                  })) || []
+                };
+                setEnrollment(enrollment);
+              }
             }
           }
         }
@@ -129,7 +145,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
   }, [courseSlug, lessonSlug, isAuthenticated]);
 
   const markLessonComplete = async () => {
-    if (!currentLesson || !isAuthenticated) return;
+    if (!currentLesson || !isAuthenticated || !course) return;
 
     try {
       const token = useAuthStore.getState().token;
@@ -148,18 +164,37 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
         // Update local state
         if (enrollment) {
           const updatedProgress = enrollment.lessonProgress.map(p =>
             p.lessonId === currentLesson.id
-              ? { ...p, isCompleted: true, watchedTime: watchTime }
+              ? { ...p, isCompleted: true, watchedTime: watchTime, completedAt: new Date().toISOString() }
               : p
           );
+          
+          // If this lesson progress didn't exist, add it
+          const existingProgress = enrollment.lessonProgress.find(p => p.lessonId === currentLesson.id);
+          if (!existingProgress) {
+            updatedProgress.push({
+              lessonId: currentLesson.id,
+              isCompleted: true,
+              watchedTime: watchTime,
+              completedAt: new Date().toISOString()
+            });
+          }
+          
           setEnrollment({ ...enrollment, lessonProgress: updatedProgress });
         }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to mark lesson complete:', errorData);
+        alert('فشل في وضع علامة الإكمال على الدرس. يرجى المحاولة مرة أخرى.');
       }
     } catch (err) {
       console.error('Failed to mark lesson complete:', err);
+      alert('حدث خطأ أثناء وضع علامة الإكمال على الدرس.');
     }
   };
 
