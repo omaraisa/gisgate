@@ -242,8 +242,26 @@ export class CertificateService {
       }
     });
 
-    if (!enrollment || !enrollment.isCompleted) {
-      throw new Error('Course not completed or enrollment not found');
+    if (!enrollment) {
+      throw new Error('Enrollment not found');
+    }
+
+    // Check if course is actually completed by counting completed lessons
+    const totalLessons = await prisma.video.count({
+      where: { courseId: enrollment.courseId }
+    });
+
+    const completedLessons = await prisma.lessonProgress.count({
+      where: {
+        enrollmentId: enrollment.id,
+        isCompleted: true
+      }
+    });
+
+    const isActuallyCompleted = totalLessons > 0 && completedLessons === totalLessons;
+
+    if (!isActuallyCompleted && !enrollment.isCompleted) {
+      throw new Error('Course not completed');
     }
 
     // Check if certificate already exists

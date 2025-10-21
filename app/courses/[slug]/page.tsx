@@ -158,10 +158,28 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   };
 
   const downloadCertificate = async (language: 'ar' | 'en') => {
-    if (!enrollment) return;
+    if (!enrollment || !course) return;
 
     try {
       const { token } = useAuthStore.getState();
+      
+      // First, let's find the correct enrollment ID by querying the user's enrollments
+      const profileResponse = await fetch('/api/user/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!profileResponse.ok) {
+        throw new Error('Failed to get user profile');
+      }
+      
+      const profileData = await profileResponse.json();
+      const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: any) => e.id === course.id);
+      
+      if (!userEnrollment) {
+        throw new Error('Enrollment not found');
+      }
+      
+      // Use a direct enrollment lookup approach
       const response = await fetch('/api/certificates/generate', {
         method: 'POST',
         headers: {
@@ -169,7 +187,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ 
-          enrollmentId: enrollment.id,
+          courseId: course.id,  // Send course ID instead of enrollment ID
           language: language
         })
       });
@@ -178,9 +196,12 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
         const data = await response.json();
         window.open(data.downloadUrl, '_blank');
       } else {
-        alert('فشل في تحميل الشهادة');
+        const errorData = await response.json();
+        console.error('Certificate download error:', errorData);
+        alert(`فشل في تحميل الشهادة: ${errorData.error || 'خطأ غير معروف'}`);
       }
     } catch (err) {
+      console.error('Certificate download error:', err);
       alert('فشل في تحميل الشهادة');
     }
   };

@@ -10,14 +10,33 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const { enrollmentId, language } = await request.json();
+    const { enrollmentId, courseId, language } = await request.json();
 
-    if (!enrollmentId) {
-      return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 });
+    if (!enrollmentId && !courseId) {
+      return NextResponse.json({ error: 'Either enrollment ID or course ID is required' }, { status: 400 });
+    }
+
+    let targetEnrollmentId = enrollmentId;
+    
+    // If courseId is provided instead of enrollmentId, find the enrollment
+    if (courseId && !enrollmentId) {
+      const { prisma } = await import('@/lib/prisma');
+      const enrollment = await prisma.courseEnrollment.findFirst({
+        where: {
+          userId: user.id,
+          courseId: courseId
+        }
+      });
+      
+      if (!enrollment) {
+        return NextResponse.json({ error: 'No enrollment found for this course' }, { status: 404 });
+      }
+      
+      targetEnrollmentId = enrollment.id;
     }
 
     // Generate certificate
-    const certificateId = await CertificateService.generateCertificate(enrollmentId, language);
+    const certificateId = await CertificateService.generateCertificate(targetEnrollmentId, language);
 
     return NextResponse.json({ 
       certificateId,
