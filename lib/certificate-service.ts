@@ -112,12 +112,8 @@ export class CertificateService {
         // Process fields
         const fields = this.processTemplateFields(template.fields);
         
-        // Calculate scale factor from template dimensions to fixed certificate dimensions
-        const templateWidth = (template as any).backgroundWidth || 2480;
-        const templateHeight = (template as any).backgroundHeight || 3508;
-        const scaleX = this.CERT_WIDTH / templateWidth;
-        const scaleY = this.CERT_HEIGHT / templateHeight;
-        const scale = Math.min(scaleX, scaleY); // Use same scale for both dimensions
+        // Field coordinates are already in fixed certificate space (2000x1414)
+        // No scaling needed - use coordinates directly
         
         let fieldsAdded = 0;
         const totalFields = fields.length;
@@ -144,10 +140,10 @@ export class CertificateService {
             fabric.Image.fromURL(qrCodeDataUrl, (qrImg) => {
               if (qrImg) {
                 qrImg.set({
-                  left: field.x * scale,
-                  top: field.y * scale,
-                  width: (field.width || 120) * scale,
-                  height: (field.height || 120) * scale,
+                  left: field.x,
+                  top: field.y,
+                  width: field.width || 120,
+                  height: field.height || 120,
                   selectable: false,
                   evented: false,
                   angle: field.rotation || 0
@@ -168,11 +164,11 @@ export class CertificateService {
               }
             });
           } else {
-            // Add text field (scaled to fixed dimensions)
+            // Add text field (coordinates already in fixed cert space)
             const text = new fabric.Textbox(fieldContent, {
-              left: field.x * scale,
-              top: field.y * scale,
-              fontSize: (field.fontSize || 16) * scale,
+              left: field.x,
+              top: field.y,
+              fontSize: field.fontSize || 16,
               fontFamily: field.fontFamily || 'Arial',
               fill: field.color || '#000000',
               fontWeight: field.fontWeight || 'normal',
@@ -180,7 +176,7 @@ export class CertificateService {
               selectable: false,
               evented: false,
               angle: field.rotation || 0,
-              width: field.maxWidth ? field.maxWidth * scale : undefined
+              width: field.maxWidth
             });
 
             canvas.add(text);
