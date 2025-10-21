@@ -1,6 +1,7 @@
-import puppeteer from 'puppeteer';
+import { fabric } from 'fabric';
 import QRCode from 'qrcode';
 import { prisma } from './prisma';
+import { generateCertificateFromCanvas } from './pdf-generator';
 
 export interface CertificateField {
   id: string;
@@ -37,6 +38,10 @@ export interface CertificateData {
 }
 
 export class CertificateService {
+  // Use same fixed dimensions as certificate builder
+  private static readonly CERT_WIDTH = 2000;
+  private static readonly CERT_HEIGHT = 1414;
+
   static async generateCertificatePDF(templateId: string, data: CertificateData): Promise<Buffer> {
     const template = await prisma.certificateTemplate.findUnique({
       where: { id: templateId }
@@ -57,48 +62,152 @@ export class CertificateService {
       }
     });
 
-    // Create HTML template
-    const html = this.generateHTML(template, data, qrCodeDataUrl);
-
-    // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-
-    try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      // Calculate page dimensions based on template size
-      const templateWidth = (template as any).backgroundWidth || 2480;
-      const templateHeight = (template as any).backgroundHeight || 3508;
-      
-      // Set page to match template dimensions (convert pixels to points: 1px = 0.75pt)
-      const pageWidth = templateWidth * 0.75;
-      const pageHeight = templateHeight * 0.75;
-      
-      const pdfBuffer = await page.pdf({
-        width: pageWidth,
-        height: pageHeight,
-        printBackground: true,
-        margin: { top: 0, right: 0, bottom: 0, left: 0 }
-      });
-
-      return Buffer.from(pdfBuffer);
-    } finally {
-      await browser.close();
-    }
+    // Create canvas and render certificate exactly like the builder
+    const canvasDataUrl = await this.generateCertificateCanvas(template, data, qrCodeDataUrl);
+    
+    // Convert canvas to PDF using the same function as the builder
+    const pdfBytes = await generateCertificateFromCanvas(canvasDataUrl);
+    
+    return Buffer.from(pdfBytes);
   }
 
-  private static generateHTML(template: any, data: CertificateData, qrCodeDataUrl: string): string {
-    let fields: CertificateField[] = [];
-    
-    if (Array.isArray(template.fields)) {
-      fields = template.fields;
-    } else if (typeof template.fields === 'object' && template.fields !== null) {
+  private static async generateCertificateCanvas(template: any, data: CertificateData, qrCodeDataUrl: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // Create fabric canvas with FIXED certificate dimensions (same as builder)
+      const canvasElement = fabric.util.createCanvasElement();
+      canvasElement.width = this.CERT_WIDTH;
+      canvasElement.height = this.CERT_HEIGHT;
+      
+      const canvas = new fabric.Canvas(canvasElement, {
+        width: this.CERT_WIDTH,
+        height: this.CERT_HEIGHT,
+        backgroundColor: '#ffffff'
+      });
+
+      // Load background image
+      fabric.Image.fromURL(template.backgroundImage, (backgroundImg) => {
+        if (!backgroundImg) {
+          reject(new Error('Failed to load background image'));
+          return;
+        }
+
+        // Scale background to fit FIXED certificate dimensions (exactly like builder)
+        const imgScale = Math.min(
+          this.CERT_WIDTH / (backgroundImg.width || this.CERT_WIDTH), 
+          this.CERT_HEIGHT / (backgroundImg.height || this.CERT_HEIGHT)
+        );
+        
+        backgroundImg.set({
+          left: 0,
+          top: 0,
+          scaleX: imgScale,
+          scaleY: imgScale,
+          selectable: false,
+          evented: false
+        });
+
+        canvas.add(backgroundImg);
+        canvas.sendToBack(backgroundImg);
+
+        // Process fields
+        const fields = this.processTemplateFields(template.fields);
+        
+        // Calculate scale factor from template dimensions to fixed certificate dimensions
+        const templateWidth = (template as any).backgroundWidth || 2480;
+        const templateHeight = (template as any).backgroundHeight || 3508;
+        const scaleX = this.CERT_WIDTH / templateWidth;
+        const scaleY = this.CERT_HEIGHT / templateHeight;
+        const scale = Math.min(scaleX, scaleY); // Use same scale for both dimensions
+        
+        let fieldsAdded = 0;
+        const totalFields = fields.length;
+
+        if (totalFields === 0) {
+          // No fields to add, render immediately
+          setTimeout(() => {
+            const dataUrl = canvas.toDataURL({
+              format: 'png',
+              quality: 1.0
+            });
+            canvas.dispose();
+            resolve(dataUrl);
+          }, 100);
+          return;
+        }
+
+        // Add each field to canvas (scaled to fixed dimensions)
+        fields.forEach((field: CertificateField) => {
+          const fieldContent = this.getFieldContentForCanvas(field, data, qrCodeDataUrl);
+          
+          if (field.type === 'QR_CODE') {
+            // Add QR code as image
+            fabric.Image.fromURL(qrCodeDataUrl, (qrImg) => {
+              if (qrImg) {
+                qrImg.set({
+                  left: field.x * scale,
+                  top: field.y * scale,
+                  width: (field.width || 120) * scale,
+                  height: (field.height || 120) * scale,
+                  selectable: false,
+                  evented: false,
+                  angle: field.rotation || 0
+                });
+                canvas.add(qrImg);
+              }
+              
+              fieldsAdded++;
+              if (fieldsAdded === totalFields) {
+                setTimeout(() => {
+                  const dataUrl = canvas.toDataURL({
+                    format: 'png',
+                    quality: 1.0
+                  });
+                  canvas.dispose();
+                  resolve(dataUrl);
+                }, 100);
+              }
+            });
+          } else {
+            // Add text field (scaled to fixed dimensions)
+            const text = new fabric.Textbox(fieldContent, {
+              left: field.x * scale,
+              top: field.y * scale,
+              fontSize: (field.fontSize || 16) * scale,
+              fontFamily: field.fontFamily || 'Arial',
+              fill: field.color || '#000000',
+              fontWeight: field.fontWeight || 'normal',
+              textAlign: field.textAlign || 'left',
+              selectable: false,
+              evented: false,
+              angle: field.rotation || 0,
+              width: field.maxWidth ? field.maxWidth * scale : undefined
+            });
+
+            canvas.add(text);
+            
+            fieldsAdded++;
+            if (fieldsAdded === totalFields) {
+              setTimeout(() => {
+                const dataUrl = canvas.toDataURL({
+                  format: 'png',
+                  quality: 1.0
+                });
+                canvas.dispose();
+                resolve(dataUrl);
+              }, 100);
+            }
+          }
+        });
+      });
+    });
+  }
+
+  private static processTemplateFields(fields: any): CertificateField[] {
+    if (Array.isArray(fields)) {
+      return fields;
+    } else if (typeof fields === 'object' && fields !== null) {
       // Convert old object format to array format
-      fields = Object.entries(template.fields).map(([key, config]: [string, any]) => ({
+      return Object.entries(fields).map(([key, config]: [string, any]) => ({
         id: key,
         type: this.mapFieldKeyToType(key) as CertificateField['type'],
         x: config.x,
@@ -108,108 +217,16 @@ export class CertificateService {
         color: config.color || '#000000',
         textAlign: config.textAlign || 'left',
         maxWidth: config.maxWidth,
-        rotation: config.rotation
+        width: config.width,
+        height: config.height,
+        fontWeight: config.fontWeight || 'normal',
+        rotation: config.rotation || 0
       }));
     }
-    
-    const isRTL = template.language === 'ar';
-
-    // Generate field HTML elements
-    const fieldElements = fields.map((field: CertificateField) => {
-      const style = this.getFieldStyle(field);
-      const content = this.getFieldContent(field, data, qrCodeDataUrl);
-      
-      return `<div style="${style}">${content}</div>`;
-    }).join('');
-
-    return `
-      <!DOCTYPE html>
-      <html lang="${template.language}" dir="${isRTL ? 'rtl' : 'ltr'}">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Certificate</title>
-        <style>
-          @font-face {
-            font-family: 'Kufi';
-            src: url('fonts/kufi.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-          }
-          
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-
-          body {
-            width: ${(template as any).backgroundWidth || 2480}px;
-            height: ${(template as any).backgroundHeight || 3508}px;
-            position: relative;
-            background-image: url('${template.backgroundImage}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            font-family: 'Kufi', sans-serif;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-          }
-
-          .field {
-            position: absolute;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-          }
-
-          .qr-code img {
-            max-width: 100%;
-            height: auto;
-          }
-        </style>
-      </head>
-      <body>
-        ${fieldElements}
-      </body>
-      </html>
-    `;
+    return [];
   }
 
-  private static getFieldStyle(field: CertificateField): string {
-    const styles = [
-      `position: absolute`,
-      `left: ${field.x}px`,
-      `top: ${field.y}px`,
-      `font-size: ${field.fontSize || 16}px`,
-      `font-family: ${field.fontFamily || 'Kufi'}`,
-      `color: ${field.color || '#000000'}`,
-      `text-align: ${field.textAlign || 'left'}`,
-      `font-weight: ${field.fontWeight || 'normal'}`
-    ];
-
-    if (field.maxWidth) {
-      styles.push(`max-width: ${field.maxWidth}px`);
-      styles.push(`white-space: nowrap`);
-      styles.push(`overflow: visible`);
-    }
-
-    if (field.width) {
-      styles.push(`width: ${field.width}px`);
-    }
-
-    if (field.height) {
-      styles.push(`height: ${field.height}px`);
-    }
-
-    if (field.rotation) {
-      styles.push(`transform: rotate(${field.rotation}deg)`);
-    }
-
-    return styles.join('; ');
-  }
-
-  private static getFieldContent(field: CertificateField, data: CertificateData, qrCodeDataUrl: string): string {
+  private static getFieldContentForCanvas(field: CertificateField, data: CertificateData, qrCodeDataUrl: string): string {
     switch (field.type) {
       case 'STUDENT_NAME':
         return data.studentName;
@@ -224,9 +241,7 @@ export class CertificateService {
       case 'CERTIFICATE_ID':
         return data.certificateId;
       case 'QR_CODE':
-        const qrWidth = field.width || 120;
-        const qrHeight = field.height || 120;
-        return `<img src="${qrCodeDataUrl}" alt="QR Code" style="width: ${qrWidth}px; height: ${qrHeight}px; object-fit: contain;" />`;
+        return '[QR]'; // QR code handled separately as image
       default:
         // Handle field.id directly for backward compatibility
         if (field.id === 'studentName') return data.studentName;
