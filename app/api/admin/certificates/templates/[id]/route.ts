@@ -27,15 +27,19 @@ export const GET = withAuth(async (request: AuthenticatedRequest, context?: { pa
 }, { requireAuth: true, requireAdmin: true });
 
 // PUT /api/admin/certificates/templates/[id] - Update template
-export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const PUT = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const resolvedParams = await params;
-    const { name, language, backgroundImage, backgroundWidth, backgroundHeight, fields, isActive } = await request.json();
+    const resolvedParams = await context?.params;
+    if (!resolvedParams?.id) {
+      return NextResponse.json({ error: 'Template ID is required' }, { status: 400 });
+    }
+
+    const { name, language, backgroundImage, fields, isActive } = await request.json();
 
     const template = await prisma.certificateTemplate.update({
       where: { id: resolvedParams.id },
@@ -43,10 +47,8 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, { params }: { 
         name,
         language,
         backgroundImage,
-        backgroundWidth: backgroundWidth || 2480,
-        backgroundHeight: backgroundHeight || 3508,
         fields: fields,
-        isActive,
+        isActive: isActive ?? true,
         updatedAt: new Date()
       }
     });

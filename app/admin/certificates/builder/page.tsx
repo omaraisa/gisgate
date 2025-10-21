@@ -134,8 +134,8 @@ export default function CertificateBuilderPage() {
     const newField: CertificateField = {
       id: `field-${Date.now()}`,
       type: fieldType as CertificateField['type'],
-      x: template.backgroundWidth / 2,
-      y: template.backgroundHeight / 2,
+      x: 100, // Start closer to top-left for testing
+      y: 100,
       fontSize: 48,
       fontFamily: template.language === 'ar' ? 'Arial' : 'Arial',
       color: '#000000',
@@ -208,15 +208,22 @@ export default function CertificateBuilderPage() {
           name: template.name,
           language: template.language,
           backgroundImage: template.backgroundImage,
-          backgroundWidth: template.backgroundWidth,
-          backgroundHeight: template.backgroundHeight,
-          fields: template.fields
+          fields: template.fields,
+          isActive: true
         })
       });
 
       if (response.ok) {
+        const savedTemplate = await response.json();
         alert('تم حفظ القالب بنجاح');
-        window.location.href = '/admin/certificates';
+        
+        // If creating a new template, update the URL to edit mode but stay on the page
+        if (!editingTemplate && savedTemplate.template?.id) {
+          setEditingTemplate(savedTemplate.template.id);
+          // Update the URL without refreshing the page
+          window.history.pushState({}, '', `/admin/certificates/builder?edit=${savedTemplate.template.id}`);
+        }
+        // If editing existing template, just stay on the page
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Failed to save template');

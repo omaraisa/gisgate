@@ -29,7 +29,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { name, language, backgroundImage, backgroundWidth, backgroundHeight, fields } = await request.json();
+    const { name, language, backgroundImage, fields } = await request.json();
 
     if (!name || !language || !backgroundImage || !fields) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -40,8 +40,6 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
         name,
         language,
         backgroundImage,
-        backgroundWidth: backgroundWidth || 2480,
-        backgroundHeight: backgroundHeight || 3508,
         fields: fields,
         isActive: true
       }

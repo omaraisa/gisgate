@@ -182,8 +182,15 @@ export default function FabricCertificateCanvas({
     // Calculate the actual scale for positioning fields
     const actualScale = displayScale * zoom;
 
+    console.log('Adding fields:', fields.length, 'actualScale:', actualScale);
+    console.log('Canvas display size:', CANVAS_DISPLAY_WIDTH, CANVAS_DISPLAY_HEIGHT);
+    console.log('Certificate size:', CERT_WIDTH, CERT_HEIGHT);
+    console.log('Display scale:', displayScale);
+
     // Add field objects
-    fields.forEach(field => {
+    fields.forEach((field, index) => {
+      console.log(`Adding field ${index}:`, field.type, field.x, field.y);
+      
       if (field.type === 'QR_CODE') {
         const qrWidth = (field.width || 150) * actualScale;
         const qrHeight = (field.height || 150) * actualScale;
@@ -218,12 +225,19 @@ export default function FabricCertificateCanvas({
 
         canvas.add(qrRect);
         canvas.add(qrText);
+        console.log('Added QR code at:', field.x * actualScale, field.y * actualScale);
       } else {
-        // Create text field
+        // Create text field with validation
+        const textLeft = field.x * actualScale;
+        const textTop = field.y * actualScale;
+        const textSize = field.fontSize * actualScale;
+        
+        console.log('Text field position:', textLeft, textTop, 'size:', textSize);
+        
         const text = new fabric.Textbox(getFieldDisplayText(field), {
-          left: field.x * actualScale,
-          top: field.y * actualScale,
-          fontSize: field.fontSize * actualScale,
+          left: textLeft,
+          top: textTop,
+          fontSize: Math.max(textSize, 10), // Ensure minimum readable size
           fontFamily: field.fontFamily,
           fill: field.color,
           textAlign: field.textAlign,
@@ -234,6 +248,7 @@ export default function FabricCertificateCanvas({
         });
 
         canvas.add(text);
+        console.log('Added text field:', field.type, 'at position:', textLeft, textTop);
       }
     });
 

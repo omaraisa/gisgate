@@ -60,6 +60,7 @@
     "framer-motion": "^12.23.21",
     "jose": "^6.1.0",
     "konva": "^9.3.6",
+    "lucide-react": "^0.544.0",
     "minio": "^8.0.6",
     "next": "15.5.4",
     "node-fetch": "^3.3.2",
