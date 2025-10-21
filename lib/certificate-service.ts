@@ -70,15 +70,22 @@ export class CertificateService {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
       
-      // Set page to A4 landscape for certificates
+      // Calculate page dimensions based on template size
+      const templateWidth = (template as any).backgroundWidth || 2480;
+      const templateHeight = (template as any).backgroundHeight || 3508;
+      
+      // Set page to match template dimensions (convert pixels to points: 1px = 0.75pt)
+      const pageWidth = templateWidth * 0.75;
+      const pageHeight = templateHeight * 0.75;
+      
       const pdfBuffer = await page.pdf({
-        format: 'A4',
-        landscape: true,
+        width: pageWidth,
+        height: pageHeight,
         printBackground: true,
         margin: { top: 0, right: 0, bottom: 0, left: 0 }
       });
 
-      return pdfBuffer;
+      return Buffer.from(pdfBuffer);
     } finally {
       await browser.close();
     }
@@ -137,8 +144,8 @@ export class CertificateService {
           }
 
           body {
-            width: 2000px;
-            height: 1414px;
+            width: ${(template as any).backgroundWidth || 2480}px;
+            height: ${(template as any).backgroundHeight || 3508}px;
             position: relative;
             background-image: url('${template.backgroundImage}');
             background-size: cover;
@@ -347,7 +354,7 @@ export class CertificateService {
         userId: enrollment.userId,
         enrollmentId: enrollment.id,
         certificateId,
-        data: certificateData
+        data: certificateData as any
       }
     });
 
