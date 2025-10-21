@@ -263,7 +263,7 @@ export const useCourseStore = create<CourseState>((set, get) => ({
 
   checkEnrollmentStatus: (courseId: string) => {
     const enrollments = get().enrollments;
-    return enrollments.some(enrollment => enrollment.courseId === courseId);
+    return enrollments.some(enrollment => enrollment.id === courseId);
   },
 
   // Progress actions

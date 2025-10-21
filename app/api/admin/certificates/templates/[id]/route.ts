@@ -11,6 +11,10 @@ export const GET = withAuth(async (request: AuthenticatedRequest, context?: { pa
     }
 
     const resolvedParams = await context?.params;
+    if (!resolvedParams?.id) {
+      return NextResponse.json({ error: 'Template ID is required' }, { status: 400 });
+    }
+
     const template = await prisma.certificateTemplate.findUnique({
       where: { id: resolvedParams.id }
     });

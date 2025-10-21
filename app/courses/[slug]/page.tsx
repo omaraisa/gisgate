@@ -41,12 +41,35 @@ interface Course {
 interface Enrollment {
   id: string;
   enrolledAt: string;
-  progress: number;
+  completedAt?: string;
   isCompleted: boolean;
+  progress: {
+    percentage: number;
+    completedLessons: number;
+    totalLessons: number;
+    totalWatchTime: number;
+  };
   lessonProgress: Array<{
+    id: string;
     lessonId: string;
-    isCompleted: boolean;
     watchedTime: number;
+    isCompleted: boolean;
+    completedAt?: string;
+    lastWatchedAt: string;
+    lesson: {
+      id: string;
+      title: string;
+      slug: string;
+      duration?: string;
+      order: number;
+    };
+  }>;
+  certificates: Array<{
+    id: string;
+    certificateId: string;
+    templateName: string;
+    language: string;
+    earnedAt: string;
   }>;
 }
 
@@ -62,7 +85,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const { enrollInCourse, fetchEnrollments, enrollments } = useCourseStore();
 
   // Get enrollment for this course
-  const enrollment = enrollments.find(e => e.courseId === course?.id) || null;
+  const enrollment = enrollments.find(e => e.id === course?.id) || null;
 
   useEffect(() => {
     async function initializeParams() {
@@ -123,8 +146,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       const success = await enrollInCourse(course.id);
       if (success) {
         alert('تم التسجيل في الدورة بنجاح!');
-        // Refresh enrollments
-        await fetchEnrollments();
+        // The course store already refreshes enrollments internally
       } else {
         alert('فشل في التسجيل في الدورة');
       }
@@ -292,11 +314,25 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                       </div>
                     ) : (
                       <motion.button
+                        onClick={() => {
+                          // Find the first incomplete lesson or just go to first lesson
+                          const firstIncompleteLesson = course.lessons.find(lesson => {
+                            const lessonProgress = enrollment?.lessonProgress?.find(lp => lp.lessonId === lesson.id);
+                            return !lessonProgress?.isCompleted;
+                          });
+                          
+                          // If no incomplete lesson found (all complete or no progress), go to first lesson
+                          const targetLesson = firstIncompleteLesson || course.lessons[0];
+                          
+                          if (targetLesson) {
+                            window.location.href = `/courses/${course.slug}/lessons/${targetLesson.id}`;
+                          }
+                        }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
                       >
-                        متابعة الدورة ({Math.round(enrollment.progress)}%)
+                        متابعة الدورة ({Math.round((enrollment.progress as any).percentage || 0)}%)
                       </motion.button>
                     )}
                   </>
