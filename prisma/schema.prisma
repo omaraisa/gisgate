@@ -236,7 +236,7 @@ model Certificate {
   createdAt    DateTime           @default(now())
   template     CertificateTemplate @relation(fields: [templateId], references: [id])
   user         User               @relation("UserCertificates", fields: [userId], references: [id])
-  enrollment   CourseEnrollment   @relation(fields: [enrollmentId], references: [id])
+  enrollment   CourseEnrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, enrollmentId])
   @@map("certificates")

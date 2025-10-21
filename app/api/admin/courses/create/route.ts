@@ -125,29 +125,40 @@ export async function POST(request: NextRequest) {
     // Create lessons if provided
     if (courseData.lessons && courseData.lessons.length > 0) {
       for (const lessonData of courseData.lessons) {
+        // Skip lessons without a title
+        if (!lessonData.title || lessonData.title.trim() === '') {
+          continue;
+        }
+
         // Always generate unique slug from lesson title (ignore any user-provided slug)
-        let slug = generateSlug(lessonData.title);
+        const baseSlug = generateSlug(lessonData.title);
+        let slug = baseSlug;
         let counter = 1;
 
-        // Ensure slug is unique within this course
+        // Ensure slug is unique globally (not just within course)
         while (true) {
           const existingLesson = await prisma.video.findFirst({
             where: {
               slug: slug,
-              courseId: newCourse.id,
             },
           });
 
           if (!existingLesson) break;
 
           // If slug exists, append counter
-          slug = `${generateSlug(lessonData.title)}-${counter}`;
+          slug = `${baseSlug}-${counter}`;
           counter++;
+
+          // Prevent infinite loop - if we've tried 100 times, add timestamp
+          if (counter > 100) {
+            slug = `${baseSlug}-${Date.now()}`;
+            break;
+          }
         }
 
         const lesson = await prisma.video.create({
           data: {
-            title: lessonData.title,
+            title: lessonData.title.trim(),
             slug: slug,
             excerpt: lessonData.excerpt || null,
             content: lessonData.content || '',

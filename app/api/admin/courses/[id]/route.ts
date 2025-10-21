@@ -113,17 +113,34 @@ export async function PUT(
 
         if (lessonData.id) {
           // Update existing lesson
+          const updateData: any = {
+            title: lessonData.title,
+            excerpt: lessonData.excerpt,
+            content: lessonData.content,
+            videoUrl: lessonData.videoUrl,
+            duration: lessonData.duration,
+            order: i,
+          };
+
+          // Only update slug if it's different and doesn't conflict
+          if (lessonData.slug && lessonData.slug !== '') {
+            // Check if slug is already taken by another lesson
+            const existingLessonWithSlug = await prisma.video.findFirst({
+              where: {
+                slug: lessonData.slug,
+                id: { not: lessonData.id } // Exclude current lesson
+              },
+            });
+
+            if (!existingLessonWithSlug) {
+              updateData.slug = lessonData.slug;
+            }
+            // If slug conflicts, keep the existing slug
+          }
+
           await prisma.video.update({
             where: { id: lessonData.id },
-            data: {
-              title: lessonData.title,
-              slug: lessonData.slug,
-              excerpt: lessonData.excerpt,
-              content: lessonData.content,
-              videoUrl: lessonData.videoUrl,
-              duration: lessonData.duration,
-              order: i,
-            }
+            data: updateData
           })
 
           // Handle attachments for existing lesson
@@ -148,11 +165,29 @@ export async function PUT(
             }
           }
         } else {
-          // Create new lesson
+          // Create new lesson - generate unique slug
+          let slug = generateSlug(lessonData.title);
+          let counter = 1;
+
+          // Ensure slug is unique globally
+          while (true) {
+            const existingLesson = await prisma.video.findFirst({
+              where: {
+                slug: slug,
+              },
+            });
+
+            if (!existingLesson) break;
+
+            // If slug exists, append counter
+            slug = `${generateSlug(lessonData.title)}-${counter}`;
+            counter++;
+          }
+
           const newLesson = await prisma.video.create({
             data: {
               title: lessonData.title,
-              slug: lessonData.slug,
+              slug: slug,
               excerpt: lessonData.excerpt,
               content: lessonData.content,
               videoUrl: lessonData.videoUrl,
@@ -190,4 +225,13 @@ export async function PUT(
       { status: 500 }
     )
   }
+}
+
+// Helper function to generate slug from title
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
 }
