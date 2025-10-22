@@ -43,10 +43,37 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }, { status: 404 });
     }
 
-    // Generate PDF with the requested language template
+    // Prepare certificate data for the requested language
+    const isArabic = language === 'ar';
+    
+    const studentName = isArabic 
+      ? certificate.user.fullNameArabic || `${certificate.user.firstName || ''} ${certificate.user.lastName || ''}`.trim() || certificate.user.email
+      : certificate.user.fullNameEnglish || `${certificate.user.firstName || ''} ${certificate.user.lastName || ''}`.trim() || certificate.user.email;
+
+    const courseTitle = isArabic 
+      ? certificate.enrollment.course.title
+      : certificate.enrollment.course.titleEnglish || certificate.enrollment.course.title;
+
+    const instructor = isArabic 
+      ? certificate.enrollment.course.authorName || 'عمر الهادي'
+      : certificate.enrollment.course.authorNameEnglish || certificate.enrollment.course.authorName || 'Omar Elhadi';
+
+    const certificateData = {
+      studentName,
+      courseTitle,
+      completionDate: isArabic 
+        ? certificate.enrollment.completedAt?.toLocaleDateString('ar-SA') || new Date().toLocaleDateString('ar-SA')
+        : certificate.enrollment.completedAt?.toLocaleDateString('en-US') || new Date().toLocaleDateString('en-US'),
+      duration: certificate.enrollment.course.duration || undefined,
+      instructor,
+      certificateId: certificate.certificateId,
+      language: language
+    };
+
+    // Generate PDF with the requested language template and data
     const pdfBuffer = await CertificateService.generateCertificatePDF(
       template.id,
-      certificate.data as any
+      certificateData
     );
 
     // Return PDF with proper headers

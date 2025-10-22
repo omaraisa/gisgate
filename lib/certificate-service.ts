@@ -336,8 +336,8 @@ export class CertificateService {
     const isArabic = template.language === 'ar';
     
     const studentName = isArabic 
-      ? enrollment.user.fullNameArabic || `${enrollment.user.firstName} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email
-      : enrollment.user.fullNameEnglish || `${enrollment.user.firstName} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email;
+      ? enrollment.user.fullNameArabic || `${enrollment.user.firstName || ''} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email
+      : enrollment.user.fullNameEnglish || `${enrollment.user.firstName || ''} ${enrollment.user.lastName || ''}`.trim() || enrollment.user.email;
 
     // Course title based on certificate language (not course language)
     const courseTitle = isArabic 

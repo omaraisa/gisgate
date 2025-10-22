@@ -25,9 +25,9 @@ model Article {
   viewCount       Int            @default(0)
   category        String?
   tags            String?
+  authorSlug      String?
   authorId        String?
   authorName      String?
-  authorSlug      String?
   images          ArticleImage[]
   author          User?          @relation("UserArticles", fields: [authorId], references: [id])
 
@@ -35,35 +35,35 @@ model Article {
 }
 
 model Video {
-  id              String         @id @default(uuid())
+  id              String           @id @default(uuid())
   title           String
-  slug            String         @unique
+  slug            String           @unique
   excerpt         String?
   content         String
   videoUrl        String?
   duration        String?
   thumbnail       String?
   featuredImage   String?
-  status          ArticleStatus  @default(DRAFT)
+  status          ArticleStatus    @default(DRAFT)
   publishedAt     DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   metaTitle       String?
   metaDescription String?
-  aiGenerated     Boolean        @default(false)
+  aiGenerated     Boolean          @default(false)
   aiPrompt        String?
-  viewCount       Int            @default(0)
+  viewCount       Int              @default(0)
   category        String?
   tags            String?
   authorId        String?
   authorName      String?
   authorSlug      String?
-  images          VideoImage[]
-  author          User?          @relation("UserVideos", fields: [authorId], references: [id])
   courseId        String?
-  course          Course?        @relation("CourseLessons", fields: [courseId], references: [id])
-  order           Int            @default(0)
+  order           Int              @default(0)
   progress        LessonProgress[]
+  images          VideoImage[]
+  author          User?            @relation("UserVideos", fields: [authorId], references: [id])
+  course          Course?          @relation("CourseLessons", fields: [courseId], references: [id])
 
   @@map("videos")
 }
@@ -80,50 +80,50 @@ model ArticleImage {
 }
 
 model VideoImage {
-  id      String @id @default(uuid())
+  id      String  @id @default(uuid())
   url     String
   alt     String?
   caption String?
   videoId String
-  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  video   Video   @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@map("video_images")
 }
 
 model User {
-  id                       String        @id @default(uuid())
-  email                    String        @unique
-  username                 String?       @unique
+  id                       String             @id @default(uuid())
+  email                    String             @unique
+  username                 String?            @unique
   password                 String
   firstName                String?
   lastName                 String?
-  fullNameArabic           String?
-  fullNameEnglish          String?
   avatar                   String?
   bio                      String?
   website                  String?
-  emailVerified            Boolean       @default(false)
-  emailVerificationToken   String?       @unique
+  emailVerified            Boolean            @default(false)
+  emailVerificationToken   String?            @unique
   emailVerificationExpires DateTime?
-  passwordResetToken       String?       @unique
+  passwordResetToken       String?            @unique
   passwordResetExpires     DateTime?
-  isActive                 Boolean       @default(true)
+  isActive                 Boolean            @default(true)
   lastLogin                DateTime?
-  loginAttempts            Int           @default(0)
+  loginAttempts            Int                @default(0)
   lockUntil                DateTime?
-  role                     UserRole      @default(USER)
-  wordpressId              Int?          @unique
+  role                     UserRole           @default(USER)
+  wordpressId              Int?               @unique
   wordpressMeta            String?
-  createdAt                DateTime      @default(now())
-  updatedAt                DateTime      @updatedAt
-  articles                 Article[]     @relation("UserArticles")
-  videos                   Video[]       @relation("UserVideos")
-  courses                  Course[]      @relation("UserCourses")
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  fullNameArabic           String?
+  fullNameEnglish          String?
+  articles                 Article[]          @relation("UserArticles")
+  certificates             Certificate[]      @relation("UserCertificates")
   enrollments              CourseEnrollment[] @relation("UserEnrollments")
-  progress                 LessonProgress[] @relation("UserProgress")
+  courses                  Course[]           @relation("UserCourses")
+  progress                 LessonProgress[]   @relation("UserProgress")
+  payments                 PaymentOrder[]     @relation("UserPayments")
   sessions                 UserSession[]
-  certificates             Certificate[] @relation("UserCertificates")
-  payments                 PaymentOrder[] @relation("UserPayments")
+  videos                   Video[]            @relation("UserVideos")
 
   @@map("users")
 }
@@ -143,50 +143,50 @@ model UserSession {
 }
 
 model Course {
-  id              String           @id @default(uuid())
-  title           String
-  titleEnglish    String?
-  slug            String           @unique
-  description     String?
-  excerpt         String?
-  featuredImage   String?
-  category        String?
-  tags            String?
-  status          ArticleStatus    @default(DRAFT)
-  publishedAt     DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  price           Float?           @default(0)
-  currency        String?          @default("USD")
-  isFree          Boolean          @default(true)
-  isPrivate       Boolean          @default(false)
-  authorId        String?
-  authorName      String?
+  id                String             @id @default(uuid())
+  title             String
+  slug              String             @unique
+  description       String?
+  excerpt           String?
+  featuredImage     String?
+  category          String?
+  tags              String?
+  status            ArticleStatus      @default(DRAFT)
+  publishedAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  price             Float?             @default(0)
+  currency          String?            @default("USD")
+  isFree            Boolean            @default(true)
+  isPrivate         Boolean            @default(false)
+  authorId          String?
+  authorName        String?
+  totalLessons      Int                @default(0)
+  duration          String?
+  level             CourseLevel        @default(BEGINNER)
+  language          String?            @default("ar")
+  titleEnglish      String?
   authorNameEnglish String?
-  author          User?            @relation("UserCourses", fields: [authorId], references: [id])
-  lessons         Video[]          @relation("CourseLessons")
-  enrollments     CourseEnrollment[]
-  totalLessons    Int              @default(0)
-  duration        String?
-  level           CourseLevel      @default(BEGINNER)
-  language        String?          @default("ar")
-  paymentOrders   PaymentOrder[]
+  enrollments       CourseEnrollment[]
+  author            User?              @relation("UserCourses", fields: [authorId], references: [id])
+  paymentOrders     PaymentOrder[]
+  lessons           Video[]            @relation("CourseLessons")
 
   @@map("courses")
 }
 
 model CourseEnrollment {
-  id            String            @id @default(uuid())
-  userId        String
-  courseId      String
-  enrolledAt    DateTime          @default(now())
-  completedAt   DateTime?
-  progress      Float             @default(0)
-  isCompleted   Boolean           @default(false)
-  user          User              @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
-  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id             String           @id @default(uuid())
+  userId         String
+  courseId       String
+  enrolledAt     DateTime         @default(now())
+  completedAt    DateTime?
+  progress       Float            @default(0)
+  isCompleted    Boolean          @default(false)
+  certificates   Certificate[]
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user           User             @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
   lessonProgress LessonProgress[]
-  certificates  Certificate[]
 
   @@unique([userId, courseId])
   @@map("course_enrollments")
@@ -197,96 +197,96 @@ model LessonProgress {
   userId        String
   lessonId      String
   enrollmentId  String
-  watchedTime   Int              @default(0) // in seconds
+  watchedTime   Int              @default(0)
   isCompleted   Boolean          @default(false)
   completedAt   DateTime?
   lastWatchedAt DateTime         @default(now())
-  user          User             @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
-  lesson        Video            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson        Video            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user          User             @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("lesson_progress")
 }
 
 model CertificateTemplate {
-  id              String        @id @default(uuid())
-  name            String        // "Arabic Certificate", "English Certificate"
-  language        String        // "ar", "en"
-  backgroundImage String        // URL to uploaded background image
-  backgroundWidth Int           @default(2480) // Image width in pixels
-  backgroundHeight Int          @default(3508) // Image height in pixels
-  fields          Json          // Array of field configurations
-  isActive        Boolean       @default(true)
-  isDefault       Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  language         String
+  backgroundImage  String
+  fields           Json
+  isActive         Boolean  @default(true)
+  isDefault        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  backgroundHeight Int      @default(3508)
+  backgroundWidth  Int      @default(2480)
 
   @@map("certificate_templates")
 }
 
 model Certificate {
-  id           String              @id @default(uuid())
-  userId       String
-  enrollmentId String
-  certificateId String            @unique // Public certificate ID for verification
-  data         Json               // Generated certificate data (base data, language-agnostic)
-  arTemplateId String?            // Arabic template ID used
-  enTemplateId String?            // English template ID used
-  createdAt    DateTime           @default(now())
-  user         User               @relation("UserCertificates", fields: [userId], references: [id])
-  enrollment   CourseEnrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  id            String           @id @default(uuid())
+  userId        String
+  enrollmentId  String
+  certificateId String           @unique
+  data          Json
+  createdAt     DateTime         @default(now())
+  arTemplateId  String?
+  enTemplateId  String?
+  enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  user          User             @relation("UserCertificates", fields: [userId], references: [id])
 
   @@unique([userId, enrollmentId])
   @@map("certificates")
 }
 
 model PaymentOrder {
-  id            String            @id @default(uuid())
-  userId        String
-  courseId      String
-  amount        Float
-  currency      String            @default("USD")
-  status        PaymentStatus     @default(PENDING)
-  paypalOrderId String?
+  id              String               @id @default(uuid())
+  userId          String
+  courseId        String
+  amount          Float
+  currency        String               @default("USD")
+  status          PaymentStatus        @default(PENDING)
+  paypalOrderId   String?
   paypalPaymentId String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  paidAt        DateTime?
-  user          User              @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
-  course        Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  transactions  PaymentTransaction[]
-  refunds       PaymentRefund[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  paidAt          DateTime?
+  course          Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user            User                 @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+  refunds         PaymentRefund[]
+  transactions    PaymentTransaction[]
 
   @@map("payment_orders")
 }
 
 model PaymentTransaction {
-  id            String            @id @default(uuid())
-  orderId       String
-  paypalTransactionId String      @unique
-  amount        Float
-  currency      String            @default("USD")
-  status        PaymentStatus     @default(PENDING)
-  paypalFee     Float?
-  netAmount     Float?
-  createdAt     DateTime          @default(now())
-  order         PaymentOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                  String        @id @default(uuid())
+  orderId             String
+  paypalTransactionId String        @unique
+  amount              Float
+  currency            String        @default("USD")
+  status              PaymentStatus @default(PENDING)
+  paypalFee           Float?
+  netAmount           Float?
+  createdAt           DateTime      @default(now())
+  order               PaymentOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("payment_transactions")
 }
 
 model PaymentRefund {
-  id            String            @id @default(uuid())
-  orderId       String
-  paypalRefundId String           @unique
-  amount        Float
-  currency      String            @default("USD")
-  reason        String?
-  status        RefundStatus      @default(PENDING)
-  requestedAt   DateTime          @default(now())
-  processedAt   DateTime?
-  order         PaymentOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  orderId        String
+  paypalRefundId String       @unique
+  amount         Float
+  currency       String       @default("USD")
+  reason         String?
+  status         RefundStatus @default(PENDING)
+  requestedAt    DateTime     @default(now())
+  processedAt    DateTime?
+  order          PaymentOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("payment_refunds")
 }

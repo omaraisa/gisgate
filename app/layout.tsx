@@ -14,6 +14,11 @@ const kufi = localFont({
   variable: "--font-kufi",
 });
 
+const aldrich = localFont({
+  src: "../fonts/Aldrich.ttf",
+  variable: "--font-aldrich",
+});
+
 export const metadata: Metadata = {
   title: "بوابة نظم المعلومات الجغرافية",
   description: "بوابة تعليمية لنظم المعلومات الجغرافية",
@@ -27,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body
-        className={`${kufi.variable} font-sans antialiased`}
+        className={`${kufi.variable} ${aldrich.variable} font-sans antialiased`}
       >
         <ErrorBoundary>
           <StoreProvider>

@@ -46,8 +46,8 @@ interface CertificateTemplate {
 }
 
 const FIELD_TYPES = [
-  { type: 'STUDENT_NAME', label: 'اسم الطالب', defaultText: 'محمد أحمد علي' },
-  { type: 'COURSE_TITLE', label: 'عنوان الدورة', defaultText: 'مقدمة في نظم المعلومات الجغرافية' },
+  { type: 'STUDENT_NAME', label: 'اسم الطالب', defaultText: 'عمر الهادي Adam Elhag' },
+  { type: 'COURSE_TITLE', label: 'عنوان الدورة', defaultText: 'مقدمة في نظم Geospatial Science' },
   { type: 'COMPLETION_DATE', label: 'تاريخ الإكمال', defaultText: '15 سبتمبر 2025' },
   { type: 'DURATION', label: 'مدة الدورة', defaultText: '8 ساعات' },
   { type: 'INSTRUCTOR', label: 'المدرب', defaultText: 'عمر الهادي' },

@@ -51,7 +51,12 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       prisma.certificate.findMany({
         skip,
         take: limit,
-        include: {
+        select: {
+          id: true,
+          certificateId: true,
+          arTemplateId: true,
+          enTemplateId: true,
+          createdAt: true,
           user: {
             select: {
               id: true,
@@ -60,13 +65,6 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
               lastName: true,
               fullNameArabic: true,
               fullNameEnglish: true
-            }
-          },
-          template: {
-            select: {
-              id: true,
-              name: true,
-              language: true
             }
           },
           enrollment: {

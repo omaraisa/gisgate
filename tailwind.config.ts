@@ -43,7 +43,7 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-kufi)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-kufi)', 'var(--font-aldrich)','system-ui', 'sans-serif'],
       },
     },
   },
