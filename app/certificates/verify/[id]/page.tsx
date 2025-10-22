@@ -60,7 +60,7 @@ export default function CertificateVerifyPage() {
   };
 
   const downloadCertificate = () => {
-    window.open(`/api/certificates/${certificateId}/download`, '_blank');
+    window.open(`/certificates/${certificateId}?lang=ar`, '_blank');
   };
 
   if (loading) {

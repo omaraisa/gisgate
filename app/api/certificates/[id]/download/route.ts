@@ -70,19 +70,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       language: language
     };
 
-    // Generate PDF with the requested language template and data
-    const pdfBuffer = await CertificateService.generateCertificatePDF(
-      template.id,
-      certificateData
-    );
-
-    // Return PDF with proper headers
-    return new NextResponse(pdfBuffer as any, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="certificate-${certificateId}-${language}.pdf"`,
-        'Cache-Control': 'no-cache'
-      }
+    // Return template and data for client-side PDF generation
+    return NextResponse.json({
+      template: {
+        id: template.id,
+        name: template.name,
+        language: template.language,
+        backgroundImage: template.backgroundImage,
+        backgroundWidth: template.backgroundWidth,
+        backgroundHeight: template.backgroundHeight,
+        fields: template.fields
+      },
+      data: certificateData,
+      certificateId: certificate.certificateId,
+      language: language
     });
 
   } catch (error) {
