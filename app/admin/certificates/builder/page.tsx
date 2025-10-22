@@ -137,7 +137,7 @@ export default function CertificateBuilderPage() {
       x: 100, // Start closer to top-left for testing
       y: 100,
       fontSize: 48,
-      fontFamily: template.language === 'ar' ? 'Arial' : 'Arial',
+      fontFamily: template.language === 'ar' ? 'Kufi' : 'Arial',
       color: '#000000',
       textAlign: 'center',
       width: fieldType === 'QR_CODE' ? 150 : undefined,
@@ -475,6 +475,8 @@ export default function CertificateBuilderPage() {
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
+                              <option value="Kufi">Kufi (Arabic)</option>
+                              <option value="Aldrich">Aldrich</option>
                               <option value="Arial">Arial</option>
                               <option value="Times New Roman">Times New Roman</option>
                               <option value="Courier New">Courier New</option>
@@ -691,6 +693,8 @@ export default function CertificateBuilderPage() {
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
+                              <option value="Kufi">Kufi (Arabic)</option>
+                              <option value="Aldrich">Aldrich</option>
                               <option value="Arial">Arial</option>
                               <option value="Times New Roman">Times New Roman</option>
                               <option value="Courier New">Courier New</option>
