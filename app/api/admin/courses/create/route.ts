@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
     const newCourse = await prisma.course.create({
       data: {
         title: courseData.title,
+        titleEnglish: courseData.titleEnglish || null,
         slug: courseData.slug,
         description: courseData.description || null,
         excerpt: courseData.excerpt || null,

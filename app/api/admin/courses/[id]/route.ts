@@ -71,6 +71,7 @@ export async function PUT(
       where: { id: resolvedParams.id },
       data: {
         title: data.title,
+        titleEnglish: data.titleEnglish || null,
         slug: data.slug,
         description: data.description,
         excerpt: data.excerpt,

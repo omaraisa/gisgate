@@ -26,27 +26,7 @@ interface Attachment {
 interface ExtendedCourse {
   id?: string
   title: string
-  slug: string
-  description?: string
-  excerpt?: string
-  featuredImage?: string
-  status: ArticleStatus
-  publishedAt?: Date | null
-  category?: string
-  tags?: string
-  price?: number
-  currency?: string
-  isFree: boolean
-  isPrivate: boolean
-  level: CourseLevel
-  language?: string
-  duration?: string
-  lessons?: Lesson[]
-}
-
-interface ExtendedCourse {
-  id?: string
-  title: string
+  titleEnglish?: string
   slug: string
   description?: string
   excerpt?: string
@@ -76,6 +56,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
 
   const [course, setCourse] = useState<ExtendedCourse>({
     title: '',
+    titleEnglish: '',
     slug: '',
     description: '',
     excerpt: '',
@@ -119,6 +100,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
         const courseData = await response.json()
         setCourse({
           ...courseData,
+          titleEnglish: courseData.titleEnglish || '',
           price: courseData.price || 0,
           currency: courseData.currency || 'USD',
           isFree: courseData.isFree !== false,
@@ -357,7 +339,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
           {/* Basic Info */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              العنوان *
+              العنوان (عربي) *
             </label>
             <input
               type="text"
@@ -365,6 +347,19 @@ export default function CourseEditor({ params }: CourseEditorProps) {
               onChange={(e) => handleTitleChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              العنوان (إنجليزي)
+            </label>
+            <input
+              type="text"
+              value={course.titleEnglish || ''}
+              onChange={(e) => setCourse(prev => ({ ...prev, titleEnglish: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="English title (optional)"
             />
           </div>
 
