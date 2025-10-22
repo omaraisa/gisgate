@@ -131,20 +131,36 @@ export default function CertificateBuilderPage() {
   };
 
   const addField = (fieldType: string) => {
+    // Use different positions for different field types to avoid overlap
+    const positions = {
+      'STUDENT_NAME': { x: 200, y: 200 },
+      'COURSE_TITLE': { x: 200, y: 300 },
+      'COMPLETION_DATE': { x: 200, y: 400 },
+      'DURATION': { x: 200, y: 500 }, // Specific position for duration
+      'INSTRUCTOR': { x: 200, y: 600 },
+      'CERTIFICATE_ID': { x: 200, y: 700 },
+      'QR_CODE': { x: 200, y: 800 }
+    };
+    
+    const position = positions[fieldType as keyof typeof positions] || { x: 100, y: 100 };
+    
     const newField: CertificateField = {
       id: `field-${Date.now()}`,
       type: fieldType as CertificateField['type'],
-      x: 100, // Start closer to top-left for testing
-      y: 100,
+      x: position.x,
+      y: position.y,
       fontSize: 48,
-      fontFamily: template.language === 'ar' ? 'Kufi' : 'Arial',
-      color: '#000000',
+      fontFamily: template.language === 'ar' ? 'Arial' : 'Arial',
+      color: '#FF0000', // Use red color for better visibility during testing
       textAlign: 'center',
       width: fieldType === 'QR_CODE' ? 150 : undefined,
       height: fieldType === 'QR_CODE' ? 150 : undefined,
+      maxWidth: fieldType !== 'QR_CODE' ? 500 : undefined, // Set maxWidth for text fields
       fontWeight: 'bold',
       rotation: 0
     };
+
+    console.log('Creating new field:', fieldType, 'at position:', position);
 
     setTemplate(prev => ({
       ...prev,
@@ -215,7 +231,7 @@ export default function CertificateBuilderPage() {
 
       if (response.ok) {
         const savedTemplate = await response.json();
-        alert('تم حفظ القالب بنجاح');
+        console.log('تم حفظ القالب بنجاح');
         
         // If creating a new template, update the URL to edit mode but stay on the page
         if (!editingTemplate && savedTemplate.template?.id) {
@@ -475,13 +491,13 @@ export default function CertificateBuilderPage() {
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
-                              <option value="Kufi">Kufi (Arabic)</option>
-                              <option value="Aldrich">Aldrich</option>
                               <option value="Arial">Arial</option>
                               <option value="Times New Roman">Times New Roman</option>
                               <option value="Courier New">Courier New</option>
                               <option value="Georgia">Georgia</option>
                               <option value="Verdana">Verdana</option>
+                              <option value="Aldrich">Aldrich</option>
+                              <option value="Kufi">Kufi</option>
                             </select>
                           </div>
 
@@ -693,13 +709,13 @@ export default function CertificateBuilderPage() {
                               onChange={(e) => updateField(field.id, { fontFamily: e.target.value })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
-                              <option value="Kufi">Kufi (Arabic)</option>
-                              <option value="Aldrich">Aldrich</option>
                               <option value="Arial">Arial</option>
                               <option value="Times New Roman">Times New Roman</option>
                               <option value="Courier New">Courier New</option>
                               <option value="Georgia">Georgia</option>
                               <option value="Verdana">Verdana</option>
+                              <option value="Aldrich">Aldrich</option>
+                              <option value="Kufi">Kufi</option>
                             </select>
                           </div>
 

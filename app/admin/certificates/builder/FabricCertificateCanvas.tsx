@@ -182,14 +182,8 @@ export default function FabricCertificateCanvas({
     // Calculate the actual scale for positioning fields
     const actualScale = displayScale * zoom;
 
-    console.log('Adding fields:', fields.length, 'actualScale:', actualScale);
-    console.log('Canvas display size:', CANVAS_DISPLAY_WIDTH, CANVAS_DISPLAY_HEIGHT);
-    console.log('Certificate size:', CERT_WIDTH, CERT_HEIGHT);
-    console.log('Display scale:', displayScale);
-
     // Add field objects
     fields.forEach((field, index) => {
-      console.log(`Adding field ${index}:`, field.type, field.x, field.y);
       
       if (field.type === 'QR_CODE') {
         const qrWidth = (field.width || 150) * actualScale;
@@ -225,14 +219,16 @@ export default function FabricCertificateCanvas({
 
         canvas.add(qrRect);
         canvas.add(qrText);
-        console.log('Added QR code at:', field.x * actualScale, field.y * actualScale);
       } else {
         // Create text field with validation
         const textLeft = field.x * actualScale;
         const textTop = field.y * actualScale;
         const textSize = field.fontSize * actualScale;
         
-        console.log('Text field position:', textLeft, textTop, 'size:', textSize);
+        // Calculate width - use maxWidth if available, otherwise auto-fit or default
+        const textWidth = field.maxWidth 
+          ? field.maxWidth * actualScale 
+          : Math.max(400 * actualScale, 200); // Default minimum width
         
         const text = new fabric.Textbox(getFieldDisplayText(field), {
           left: textLeft,
@@ -243,12 +239,12 @@ export default function FabricCertificateCanvas({
           textAlign: field.textAlign,
           fontWeight: field.fontWeight || 'normal',
           angle: field.rotation || 0,
-          width: field.maxWidth ? field.maxWidth * actualScale : undefined,
+          width: textWidth,
           data: { fieldId: field.id, fieldType: field.type }
         });
 
         canvas.add(text);
-        console.log('Added text field:', field.type, 'at position:', textLeft, textTop);
+        
       }
     });
 
