@@ -130,7 +130,7 @@ export default function CertificateViewPage() {
       case 'CERTIFICATE_ID':
         return data.certificateId;
       case 'QR_CODE':
-        return '[QR]';
+        return data.certificateId; // Pass certificate ID for QR generation
       default:
         return '';
     }

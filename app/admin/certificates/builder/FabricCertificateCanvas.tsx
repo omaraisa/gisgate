@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
+import QRCode from 'qrcode';
 
 interface CertificateField {
   id: string;
@@ -56,6 +57,27 @@ export default function FabricCertificateCanvas({
   
   // Calculate scale factor to display the certificate in the canvas
   const displayScale = CANVAS_DISPLAY_WIDTH / CERT_WIDTH;
+
+  // Generate QR code URL for verification
+  const generateQRCode = async (certificateId: string): Promise<string> => {
+    try {
+      // Use APP_URL from environment or fallback to current origin
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const verificationUrl = `${baseUrl}/certificates/verify/${certificateId}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      return qrCodeDataUrl;
+    } catch (error) {
+      console.error('Failed to generate QR code:', error);
+      return '';
+    }
+  };
 
   // Initialize Fabric.js canvas
   useEffect(() => {
@@ -189,36 +211,62 @@ export default function FabricCertificateCanvas({
         const qrWidth = (field.width || 150) * actualScale;
         const qrHeight = (field.height || 150) * actualScale;
         
-        // Create QR placeholder as rectangle
-        const qrRect = new fabric.Rect({
-          left: field.x * actualScale,
-          top: field.y * actualScale,
-          width: qrWidth,
-          height: qrHeight,
-          fill: 'rgba(0, 0, 0, 0.1)',
-          stroke: '#000',
-          strokeWidth: 2,
-          angle: field.rotation || 0,
-          data: { fieldId: field.id, fieldType: 'QR_CODE' }
-        });
+        // Get certificate ID from display text or generate a fallback
+        const certificateId = getFieldDisplayText({ ...field, type: 'CERTIFICATE_ID' }) || 'CERT-PREVIEW';
+        
+        // Generate QR code asynchronously
+        generateQRCode(certificateId).then((qrDataUrl) => {
+          if (qrDataUrl) {
+            // Create QR code as image
+            fabric.Image.fromURL(qrDataUrl, (qrImg) => {
+              if (qrImg) {
+                qrImg.set({
+                  left: field.x * actualScale,
+                  top: field.y * actualScale,
+                  scaleX: qrWidth / 200, // QR is generated at 200px, scale to desired size
+                  scaleY: qrHeight / 200,
+                  angle: field.rotation || 0,
+                  selectable: true,
+                  data: { fieldId: field.id, fieldType: 'QR_CODE' }
+                });
+                canvas.add(qrImg);
+                canvas.renderAll();
+              }
+            });
+          } else {
+            // Fallback: Create QR placeholder as rectangle if generation fails
+            const qrRect = new fabric.Rect({
+              left: field.x * actualScale,
+              top: field.y * actualScale,
+              width: qrWidth,
+              height: qrHeight,
+              fill: 'rgba(0, 0, 0, 0.1)',
+              stroke: '#000',
+              strokeWidth: 2,
+              angle: field.rotation || 0,
+              data: { fieldId: field.id, fieldType: 'QR_CODE' }
+            });
 
-        // Add QR text label centered in the rectangle
-        const qrText = new fabric.Text('[QR]', {
-          left: field.x * actualScale + qrWidth / 2,
-          top: field.y * actualScale + qrHeight / 2,
-          fontSize: Math.min(qrWidth, qrHeight) * 0.15,
-          fontFamily: 'Arial',
-          fill: '#666',
-          textAlign: 'center',
-          originX: 'center',
-          originY: 'center',
-          selectable: false,
-          evented: false,
-          data: { fieldId: field.id, fieldType: 'QR_TEXT', parentId: field.id }
-        });
+            // Add QR text label centered in the rectangle
+            const qrText = new fabric.Text('[QR]', {
+              left: field.x * actualScale + qrWidth / 2,
+              top: field.y * actualScale + qrHeight / 2,
+              fontSize: Math.min(qrWidth, qrHeight) * 0.15,
+              fontFamily: 'Arial',
+              fill: '#666',
+              textAlign: 'center',
+              originX: 'center',
+              originY: 'center',
+              selectable: false,
+              evented: false,
+              data: { fieldId: field.id, fieldType: 'QR_TEXT', parentId: field.id }
+            });
 
-        canvas.add(qrRect);
-        canvas.add(qrText);
+            canvas.add(qrRect);
+            canvas.add(qrText);
+            canvas.renderAll();
+          }
+        });
       } else {
         // Create text field with validation
         const textLeft = field.x * actualScale;
@@ -288,36 +336,62 @@ export default function FabricCertificateCanvas({
         
         tempCanvas.setBackgroundImage(img, () => {
           // Add fields at actual coordinates
-          fields.forEach(field => {
+          fields.forEach(async (field) => {
             if (field.type === 'QR_CODE') {
               const qrWidth = field.width || 150;
               const qrHeight = field.height || 150;
               
-              const qrRect = new fabric.Rect({
-                left: field.x,
-                top: field.y,
-                width: qrWidth,
-                height: qrHeight,
-                fill: 'rgba(0, 0, 0, 0.1)',
-                stroke: '#000',
-                strokeWidth: 2,
-                angle: field.rotation || 0
-              });
+              // Get certificate ID for QR generation
+              const certificateId = getFieldDisplayText({ ...field, type: 'CERTIFICATE_ID' }) || 'CERT-PREVIEW';
+              
+              try {
+                const qrDataUrl = await generateQRCode(certificateId);
+                if (qrDataUrl) {
+                  fabric.Image.fromURL(qrDataUrl, (qrImg) => {
+                    if (qrImg) {
+                      qrImg.set({
+                        left: field.x,
+                        top: field.y,
+                        scaleX: qrWidth / 200,
+                        scaleY: qrHeight / 200,
+                        angle: field.rotation || 0
+                      });
+                      tempCanvas.add(qrImg);
+                      tempCanvas.renderAll();
+                    }
+                  });
+                } else {
+                  throw new Error('QR generation failed');
+                }
+              } catch (error) {
+                // Fallback: Add placeholder rectangle if QR generation fails
+                const qrRect = new fabric.Rect({
+                  left: field.x,
+                  top: field.y,
+                  width: qrWidth,
+                  height: qrHeight,
+                  fill: 'rgba(0, 0, 0, 0.1)',
+                  stroke: '#000',
+                  strokeWidth: 2,
+                  angle: field.rotation || 0
+                });
 
-              const qrText = new fabric.Text('[QR]', {
-                left: field.x + qrWidth / 2,
-                top: field.y + qrHeight / 2,
-                fontSize: Math.min(qrWidth, qrHeight) * 0.15,
-                fontFamily: 'Arial',
-                fill: '#666',
-                textAlign: 'center',
-                originX: 'center',
-                originY: 'center',
-                angle: field.rotation || 0
-              });
+                const qrText = new fabric.Text('[QR]', {
+                  left: field.x + qrWidth / 2,
+                  top: field.y + qrHeight / 2,
+                  fontSize: Math.min(qrWidth, qrHeight) * 0.15,
+                  fontFamily: 'Arial',
+                  fill: '#666',
+                  textAlign: 'center',
+                  originX: 'center',
+                  originY: 'center',
+                  angle: field.rotation || 0
+                });
 
-              tempCanvas.add(qrRect);
-              tempCanvas.add(qrText);
+                tempCanvas.add(qrRect);
+                tempCanvas.add(qrText);
+                tempCanvas.renderAll();
+              }
             } else {
               const text = new fabric.Textbox(getFieldDisplayText(field), {
                 left: field.x,
