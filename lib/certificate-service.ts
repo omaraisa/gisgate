@@ -282,7 +282,7 @@ export class CertificateService {
       throw new Error('Course not completed');
     }
 
-    // Check if certificate already exists
+    // Check if certificate already exists for this enrollment (regardless of language)
     const existingCert = await prisma.certificate.findUnique({
       where: { 
         userId_enrollmentId: {
@@ -358,15 +358,23 @@ export class CertificateService {
       language: template.language
     };
 
-    // Create certificate record
+    // Create certificate record with template IDs for both languages
+    const updateData: any = {
+      userId: enrollment.userId,
+      enrollmentId: enrollment.id,
+      certificateId,
+      data: certificateData as any
+    };
+
+    // Track which template was used for which language
+    if (template.language === 'ar') {
+      updateData.arTemplateId = template.id;
+    } else if (template.language === 'en') {
+      updateData.enTemplateId = template.id;
+    }
+
     await prisma.certificate.create({
-      data: {
-        templateId: template.id,
-        userId: enrollment.userId,
-        enrollmentId: enrollment.id,
-        certificateId,
-        data: certificateData as any
-      }
+      data: updateData
     });
 
     return certificateId;

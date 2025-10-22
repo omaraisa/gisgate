@@ -77,12 +77,8 @@ export async function GET(request: NextRequest) {
             id: true,
             certificateId: true,
             createdAt: true,
-            template: {
-              select: {
-                name: true,
-                language: true,
-              },
-            },
+            arTemplateId: true,
+            enTemplateId: true,
           },
         },
       },
@@ -183,8 +179,8 @@ export async function GET(request: NextRequest) {
         certificates: enrollment.certificates.map((cert: any) => ({
           id: cert.id,
           certificateId: cert.certificateId,
-          templateName: cert.template.name,
-          language: cert.template.language,
+          hasArabic: !!cert.arTemplateId,
+          hasEnglish: !!cert.enTemplateId,
           earnedAt: cert.createdAt,
         })),
       };

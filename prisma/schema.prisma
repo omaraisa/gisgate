@@ -221,20 +221,19 @@ model CertificateTemplate {
   isDefault       Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  certificates    Certificate[]
 
   @@map("certificate_templates")
 }
 
 model Certificate {
   id           String              @id @default(uuid())
-  templateId   String
   userId       String
   enrollmentId String
   certificateId String            @unique // Public certificate ID for verification
-  data         Json               // Generated certificate data
+  data         Json               // Generated certificate data (base data, language-agnostic)
+  arTemplateId String?            // Arabic template ID used
+  enTemplateId String?            // English template ID used
   createdAt    DateTime           @default(now())
-  template     CertificateTemplate @relation(fields: [templateId], references: [id])
   user         User               @relation("UserCertificates", fields: [userId], references: [id])
   enrollment   CourseEnrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 

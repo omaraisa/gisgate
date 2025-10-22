@@ -194,7 +194,9 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       
       if (response.ok) {
         const data = await response.json();
-        window.open(data.downloadUrl, '_blank');
+        // Add language parameter to download URL
+        const downloadUrl = `${data.downloadUrl}?lang=${language}`;
+        window.open(downloadUrl, '_blank');
       } else {
         const errorData = await response.json();
         console.error('Certificate download error:', errorData);
