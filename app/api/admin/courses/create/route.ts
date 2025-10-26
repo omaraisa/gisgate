@@ -30,7 +30,8 @@ interface CourseData {
   isPrivate?: boolean
   level?: string
   language?: string
-  duration?: string
+  durationValue?: number
+  durationUnit?: string
   lessons?: any[]
 }
 
@@ -61,7 +62,8 @@ export async function POST(request: NextRequest) {
         isPrivate: formData.get('isPrivate') === 'true',
         level: formData.get('level') as string || CourseLevel.BEGINNER,
         language: formData.get('language') as string || 'ar',
-        duration: formData.get('duration') as string,
+        durationValue: formData.get('durationValue') ? parseInt(formData.get('durationValue') as string) : undefined,
+        durationUnit: formData.get('durationUnit') as string || 'hours',
       }
 
       // Handle featured image upload
@@ -119,7 +121,8 @@ export async function POST(request: NextRequest) {
         isPrivate: courseData.isPrivate || false,
         level: courseData.level as CourseLevel || CourseLevel.BEGINNER,
         language: courseData.language || 'ar',
-        duration: courseData.duration || null,
+        durationValue: courseData.durationValue || null,
+        durationUnit: courseData.durationUnit || null,
       }
     })
 

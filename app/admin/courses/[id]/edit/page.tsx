@@ -41,7 +41,8 @@ interface ExtendedCourse {
   isPrivate: boolean
   level: CourseLevel
   language?: string
-  duration?: string
+  durationValue?: number
+  durationUnit?: string
   lessons?: Lesson[]
 }
 
@@ -70,7 +71,8 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     isPrivate: false,
     level: CourseLevel.BEGINNER,
     language: 'ar',
-    duration: '',
+    durationValue: undefined,
+    durationUnit: 'hours',
     lessons: []
   })
   const [loading, setLoading] = useState(!isNewCourse)
@@ -107,6 +109,8 @@ export default function CourseEditor({ params }: CourseEditorProps) {
           isPrivate: courseData.isPrivate || false,
           level: courseData.level || CourseLevel.BEGINNER,
           language: courseData.language || 'ar',
+          durationValue: courseData.durationValue || undefined,
+          durationUnit: courseData.durationUnit || 'hours',
           lessons: courseData.lessons?.map((lesson: any) => ({
             ...lesson,
             attachments: lesson.images?.map((image: any) => ({
@@ -439,13 +443,26 @@ export default function CourseEditor({ params }: CourseEditorProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 المدة الزمنية
               </label>
-              <input
-                type="text"
-                value={course.duration || ''}
-                onChange={(e) => setCourse(prev => ({ ...prev, duration: e.target.value }))}
-                placeholder="مثال: 4 أسابيع"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  value={course.durationValue || ''}
+                  onChange={(e) => setCourse(prev => ({ ...prev, durationValue: parseInt(e.target.value) || undefined }))}
+                  placeholder="القيمة"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="1"
+                />
+                <select
+                  value={course.durationUnit || 'hours'}
+                  onChange={(e) => setCourse(prev => ({ ...prev, durationUnit: e.target.value }))}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="minutes">دقيقة</option>
+                  <option value="hours">ساعة</option>
+                  <option value="days">يوم</option>
+                  <option value="weeks">أسبوع</option>
+                </select>
+              </div>
             </div>
           </div>
 

@@ -86,7 +86,8 @@ export async function PUT(
         isPrivate: data.isPrivate,
         level: data.level,
         language: data.language,
-        duration: data.duration,
+        durationValue: data.durationValue || null,
+        durationUnit: data.durationUnit || null,
       }
     })
 

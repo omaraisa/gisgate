@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
             level: true,
             language: true,
             totalLessons: true,
-            duration: true,
+            durationValue: true,
+            durationUnit: true,
             createdAt: true,
           },
         },
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true,
                 slug: true,
-                duration: true,
+
                 order: true,
               },
             },

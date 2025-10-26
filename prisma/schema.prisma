@@ -162,7 +162,8 @@ model Course {
   authorId          String?
   authorName        String?
   totalLessons      Int                @default(0)
-  duration          String?
+  durationValue     Int?
+  durationUnit      String?
   level             CourseLevel        @default(BEGINNER)
   language          String?            @default("ar")
   titleEnglish      String?

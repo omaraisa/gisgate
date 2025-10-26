@@ -40,7 +40,7 @@ export default function Footer({ theme = 'dark' }: FooterProps) {
             </form>
           </div>
           <div>
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-secondary-400' : 'text-gray-700'}`}>اشترك معنا</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-secondary-400' : 'text-gray-700'}`}>اشترك في النشرة الإخبارية</h3>
             <form className="space-y-4">
               <input type="text" placeholder="الاسم الأول" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
               <input type="text" placeholder="الاسم الأخير" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />

@@ -42,6 +42,40 @@ export class CertificateService {
   private static readonly CERT_WIDTH = 2000;
   private static readonly CERT_HEIGHT = 1414;
 
+  // Helper function to format duration based on language
+  static formatDuration(value: number | null, unit: string | null, isArabic: boolean): string {
+    if (!value || !unit) return '';
+
+    const unitTranslations = {
+      'minutes': { ar: 'دقيقة', en: 'minute' },
+      'hours': { ar: 'ساعة', en: 'hour' },
+      'days': { ar: 'يوم', en: 'day' },
+      'weeks': { ar: 'أسبوع', en: 'week' }
+    };
+
+    const unitInfo = unitTranslations[unit as keyof typeof unitTranslations];
+    if (!unitInfo) return `${value} ${unit}`;
+
+    const translatedUnit = isArabic ? unitInfo.ar : unitInfo.en;
+    
+    // Handle plural forms and text direction
+    if (isArabic) {
+      // Arabic: unit comes before number, proper plural handling
+      let unitText = translatedUnit;
+      if (value > 1) {
+        // Add proper Arabic plural forms
+        if (unit === 'hours') unitText = 'ساعات';
+        else if (unit === 'days') unitText = 'أيام'; 
+        else if (unit === 'weeks') unitText = 'أسابيع';
+        else if (unit === 'minutes') unitText = 'دقائق';
+      }
+      return `${unitText} ${value}`; // Arabic order: unit first, then number
+    } else {
+      // English plural logic
+      return value === 1 ? `${value} ${translatedUnit}` : `${value} ${translatedUnit}s`;
+    }
+  }
+
   static async generateCertificatePDF(templateId: string, data: CertificateData): Promise<Buffer> {
     const template = await prisma.certificateTemplate.findUnique({
       where: { id: templateId }
@@ -344,13 +378,21 @@ export class CertificateService {
       ? enrollment.course.title // Arabic title
       : enrollment.course.titleEnglish || enrollment.course.title; // English title or fallback
 
+    // Format duration based on certificate language
+    const course = enrollment.course as any; // Type assertion for new duration fields
+    const duration = CertificateService.formatDuration(
+      course.durationValue, 
+      course.durationUnit, 
+      isArabic
+    );
+
     const certificateData: CertificateData = {
       studentName,
       courseTitle,
       completionDate: isArabic 
         ? enrollment.completedAt?.toLocaleDateString('ar-SA') || new Date().toLocaleDateString('ar-SA')
         : enrollment.completedAt?.toLocaleDateString('en-US') || new Date().toLocaleDateString('en-US'),
-      duration: enrollment.course.duration || undefined,
+      duration,
       instructor: isArabic 
         ? enrollment.course.authorName || 'عمر الهادي'
         : enrollment.course.authorNameEnglish || enrollment.course.authorName || 'Omar Elhadi',
