@@ -170,7 +170,7 @@ export default function ArticlesPage() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="mb-8"
           >
-            <div className="text-xl md:text-2xl text-foreground-secondary h-20">
+            <div className="text-xl md:text-2xl text-white h-20">
               <TypeAnimation
                 sequence={[
                   'اكتشف أحدث المقالات في نظم المعلومات الجغرافية',

@@ -104,12 +104,11 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-background/90 backdrop-blur-md border-b border-background/20">
+      <header className="bg-gray-50 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text- hover:text-secondary-400 transition-colors"
-            style={{ color: 'var(--background)' }}
+            className="inline-flex items-center gap-2 text-gray-700 hover:text-secondary-400 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             العودة إلى الرئيسية
