@@ -291,7 +291,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">معلومات أساسية</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات أساسية</h3>
 
               <div className="space-y-4">
                 <div>
@@ -645,7 +645,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
           <div className="space-y-6">
             {/* Publish Settings */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">إعدادات النشر</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">إعدادات النشر</h3>
 
               <div className="space-y-4">
                 <div>
@@ -697,7 +697,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
 
             {/* Categories & Tags */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">التصنيف والوسوم</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">التصنيف والوسوم</h3>
 
               <div className="space-y-4">
                 <div>
@@ -730,7 +730,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
 
             {/* Featured Image */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">الصورة البارزة</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">الصورة البارزة</h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -763,7 +763,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
 
             {/* SEO Settings */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">إعدادات SEO</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">إعدادات SEO</h3>
 
               <div className="space-y-4">
                 <div>

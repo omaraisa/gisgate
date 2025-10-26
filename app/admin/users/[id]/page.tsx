@@ -358,7 +358,7 @@ export default function UserDetailsPage() {
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">معلومات شخصية</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات شخصية</h3>
                   <dl className="space-y-3">
                     <div>
                       <dt className="text-sm font-medium text-gray-500">الاسم الكامل (عربي)</dt>
@@ -396,7 +396,7 @@ export default function UserDetailsPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">معلومات الحساب</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">معلومات الحساب</h3>
                   <dl className="space-y-3">
                     <div>
                       <dt className="text-sm font-medium text-gray-500">معرف المستخدم</dt>
@@ -439,7 +439,7 @@ export default function UserDetailsPage() {
 
             {activeTab === 'enrollments' && (
               <div>
-                <h3 className="text-lg font-semibold mb-4">التسجيلات في الكورسات</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">التسجيلات في الكورسات</h3>
                 {user.enrollments.length === 0 ? (
                   <p className="text-gray-500">لا توجد تسجيلات</p>
                 ) : (
@@ -491,7 +491,7 @@ export default function UserDetailsPage() {
 
             {activeTab === 'certificates' && (
               <div>
-                <h3 className="text-lg font-semibold mb-4">الشهادات المحصلة</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">الشهادات المحصلة</h3>
                 {user.certificates.length === 0 ? (
                   <p className="text-gray-500">لا توجد شهادات</p>
                 ) : (
@@ -526,7 +526,7 @@ export default function UserDetailsPage() {
 
             {activeTab === 'payments' && (
               <div>
-                <h3 className="text-lg font-semibold mb-4">سجل المدفوعات</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">سجل المدفوعات</h3>
                 {user.payments.length === 0 ? (
                   <p className="text-gray-500">لا توجد مدفوعات</p>
                 ) : (
