@@ -79,7 +79,7 @@ export default function Header() {
                 height={isScrolled ? 40 : 60} 
                 className={`mr-3 transition-all duration-300 ${isScrolled ? 'h-10 w-10' : 'h-[60px] w-[60px]'}`} 
               />
-              <h1 className={`font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent transition-all duration-300 ${
+              <h1 className={`font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent transition-all duration-300 ${
                 isScrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
               }`}>
                 <span className="hidden sm:inline">بوابة نظم المعلومات الجغرافية</span>
@@ -98,8 +98,8 @@ export default function Header() {
                       href={item.href}
                       className={`relative px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 ${
                         isActive
-                          ? 'text-lime-300 bg-lime-500/20'
-                          : 'text-white hover:text-lime-300'
+                          ? 'text-secondary-400 bg-secondary-400/20'
+                          : 'text-white hover:text-secondary-400'
                       }`}
                     >
                       {item.label}
@@ -115,7 +115,7 @@ export default function Header() {
                   <div className="relative">
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center space-x-2 space-x-reverse text-white hover:text-lime-300 transition-colors duration-200 focus:outline-none"
+                      className="flex items-center space-x-2 space-x-reverse text-white hover:text-secondary-400 transition-colors duration-200 focus:outline-none"
                     >
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold">
                         {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
@@ -171,7 +171,7 @@ export default function Header() {
                 <div className="flex items-center space-x-4 space-x-reverse">
                   <Link
                     href="/auth"
-                    className="px-4 py-2 text-sm font-medium bg-lime-500 text-green-900 rounded-md hover:bg-lime-400 transition-colors duration-200"
+                    className="px-4 py-2 text-sm font-medium bg-secondary-400 text-primary-700 rounded-md hover:bg-secondary-500 transition-colors duration-200"
                   >
                     تسجيل الدخول
                   </Link>

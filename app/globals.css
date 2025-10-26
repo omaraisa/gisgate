@@ -18,14 +18,58 @@
   font-display: swap;
 }
 
-/* Custom color variables */
+/* Tailwind v4 Custom Theme - Define colors using @theme */
+@theme {
+  /* Primary colors */
+  --color-primary-100: #E8F5E8;
+  --color-primary-200: #C5E6C5;
+  --color-primary-300: #9FD69F;
+  --color-primary-400: #3A5339;
+  --color-primary-500: #293F28;
+  --color-primary-600: #1F311E;
+  --color-primary-700: #152315;
+  
+  /* Secondary colors */
+  --color-secondary-100: #F7FFD9;
+  --color-secondary-200: #EFFFB3;
+  --color-secondary-300: #E7FF8C;
+  --color-secondary-400: #D4FF33;
+  --color-secondary-500: #ADD900;
+  --color-secondary-600: #8BB500;
+  --color-secondary-700: #699100;
+  
+  /* Background colors */
+  --color-background: #0F1310;
+  --color-background-secondary: #1A1F1A;
+  --color-background-tertiary: #242A24;
+  
+  /* Foreground colors */
+  --color-foreground: #F5F7F5;
+  --color-foreground-secondary: #E8EAE8;
+  --color-foreground-muted: #B8C2B8;
+  
+  /* Surface colors */
+  --color-surface: #1A1F1A;
+  --color-surface-elevated: #242A24;
+  --color-surface-hover: #2E332E;
+  
+  /* Border colors */
+  --color-border: #293F28;
+  --color-border-hover: #3A5339;
+  --color-border-focus: #ADD900;
+}
+
+/* Keep legacy CSS variables for custom utilities */
 :root {
+  --font-kufi: 'Kufi', Arial, Helvetica, sans-serif;
+  
+  /* Legacy color variables for custom utilities */
   --primary-400: #3A5339;
   --primary-500: #293F28;
   --primary-600: #1F311E;
   --primary-700: #152315;
   
-  --  : #D4FF33;
+  --secondary-400: #D4FF33;
   --secondary-500: #ADD900;
   --secondary-600: #8BB500;
   --secondary-700: #699100;
@@ -45,13 +89,11 @@
   --border: #293F28;
   --border-hover: #3A5339;
   --border-focus: #ADD900;
-  
-  --font-kufi: 'Kufi', Arial, Helvetica, sans-serif;
 }
 
 /* Base app styling with color system */
 html {
-  background-color: transparent;
+  background-color: var(--background);
   color: var(--foreground);
 }
 
@@ -110,7 +152,6 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, var(--primary-700) 95%, var(--secondary-500) 5%);
   font-family: var(--font-kufi);
   min-height: 100vh;
 }
