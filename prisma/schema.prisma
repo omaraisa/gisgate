@@ -124,6 +124,10 @@ model User {
   payments                 PaymentOrder[]     @relation("UserPayments")
   sessions                 UserSession[]
   videos                   Video[]            @relation("UserVideos")
+  solutions                Solution[]         @relation("UserSolutions")
+  solutionReviews          SolutionReview[]   @relation("UserReviews")
+  solutionPurchases        SolutionPurchase[] @relation("UserPurchases")
+  solutionDownloads        SolutionDownload[] @relation("UserDownloads")
 
   @@map("users")
 }
@@ -327,4 +331,133 @@ enum RefundStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+model Solution {
+  id            String  @id @default(uuid())
+  title         String
+  slug          String  @unique
+  description   String
+  excerpt       String?
+  featuredImage String?
+  images        String? // JSON array of image URLs
+
+  // Solution Type & Category
+  solutionType SolutionType
+  category     String?
+  tags         String?
+
+  // Pricing
+  price    Float?  @default(0)
+  currency String? @default("USD")
+  isFree   Boolean @default(true)
+
+  // Files & Downloads
+  fileUrl          String? // Main download file URL
+  fileSize         String? // e.g., "2.5 MB"
+  fileType         String? // e.g., "Python Script", "ArcGIS Toolbox", etc.
+  demoUrl          String? // Demo/preview URL
+  documentationUrl String? // Documentation link
+  sourceCodeUrl    String? // GitHub or source code link
+
+  // Version & Compatibility
+  version       String?
+  lastUpdated   DateTime?
+  compatibility String? // JSON array: ["ArcGIS Pro 3.x", "QGIS 3.x", etc.]
+  requirements  String? // System requirements
+
+  // Metadata
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Author/Seller
+  authorId   String?
+  authorName String?
+  sellerInfo String? // JSON for future seller details
+
+  // Stats & Engagement
+  viewCount     Int    @default(0)
+  downloadCount Int    @default(0)
+  purchaseCount Int    @default(0)
+  rating        Float? @default(0)
+  reviewCount   Int    @default(0)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  author    User?              @relation("UserSolutions", fields: [authorId], references: [id])
+  reviews   SolutionReview[]
+  purchases SolutionPurchase[]
+  downloads SolutionDownload[]
+
+  @@map("solutions")
+}
+
+model SolutionReview {
+  id         String   @id @default(uuid())
+  solutionId String
+  userId     String
+  rating     Int // 1-5 stars
+  comment    String?
+  isVerified Boolean  @default(false) // Verified purchase
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  solution Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  user     User     @relation("UserReviews", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, solutionId])
+  @@map("solution_reviews")
+}
+
+model SolutionPurchase {
+  id            String        @id @default(uuid())
+  userId        String
+  solutionId    String
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  paypalOrderId String?
+  purchasedAt   DateTime      @default(now())
+
+  solution Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  user     User     @relation("UserPurchases", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("solution_purchases")
+}
+
+model SolutionDownload {
+  id           String   @id @default(uuid())
+  userId       String? // Can be null for anonymous downloads of free items
+  solutionId   String
+  downloadedAt DateTime @default(now())
+  ipAddress    String?
+
+  solution Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  user     User?    @relation("UserDownloads", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("solution_downloads")
+}
+
+enum SolutionType {
+  TOOL // Standalone tools
+  ADDIN // Add-ins/Extensions
+  PLUGIN // Plugins
+  SCRIPT // Python, JavaScript, etc.
+  DATASET // Data files
+  TEMPLATE // Project templates
+  TOOLBOX // ArcGIS Toolboxes
+  MODEL // Model Builder models
+  STYLE // Map styles/symbology
+  WIDGET // Web widgets
+  APPLICATION // Full applications
+  SERVICE // Web services/APIs
+  EXTENSION // Browser extensions
+  LIBRARY // Code libraries
+  CONFIGURATION // Configuration files
+  OTHER // Other types
 }
