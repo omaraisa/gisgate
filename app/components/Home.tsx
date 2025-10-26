@@ -622,105 +622,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Applications Showcase */}
-        <ParallaxSection className="py-20 px-4" offset={30}>
-          <div className="max-w-7xl mx-auto">
-            <MotionCard className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
-                تطبيقات البوابة
-              </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-blue-400 mx-auto rounded-full"></div>
-            </MotionCard>
-
-            <MotionCard delay={0.3}>
-              <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-12 shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                  <div>
-                    <motion.h3 
-                      className="text-3xl font-bold text-white mb-6 flex items-center gap-4"
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      <motion.span
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        🌍
-                      </motion.span>
-                      جي بورتال
-                    </motion.h3>
-                    <p className="text-white/90 text-lg leading-relaxed mb-8">
-                      منصة جي بورتال عبارة عن تطبيق نظم معلومات جغرافية متعدد المهام تم تطويره
-                      ليسمح للمستخدمين بإضافة ورفع مختلف أنواع البيانات مثل الشيبفايل وملفات الإكسل
-                      ومن ثم إجراء مختلف العمليات عليها كالاستكشاف، التحرير، الاستعلام، التحليل، الترميز
-                      ومن ثم تصدير النتائج وطباعة الخرائط.
-                    </p>
-                    <motion.a 
-                      href="https://rebrand.ly/gportal"
-                      whileHover={{ scale: 1.05, rotateX: 10 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
-                    >
-                      <Sparkles className="w-6 h-6" />
-                      جرب الآن
-                      <motion.div
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                      >
-                        <ArrowRight className="w-5 h-5" />
-                      </motion.div>
-                    </motion.a>
-                  </div>
-                  <div className="relative">
-                    <motion.div
-                      whileHover={{ rotateY: 15, rotateX: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      className="relative"
-                    >
-                      <div className="w-full h-80 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-green-400/30">
-                        <motion.div
-                          animate={{ 
-                            scale: [1, 1.1, 1],
-                            opacity: [0.7, 1, 0.7]
-                          }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                          className="text-5xl"
-                        >
-                          🗺️
-                        </motion.div>
-                      </div>
-                      {/* Floating particles around the app preview */}
-                      <motion.div
-                        animate={{ 
-                          y: [0, -20, 0],
-                          opacity: [0.5, 1, 0.5]
-                        }}
-                        transition={{ duration: 4, repeat: Infinity, delay: 0 }}
-                        className="absolute -top-4 -left-4 w-4 h-4 bg-green-400 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ 
-                          y: [0, -15, 0],
-                          opacity: [0.5, 1, 0.5]
-                        }}
-                        transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                        className="absolute -bottom-4 -right-4 w-3 h-3 bg-secondary-400 rounded-full"
-                      />
-                      <motion.div
-                        animate={{ 
-                          y: [0, -25, 0],
-                          opacity: [0.5, 1, 0.5]
-                        }}
-                        transition={{ duration: 5, repeat: Infinity, delay: 2 }}
-                        className="absolute top-1/2 -right-6 w-2 h-2 bg-cyan-400 rounded-full"
-                      />
-                    </motion.div>
-                  </div>
-                </div>
-              </FloatingCard>
-            </MotionCard>
-          </div>
-        </ParallaxSection>
       </div>
 
       {/* Footer */}
