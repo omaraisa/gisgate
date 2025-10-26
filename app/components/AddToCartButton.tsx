@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Course } from '@/lib/stores/course-store';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
@@ -24,12 +25,17 @@ export default function AddToCartButton({
   disabled = false,
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const router = useRouter();
   const { addToCart, isInCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { addNotification } = useUIStore();
 
   const isCourseInCart = isInCart(course.id);
   const isFree = course.isFree || (course.price || 0) === 0;
+
+  const handleFreeCourseClick = () => {
+    router.push(`/courses/${course.slug || course.id}`);
+  };
 
   const handleAddToCart = async () => {
     // Prevent adding if already in cart
@@ -52,11 +58,7 @@ export default function AddToCartButton({
     }
 
     if (isFree) {
-      addNotification({
-        type: 'info',
-        title: 'دورة مجانية',
-        message: 'يمكنك التسجيل في هذه الدورة مباشرة دون إضافتها للعربة',
-      });
+      // Free courses navigate directly to course page
       return;
     }
 
@@ -98,6 +100,7 @@ export default function AddToCartButton({
   if (isFree) {
     return (
       <button
+        onClick={handleFreeCourseClick}
         className={`${buttonClasses} bg-blue-600 hover:bg-blue-700 focus:ring-blue-500`}
         disabled={disabled}
       >
