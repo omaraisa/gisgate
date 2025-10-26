@@ -139,19 +139,45 @@ interface CoursesResponse {
   };
 }
 
+interface Solution {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  featuredImage?: string;
+  solutionType: string;
+  category?: string;
+  isFree: boolean;
+  price?: number;
+  currency?: string;
+  downloadCount: number;
+}
+
+interface SolutionsResponse {
+  solutions: Solution[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [solutions, setSolutions] = useState<Solution[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [articlesResponse, lessonsResponse, coursesResponse] = await Promise.all([
+        const [articlesResponse, lessonsResponse, coursesResponse, solutionsResponse] = await Promise.all([
           fetch('/api/articles?status=PUBLISHED&limit=3'),
           fetch('/api/lessons?status=PUBLISHED&limit=3'),
-          fetch('/api/courses?status=PUBLISHED&limit=3')
+          fetch('/api/courses?status=PUBLISHED&limit=3'),
+          fetch('/api/marketplace?status=PUBLISHED&limit=3')
         ]);
 
         if (articlesResponse.ok) {
@@ -167,6 +193,11 @@ export default function Home() {
         if (coursesResponse.ok) {
           const coursesData = await coursesResponse.json();
           setCourses(coursesData.courses);
+        }
+
+        if (solutionsResponse.ok) {
+          const solutionsData = await solutionsResponse.json();
+          setSolutions(solutionsData.solutions);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -571,6 +602,137 @@ export default function Home() {
             </MotionCard>
           </div>
         </section>
+
+        {/* Marketplace Section */}
+        <ParallaxSection className="py-20 px-4" offset={-50}>
+          <div className="max-w-7xl mx-auto">
+            <MotionCard className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-white mb-4">
+                <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 bg-clip-text text-transparent">
+                  أو تصفح متجر الحلول
+                </span>
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 mx-auto rounded-full"></div>
+            </MotionCard>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full animate-pulse">
+                      <div className="h-48 bg-white/10 rounded-lg mb-4"></div>
+                      <div className="h-6 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded w-2/3"></div>
+                    </div>
+                  </MotionCard>
+                ))
+              ) : solutions.length > 0 ? (
+                solutions.map((solution, index) => (
+                  <MotionCard key={solution.id} delay={index * 0.1}>
+                    <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
+                      <a href={`/marketplace/${solution.slug}`}>
+                        {solution.featuredImage ? (
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={solution.featuredImage} 
+                              alt={solution.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute top-4 right-4">
+                              {solution.isFree ? (
+                                <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                                  مجاني
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 bg-yellow-500 text-white text-xs font-semibold rounded-full">
+                                  ${solution.price}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative h-48 bg-gradient-to-br from-orange-500/20 to-cyan-500/20 flex items-center justify-center">
+                            <motion.div
+                              whileHover={{ rotate: 360 }}
+                              transition={{ duration: 0.6 }}
+                              className="p-6 bg-gradient-to-r from-orange-500 to-cyan-500 rounded-xl text-white"
+                            >
+                              <Globe className="w-12 h-12" />
+                            </motion.div>
+                            <div className="absolute top-4 right-4">
+                              {solution.isFree ? (
+                                <span className="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                                  مجاني
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 bg-yellow-500 text-white text-xs font-semibold rounded-full">
+                                  ${solution.price}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        <div className="p-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="px-2 py-1 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-semibold rounded-full">
+                              {solution.solutionType}
+                            </span>
+                            {solution.category && (
+                              <span className="px-2 py-1 bg-white/10 text-white/80 text-xs rounded-full">
+                                {solution.category}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-orange-300 transition-colors line-clamp-2">
+                            {solution.title}
+                          </h3>
+                          {solution.excerpt && (
+                            <p className="text-white/70 text-sm mb-4 line-clamp-3">
+                              {solution.excerpt}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between text-sm text-white/60 pt-4 border-t border-white/10">
+                            <span className="flex items-center gap-1">
+                              <ArrowRight className="w-4 h-4" />
+                              {solution.downloadCount} تحميل
+                            </span>
+                          </div>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileHover={{ width: "100%" }}
+                            className="h-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 rounded-full mt-4"
+                          />
+                        </div>
+                      </a>
+                    </FloatingCard>
+                  </MotionCard>
+                ))
+              ) : (
+                // Empty state
+                <MotionCard delay={0.2} className="col-span-full">
+                  <div className="text-center py-12">
+                    <Globe className="w-16 h-16 text-white/40 mx-auto mb-4" />
+                    <p className="text-white/70 text-lg">لا توجد حلول متاحة حالياً</p>
+                    <p className="text-white/50 text-sm mt-2">سيتم إضافة الحلول قريباً</p>
+                  </div>
+                </MotionCard>
+              )}
+            </div>
+
+            <MotionCard className="text-center mt-12" delay={0.8}>
+              <motion.a
+                href="/marketplace"
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-block bg-gradient-to-r from-orange-600 via-yellow-600 to-cyan-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-orange-500/25 transition-all duration-300"
+              >
+                تصفح جميع الحلول &gt;&gt;
+              </motion.a>
+            </MotionCard>
+          </div>
+        </ParallaxSection>
 
         {/* What the Portal Offers */}
         <section className="py-20 px-4">
