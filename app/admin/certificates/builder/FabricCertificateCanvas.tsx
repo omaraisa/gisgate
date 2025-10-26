@@ -30,6 +30,7 @@ interface FabricCertificateCanvasProps {
   onUpdateField: (fieldId: string, updates: Partial<CertificateField>) => void;
   getFieldDisplayText: (field: CertificateField) => string;
   zoom: number;
+  readOnly?: boolean; // When true, locks all elements from being edited or selected
 }
 
 export default function FabricCertificateCanvas({
@@ -41,7 +42,8 @@ export default function FabricCertificateCanvas({
   onSelectField,
   onUpdateField,
   getFieldDisplayText,
-  zoom
+  zoom,
+  readOnly = false // Default to editable for backward compatibility
 }: FabricCertificateCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -87,75 +89,77 @@ export default function FabricCertificateCanvas({
       width: CANVAS_DISPLAY_WIDTH,
       height: CANVAS_DISPLAY_HEIGHT,
       backgroundColor: '#f0f0f0',
-      selection: true,
+      selection: !readOnly, // Disable selection in read-only mode
       preserveObjectStacking: true
     });
 
     fabricCanvasRef.current = canvas;
     setIsCanvasReady(true);
 
-    // Canvas event handlers
-    canvas.on('selection:created', (e: any) => {
-      const activeObject = e.selected?.[0];
-      if (activeObject && activeObject.data?.fieldId) {
-        onSelectField(activeObject.data.fieldId);
-      }
-    });
-
-    canvas.on('selection:updated', (e: any) => {
-      const activeObject = e.selected?.[0];
-      if (activeObject && activeObject.data?.fieldId) {
-        onSelectField(activeObject.data.fieldId);
-      }
-    });
-
-    canvas.on('selection:cleared', () => {
-      onSelectField(null);
-    });
-
-    canvas.on('object:modified', (e: any) => {
-      const target = e.target;
-      if (target && target.data?.fieldId) {
-        // Convert canvas coordinates back to actual image coordinates
-        const actualScale = displayScale * zoom;
-        const updates: Partial<CertificateField> = {
-          x: (target.left || 0) / actualScale,
-          y: (target.top || 0) / actualScale,
-          rotation: target.angle || 0
-        };
-
-        if (target.type === 'textbox' || target.type === 'text') {
-          const textObj = target as fabric.Text;
-          updates.fontSize = (textObj.fontSize || 16) / actualScale;
+    // Canvas event handlers - only attach if not in read-only mode
+    if (!readOnly) {
+      canvas.on('selection:created', (e: any) => {
+        const activeObject = e.selected?.[0];
+        if (activeObject && activeObject.data?.fieldId) {
+          onSelectField(activeObject.data.fieldId);
         }
+      });
 
-        if (target.data?.fieldType === 'QR_CODE') {
-          updates.width = (target.width || 150) * (target.scaleX || 1) / actualScale;
-          updates.height = (target.height || 150) * (target.scaleY || 1) / actualScale;
-          
-          // Also update the QR text position
-          const qrText = canvas.getObjects().find((obj: any) => obj.data?.parentId === target.data.fieldId);
-          if (qrText) {
-            const qrWidth = (target.width || 150) * (target.scaleX || 1);
-            const qrHeight = (target.height || 150) * (target.scaleY || 1);
-            qrText.set({
-              left: (target.left || 0) + qrWidth / 2,
-              top: (target.top || 0) + qrHeight / 2,
-              angle: target.angle || 0
-            });
-            qrText.setCoords();
+      canvas.on('selection:updated', (e: any) => {
+        const activeObject = e.selected?.[0];
+        if (activeObject && activeObject.data?.fieldId) {
+          onSelectField(activeObject.data.fieldId);
+        }
+      });
+
+      canvas.on('selection:cleared', () => {
+        onSelectField(null);
+      });
+
+      canvas.on('object:modified', (e: any) => {
+        const target = e.target;
+        if (target && target.data?.fieldId) {
+          // Convert canvas coordinates back to actual image coordinates
+          const actualScale = displayScale * zoom;
+          const updates: Partial<CertificateField> = {
+            x: (target.left || 0) / actualScale,
+            y: (target.top || 0) / actualScale,
+            rotation: target.angle || 0
+          };
+
+          if (target.type === 'textbox' || target.type === 'text') {
+            const textObj = target as fabric.Text;
+            updates.fontSize = (textObj.fontSize || 16) / actualScale;
           }
-        }
 
-        onUpdateField(target.data.fieldId, updates);
-        canvas.renderAll();
-      }
-    });
+          if (target.data?.fieldType === 'QR_CODE') {
+            updates.width = (target.width || 150) * (target.scaleX || 1) / actualScale;
+            updates.height = (target.height || 150) * (target.scaleY || 1) / actualScale;
+            
+            // Also update the QR text position
+            const qrText = canvas.getObjects().find((obj: any) => obj.data?.parentId === target.data.fieldId);
+            if (qrText) {
+              const qrWidth = (target.width || 150) * (target.scaleX || 1);
+              const qrHeight = (target.height || 150) * (target.scaleY || 1);
+              qrText.set({
+                left: (target.left || 0) + qrWidth / 2,
+                top: (target.top || 0) + qrHeight / 2,
+                angle: target.angle || 0
+              });
+              qrText.setCoords();
+            }
+          }
+
+          onUpdateField(target.data.fieldId, updates);
+          canvas.renderAll();
+        }
+      });
+    }
 
     return () => {
       canvas.dispose();
     };
-  }, []);
+  }, [readOnly]); // Re-initialize when readOnly changes
 
   // Update canvas zoom
   useEffect(() => {
@@ -226,7 +230,8 @@ export default function FabricCertificateCanvas({
                   scaleX: qrWidth / 200, // QR is generated at 200px, scale to desired size
                   scaleY: qrHeight / 200,
                   angle: field.rotation || 0,
-                  selectable: true,
+                  selectable: !readOnly, // Lock in read-only mode
+                  evented: !readOnly, // Disable events in read-only mode
                   data: { fieldId: field.id, fieldType: 'QR_CODE' }
                 });
                 canvas.add(qrImg);
@@ -244,6 +249,8 @@ export default function FabricCertificateCanvas({
               stroke: '#000',
               strokeWidth: 2,
               angle: field.rotation || 0,
+              selectable: !readOnly, // Lock in read-only mode
+              evented: !readOnly, // Disable events in read-only mode
               data: { fieldId: field.id, fieldType: 'QR_CODE' }
             });
 
@@ -288,6 +295,9 @@ export default function FabricCertificateCanvas({
           fontWeight: field.fontWeight || 'normal',
           angle: field.rotation || 0,
           width: textWidth,
+          selectable: !readOnly, // Lock in read-only mode
+          editable: !readOnly, // Disable text editing in read-only mode
+          evented: !readOnly, // Disable events in read-only mode
           data: { fieldId: field.id, fieldType: field.type }
         });
 
@@ -305,7 +315,7 @@ export default function FabricCertificateCanvas({
     }
 
     canvas.renderAll();
-  }, [fields, selectedFieldId, zoom, isCanvasReady, getFieldDisplayText, displayScale]);
+  }, [fields, selectedFieldId, zoom, isCanvasReady, getFieldDisplayText, displayScale, readOnly]);
 
   // Export canvas as image for PDF generation
   const exportCanvasImage = () => {

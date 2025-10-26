@@ -245,6 +245,7 @@ export default function CertificateViewPage() {
               onUpdateField={() => {}}
               getFieldDisplayText={getFieldDisplayText}
               zoom={1.0}
+              readOnly={true} // Lock all elements to prevent editing
             />
           </div>
         </div>

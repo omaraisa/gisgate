@@ -250,6 +250,7 @@ export default function CertificateDownloadPage() {
               onUpdateField={() => {}} // Disabled for download view
               getFieldDisplayText={getFieldDisplayText}
               zoom={1.0} // Full size for proper preview
+              readOnly={true} // Lock all elements to prevent editing
             />
           </div>
         </div>
