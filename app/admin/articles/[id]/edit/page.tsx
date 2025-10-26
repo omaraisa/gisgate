@@ -60,6 +60,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
   })
   const [loading, setLoading] = useState(!isNewArticle)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -183,6 +184,32 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       alert('حدث خطأ أثناء الحفظ')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setArticle(prev => ({ ...prev, featuredImage: data.imageUrl }))
+      } else {
+        const error = await response.json()
+        alert(`خطأ في رفع الصورة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('حدث خطأ أثناء رفع الصورة')
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -727,31 +754,61 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">الصورة البارزة</h3>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  رابط الصورة
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  صورة مميزة
                 </label>
-                <input
-                  type="url"
-                  value={article.featuredImage || ''}
-                  onChange={(e) => setArticle((prev: ExtendedArticle) => ({ ...prev, featuredImage: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/image.jpg"
-                />
-                
-                {article.featuredImage && (
-                  <div className="mt-3">
-                    <Image
-                      src={article.featuredImage}
-                      alt="معاينة الصورة"
-                      width={400}
-                      height={128}
-                      className="w-full h-32 object-cover rounded-md"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
+                <div className="space-y-3">
+                  {/* Current Image Preview */}
+                  {article.featuredImage && (
+                    <div className="relative inline-block">
+                      <Image
+                        src={article.featuredImage}
+                        alt="صورة مميزة"
+                        width={128}
+                        height={128}
+                        className="w-32 h-32 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setArticle(prev => ({ ...prev, featuredImage: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+
+                  {/* File Upload */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          handleImageUpload(file)
+                        }
                       }}
+                      disabled={uploadingImage}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                    />
+                    {uploadingImage && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    )}
+                  </div>
+
+                  {/* URL Input as Fallback */}
+                  <div className="text-sm text-gray-600">
+                    أو أدخل رابط الصورة مباشرة:
+                    <input
+                      type="url"
+                      value={article.featuredImage || ''}
+                      onChange={(e) => setArticle(prev => ({ ...prev, featuredImage: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
