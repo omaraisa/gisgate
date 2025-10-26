@@ -63,7 +63,7 @@ export default function Header() {
     { href: '/articles', label: 'مقالات', icon: '📰' },
     { href: '/lessons', label: 'دروس', icon: '🎥' },
     { href: '/courses', label: 'دورات تدريبية', icon: '🎓' },
-    { href: '#', label: 'من نحن', icon: '👥' },
+    { href: '/about', label: 'من نحن', icon: '👥' },
   ] as const;
   return (
     <>
