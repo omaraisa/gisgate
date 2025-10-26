@@ -95,6 +95,20 @@ interface Lesson {
   duration?: string;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage?: string;
+  category?: string;
+  publishedAt?: string;
+  viewCount: number;
+  authorName?: string;
+  duration?: string;
+  price?: number;
+}
+
 interface ArticlesResponse {
   articles: Article[];
   pagination: {
@@ -115,17 +129,29 @@ interface LessonsResponse {
   };
 }
 
+interface CoursesResponse {
+  courses: Course[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [articlesResponse, lessonsResponse] = await Promise.all([
+        const [articlesResponse, lessonsResponse, coursesResponse] = await Promise.all([
           fetch('/api/articles?status=PUBLISHED&limit=3'),
-          fetch('/api/lessons?status=PUBLISHED&limit=3')
+          fetch('/api/lessons?status=PUBLISHED&limit=3'),
+          fetch('/api/courses?status=PUBLISHED&limit=3')
         ]);
 
         if (articlesResponse.ok) {
@@ -136,6 +162,11 @@ export default function Home() {
         if (lessonsResponse.ok) {
           const lessonsData = await lessonsResponse.json();
           setLessons(lessonsData.lessons);
+        }
+
+        if (coursesResponse.ok) {
+          const coursesData = await coursesResponse.json();
+          setCourses(coursesData.courses);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -163,6 +194,15 @@ export default function Home() {
     { title: 'التوأم الرقمي Digital Twin', link: '/articles/digital-twin', icon: <Users className="w-6 h-6" /> },
     { title: 'إضافات ازري الجديدة للمطورين', link: '#', icon: <BookOpen className="w-6 h-6" /> },
     { title: 'خريطتك كما يراها أصحاب عمى الألوان', link: '#', icon: <FileText className="w-6 h-6" /> },
+  ];
+
+  const coursePosts = [
+    { title: 'دورة ArcGIS Pro المتقدمة', link: '#', icon: <Globe className="w-6 h-6" />, duration: '40 ساعة', price: 299 },
+    { title: 'تحليل البيانات المكانية مع Python', link: '#', icon: <Zap className="w-6 h-6" />, duration: '25 ساعة', price: 199 },
+    { title: 'تصميم الخرائط الرقمية المتقدمة', link: '#', icon: <Sparkles className="w-6 h-6" />, duration: '30 ساعة', price: 249 },
+    { title: 'إدارة قواعد البيانات الجغرافية', link: '#', icon: <BookOpen className="w-6 h-6" />, duration: '35 ساعة', price: 279 },
+    { title: 'تطوير تطبيقات GIS على الويب', link: '#', icon: <Users className="w-6 h-6" />, duration: '45 ساعة', price: 349 },
+    { title: 'تحليل الظواهر المكانية المتقدم', link: '#', icon: <FileText className="w-6 h-6" />, duration: '50 ساعة', price: 399 },
   ];
 
   return (
@@ -444,6 +484,93 @@ export default function Home() {
             </MotionCard>
           </div>
         </ParallaxSection>
+
+        {/* Take a Course Section */}
+        <section className="py-20 px-4">
+          <div className="max-w-7xl mx-auto">
+            <MotionCard className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                أو خذ دورة تدريبية
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-purple-400 to-pink-400 mx-auto rounded-full"></div>
+            </MotionCard>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full animate-pulse">
+                      <div className="h-48 bg-white/10 rounded-lg mb-4"></div>
+                      <div className="h-6 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded mb-2"></div>
+                      <div className="h-4 bg-white/10 rounded w-2/3"></div>
+                    </div>
+                  </MotionCard>
+                ))
+              ) : courses.length > 0 ? (
+                courses.map((course, index) => (
+                  <MotionCard key={course.id} delay={index * 0.1}>
+                    <PostCard
+                      title={course.title}
+                      excerpt={course.excerpt}
+                      slug={course.slug}
+                      publishedAt={course.publishedAt ? new Date(course.publishedAt) : null}
+                      featuredImage={course.featuredImage}
+                      authorName={course.authorName}
+                      category={course.category}
+                      type="course"
+                    />
+                  </MotionCard>
+                ))
+              ) : (
+                // Fallback to sample data if no courses
+                coursePosts.slice(0, 3).map((post, index) => (
+                  <MotionCard key={index} delay={index * 0.1}>
+                    <FloatingCard className="group bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full cursor-pointer shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
+                      <div className="flex items-center gap-4 mb-4">
+                        <motion.div
+                          whileHover={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.6 }}
+                          className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white"
+                        >
+                          {post.icon}
+                        </motion.div>
+                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                      </div>
+                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-purple-300 transition-colors">
+                        {post.title}
+                      </h3>
+                      <div className="flex items-center justify-between text-sm text-white/60 mb-4">
+                        <span className="flex items-center gap-1">
+                          <Play className="w-4 h-4" />
+                          {post.duration}
+                        </span>
+                        <span className="font-bold text-purple-400">${post.price}</span>
+                      </div>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileHover={{ width: "100%" }}
+                        className="h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"
+                      />
+                    </FloatingCard>
+                  </MotionCard>
+                ))
+              )}
+            </div>
+
+            <MotionCard className="text-center mt-12" delay={0.8}>
+              <motion.a
+                href="/courses"
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-purple-500/25 transition-all duration-300"
+              >
+                تصفح جميع الدورات &gt;&gt;
+              </motion.a>
+            </MotionCard>
+          </div>
+        </section>
 
         {/* What the Portal Offers */}
         <section className="py-20 px-4">

@@ -12,7 +12,7 @@ interface PostCardProps {
   featuredImage?: string | null;
   authorName?: string | null;
   category?: string | null;
-  type?: 'article' | 'video';
+  type?: 'article' | 'video' | 'course';
 }
 
 export default function PostCard({
@@ -25,7 +25,7 @@ export default function PostCard({
   category,
   type = 'article'
 }: PostCardProps) {
-  const link = type === 'video' ? `/lessons/${slug}` : `/articles/${slug}`;
+  const link = type === 'video' ? `/lessons/${slug}` : type === 'course' ? `/courses/${slug}` : `/articles/${slug}`;
 
   return (
     <motion.div
@@ -57,6 +57,13 @@ export default function PostCard({
               <div className="absolute top-4 left-4">
                 <span className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
                   🎥 فيديو
+                </span>
+              </div>
+            )}
+            {type === 'course' && (
+              <div className="absolute top-4 left-4">
+                <span className="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                  🎓 دورة
                 </span>
               </div>
             )}
