@@ -301,27 +301,78 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            className="flex flex-col items-center mt-12"
           >
             <motion.button
-              whileHover={{ scale: 1.05, rotateX: 10 }}
-              whileTap={{ scale: 0.95 }}
-              className="group relative px-8 py-4 bg-gradient-to-r from-secondary-600 to-secondary-500 text-primary-700 font-bold rounded-full text-lg shadow-2xl overflow-hidden"
+              onClick={() => {
+                document.getElementById('watch-lesson-section')?.scrollIntoView({ 
+                  behavior: 'smooth' 
+                });
+              }}
+              whileHover={{ 
+                scale: 1.1,
+                y: -5,
+                boxShadow: "0 20px 40px rgba(173, 217, 0, 0.3)"
+              }}
+              whileTap={{ scale: 0.9 }}
+              className="group relative p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-full shadow-2xl hover:bg-white/20 transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-secondary-700 to-secondary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <span className="relative flex items-center gap-2">
-                ابدأ التعلم الآن
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
+              <motion.div
+                animate={{ 
+                  y: [0, 8, 0],
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="text-white group-hover:text-secondary-300"
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14"/>
+                  <path d="m19 12-7 7-7-7"/>
+                </svg>
+              </motion.div>
+              
+              {/* Ripple Effect */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-white/30"
+                animate={{
+                  scale: [1, 1.5, 1],
+                  opacity: [0.7, 0, 0.7],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Second Ripple */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-secondary-400/50"
+                animate={{
+                  scale: [1, 2, 1],
+                  opacity: [0.5, 0, 0.5],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1
+                }}
+              />
             </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05, rotateX: -10 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 border-2 border-foreground text-foreground font-bold rounded-full text-lg backdrop-blur-sm hover:bg-foreground/10 transition-all duration-300"
+            
+            {/* Text below the button */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.5 }}
+              className="text-white/70 text-sm mt-4 font-medium"
             >
-              تصفح المحتوى
-            </motion.button>
+              استكشف المحتوى
+            </motion.p>
           </motion.div>
         </div>
 
@@ -356,7 +407,7 @@ export default function Home() {
       {/* Content Sections */}
       <div className="relative z-10 bg-transparent">
         {/* Watch a Lesson Section */}
-        <section className="py-20 px-4">
+        <section id="watch-lesson-section" className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
               <h2 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
@@ -744,44 +795,134 @@ export default function Home() {
               <div className="w-24 h-1 bg-gradient-to-r from-secondary-400 to-primary-400 mx-auto rounded-full"></div>
             </MotionCard>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <MotionCard delay={0.3}>
-                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Articles Section */}
+              <MotionCard delay={0.1}>
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                  <div className="text-center">
                     <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                      className="p-4 bg-gradient-to-r from-secondary-500 to-primary-500 rounded-2xl"
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
+                      className="p-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl mx-auto w-fit mb-4"
                     >
-                      <BookOpen className="w-8 h-8 text-white" />
+                      <FileText className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-2xl font-bold text-white">الدروس التقنية</h3>
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-cyan-300 transition-colors">المقالات</h3>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      مقالات تقنية متخصصة في نظم المعلومات الجغرافية تغطي أحدث التقنيات والتطبيقات العملية في مجال GIS
+                    </p>
                   </div>
-                  <p className="text-white/90 text-lg leading-relaxed">
-                    توفر البوابة باقة واسعة من الدروس التقنية مصحوبة بالبيانات الجغرافية والكتيبات
-                    الإرشادية وشتى المعينات التدريبية لضمان تجربة تعليمية متكاملة وفعالة
-                  </p>
                 </FloatingCard>
               </MotionCard>
 
-              <MotionCard delay={0.5}>
-                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300">
-                  <div className="flex items-center gap-4 mb-6">
+              {/* Lessons Section */}
+              <MotionCard delay={0.2}>
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                  <div className="text-center">
                     <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="p-4 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl"
+                      whileHover={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.6 }}
+                      className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl mx-auto w-fit mb-4"
+                    >
+                      <Play className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-green-300 transition-colors">الدروس</h3>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      دروس فيديو تفاعلية مجانية تشرح أساسيات وتقنيات متقدمة في ArcGIS وتطبيقات نظم المعلومات الجغرافية
+                    </p>
+                  </div>
+                </FloatingCard>
+              </MotionCard>
+
+              {/* Courses Section */}
+              <MotionCard delay={0.3}>
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                  <div className="text-center">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                      className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mx-auto w-fit mb-4"
+                    >
+                      <BookOpen className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">الدورات التدريبية</h3>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      دورات شاملة ومتقدمة مع شهادات معتمدة تغطي جميع جوانب نظم المعلومات الجغرافية من المبتدئ إلى المحترف
+                    </p>
+                  </div>
+                </FloatingCard>
+              </MotionCard>
+
+              {/* Solutions Section */}
+              <MotionCard delay={0.4}>
+                <FloatingCard className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full shadow-xl hover:shadow-2xl hover:bg-white/10 transition-all duration-300 group">
+                  <div className="text-center">
+                    <motion.div
+                      whileHover={{ 
+                        scale: 1.1,
+                        rotateY: 180
+                      }}
+                      transition={{ duration: 0.6 }}
+                      className="p-4 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl mx-auto w-fit mb-4"
                     >
                       <Zap className="w-8 h-8 text-white" />
                     </motion.div>
-                    <h3 className="text-2xl font-bold text-white">الحلول الجيومكانية</h3>
+                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-orange-300 transition-colors">الحلول الجيومكانية</h3>
+                    <p className="text-white/80 text-sm leading-relaxed">
+                      متجر متخصص يضم إضافات وأدوات وقوالب جاهزة لبرامج GIS مع نماذج تحليلية وحلول متكاملة قابلة للتحميل
+                    </p>
                   </div>
-                  <p className="text-white/90 text-lg leading-relaxed">
-                    تشرف البوابة على تنفيذ وتطوير مختلف أنواع الحلول الجيومكانية من الإضافات على برنامج أرك برو، الأدوات التحليلية المعقدة وحتى المنصات الجيومكانية
-                  </p>
                 </FloatingCard>
               </MotionCard>
             </div>
+
+            {/* Call to Action */}
+            <MotionCard className="text-center mt-16" delay={0.6}>
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8">
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  <span className="bg-gradient-to-r from-secondary-400 to-primary-400 bg-clip-text text-transparent">
+                    ابدأ رحلتك التعليمية اليوم
+                  </span>
+                </h3>
+                <p className="text-white/80 text-lg mb-6 max-w-2xl mx-auto">
+                  انضم إلى آلاف المتخصصين في مجال نظم المعلومات الجغرافية واستفد من محتوى تعليمي متميز وحلول عملية متطورة
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <motion.a
+                    href="/articles"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    تصفح المقالات
+                  </motion.a>
+                  <motion.a
+                    href="/lessons"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    شاهد الدروس
+                  </motion.a>
+                  <motion.a
+                    href="/courses"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    استكشف الدورات
+                  </motion.a>
+                  <motion.a
+                    href="/marketplace"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-yellow-600 text-white rounded-full font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    تصفح الحلول
+                  </motion.a>
+                </div>
+              </div>
+            </MotionCard>
           </div>
         </section>
       </div>
