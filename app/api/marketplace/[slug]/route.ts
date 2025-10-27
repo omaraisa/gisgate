@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma';
 // GET /api/marketplace/[slug] - Get single solution by slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const solution = await prisma.solution.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         author: {
           select: {
@@ -59,13 +60,14 @@ export async function GET(
 // PUT /api/marketplace/[slug] - Update solution (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const body = await request.json();
 
     const solution = await prisma.solution.update({
-      where: { slug: params.slug },
+      where: { slug },
       data: {
         title: body.title,
         slug: body.slug,
@@ -110,11 +112,12 @@ export async function PUT(
 // DELETE /api/marketplace/[slug] - Delete solution (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     await prisma.solution.delete({
-      where: { slug: params.slug },
+      where: { slug },
     });
 
     return NextResponse.json({ message: 'Solution deleted successfully' });

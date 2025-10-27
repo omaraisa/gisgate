@@ -311,13 +311,11 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
                   <div className="text-xs text-white/60">مشاهدة</div>
                 </div>
 
-                {solution.rating && solution.rating > 0 && (
-                  <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
-                    <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2 fill-yellow-400" />
-                    <div className="text-2xl font-bold text-white">{solution.rating.toFixed(1)}</div>
-                    <div className="text-xs text-white/60">{solution.reviewCount} تقييم</div>
-                  </div>
-                )}
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+                  <Star className="w-6 h-6 text-yellow-400 mx-auto mb-2 fill-yellow-400" />
+                  <div className="text-2xl font-bold text-white">{solution.rating ? solution.rating.toFixed(1) : '0.0'}</div>
+                  <div className="text-xs text-white/60">{solution.reviewCount || 0} تقييم</div>
+                </div>
 
                 {solution.version && (
                   <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">

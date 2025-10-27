@@ -39,7 +39,8 @@ export default function AdminMarketplacePage() {
 
   const fetchSolutions = async () => {
     try {
-      const response = await fetch('/api/marketplace?limit=100')
+      // Fetch all solutions regardless of status for admin
+      const response = await fetch('/api/marketplace?limit=100&status=')
       const data = await response.json()
       setSolutions(data.solutions || [])
     } catch (error) {
@@ -67,6 +68,29 @@ export default function AdminMarketplacePage() {
       }
     } catch (error) {
       console.error('Error deleting solution:', error)
+    }
+  }
+
+  const handleToggleStatus = async (solution: Solution) => {
+    const newStatus = solution.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
+    
+    try {
+      const response = await fetch(`/api/marketplace/${solution.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...solution,
+          status: newStatus,
+          publishedAt: newStatus === 'PUBLISHED' ? new Date() : null
+        })
+      })
+
+      if (response.ok) {
+        const updatedSolution = await response.json()
+        setSolutions(prev => prev.map(s => s.id === solution.id ? updatedSolution : s))
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
     }
   }
 
@@ -283,13 +307,17 @@ export default function AdminMarketplacePage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          solution.status === 'PUBLISHED'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <button
+                          onClick={() => handleToggleStatus(solution)}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-md ${
+                            solution.status === 'PUBLISHED'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          }`}
+                          title={solution.status === 'PUBLISHED' ? 'انقر للتحويل إلى مسودة' : 'انقر للنشر'}
+                        >
                           {solution.status === 'PUBLISHED' ? 'منشور' : 'مسودة'}
-                        </span>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">

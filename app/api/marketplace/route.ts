@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '12');
-    const status = searchParams.get('status') || 'PUBLISHED';
+    const statusParam = searchParams.get('status');
+    const status = statusParam === '' ? undefined : (statusParam || 'PUBLISHED');
     const solutionType = searchParams.get('type');
     const category = searchParams.get('category');
     const isFree = searchParams.get('isFree');
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {};
     
-    if (status) {
+    if (status !== undefined) {
       where.status = status;
     }
     

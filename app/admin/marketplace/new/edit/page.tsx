@@ -55,14 +55,9 @@ interface Solution {
   metaDescription?: string
 }
 
-interface SolutionEditorProps {
-  params: Promise<{ id: string }>
-}
-
-export default function SolutionEditor({ params }: SolutionEditorProps) {
+export default function SolutionEditor() {
   const router = useRouter()
-  const resolvedParams = React.use(params)
-  const isNewSolution = resolvedParams.id === 'new'
+  const isNewSolution = true // This page is always for new solutions
 
   const [solution, setSolution] = useState<Solution>({
     title: '',
@@ -98,23 +93,16 @@ export default function SolutionEditor({ params }: SolutionEditorProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'files' | 'seo'>('basic')
 
   useEffect(() => {
+    // For new solutions, we don't need to fetch anything
     if (!isNewSolution) {
       fetchSolution()
     }
-  }, [isNewSolution, resolvedParams.id])
+  }, [isNewSolution])
 
   const fetchSolution = async () => {
-    try {
-      const response = await fetch(`/api/admin/marketplace/${resolvedParams.id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSolution(data)
-      }
-    } catch (error) {
-      console.error('Error fetching solution:', error)
-    } finally {
-      setLoading(false)
-    }
+    // This function is not used for new solutions
+    // but kept for consistency
+    setLoading(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,6 +141,16 @@ export default function SolutionEditor({ params }: SolutionEditorProps) {
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '')
+      .replace(/[أ-ي]/g, (match) => {
+        // Simple transliteration for Arabic characters
+        const arabicToLatin: { [key: string]: string } = {
+          'أ': 'a', 'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
+          'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
+          'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
+          'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'y', 'ة': 'h'
+        };
+        return arabicToLatin[match] || match;
+      }) || `solution-${Date.now()}`;
   }
 
   const handleTitleChange = (title: string) => {

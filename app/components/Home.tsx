@@ -608,11 +608,11 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             <MotionCard className="text-center mb-16">
               <h2 className="text-4xl font-bold text-white mb-4">
-                <span className="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 bg-clip-text text-transparent">
                   أو تصفح متجر الحلول
                 </span>
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-primary-400 to-secondary-400 mx-auto rounded-full"></div>
+              <div className="w-24 h-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 mx-auto rounded-full"></div>
             </MotionCard>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -653,11 +653,11 @@ export default function Home() {
                             </div>
                           </div>
                         ) : (
-                          <div className="relative h-48 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 flex items-center justify-center">
+                          <div className="relative h-48 bg-gradient-to-br from-orange-500/20 to-cyan-500/20 flex items-center justify-center">
                             <motion.div
                               whileHover={{ rotate: 360 }}
                               transition={{ duration: 0.6 }}
-                              className="p-6 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl text-white"
+                              className="p-6 bg-gradient-to-r from-orange-500 to-cyan-500 rounded-xl text-white"
                             >
                               <Globe className="w-12 h-12" />
                             </motion.div>
@@ -676,7 +676,7 @@ export default function Home() {
                         )}
                         <div className="p-6">
                           <div className="flex items-center gap-2 mb-3">
-                            <span className="px-2 py-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-xs font-semibold rounded-full">
+                            <span className="px-2 py-1 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-semibold rounded-full">
                               {solution.solutionType}
                             </span>
                             {solution.category && (
@@ -685,7 +685,7 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-secondary-300 transition-colors line-clamp-2">
+                          <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-orange-300 transition-colors line-clamp-2">
                             {solution.title}
                           </h3>
                           {solution.excerpt && (
