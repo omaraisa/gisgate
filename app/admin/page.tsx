@@ -396,6 +396,12 @@ export default function AdminPage() {
               إدارة المستخدمين
             </Link>
             <Link
+              href="/admin/marketplace"
+              className="px-6 py-2 rounded-lg font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+            >
+              إدارة المتجر
+            </Link>
+            <Link
               href="/admin/certificates"
               className="px-6 py-2 rounded-lg font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
             >

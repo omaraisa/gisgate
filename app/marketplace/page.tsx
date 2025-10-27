@@ -196,11 +196,11 @@ export default function MarketplacePage() {
               <span 
                 className="font-extrabold text-white drop-shadow-lg"
                 style={{
-                  background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FDC830 100%)',
+                  background: 'linear-gradient(135deg, #ADD900 0%, #8BB500 50%, #699100 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  textShadow: '0 0 30px rgba(255, 107, 53, 0.5)'
+                  textShadow: '0 0 30px rgba(173, 217, 0, 0.5)'
                 }}
               >
                 متجر
@@ -209,11 +209,8 @@ export default function MarketplacePage() {
               <span 
                 className="font-extrabold text-white drop-shadow-lg"
                 style={{
-                  background: 'linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  textShadow: '0 0 20px rgba(0, 180, 219, 0.5)'
+                  color: '#FFFFFF',
+                  textShadow: '0 0 20px rgba(41, 63, 40, 0.8), 0 4px 8px rgba(0,0,0,0.3)'
                 }}
               >
                 الحلول
@@ -343,11 +340,11 @@ export default function MarketplacePage() {
             {/* Section Title */}
             <MotionCard className="text-center mb-16">
               <h2 className="text-4xl font-bold text-white mb-4">
-                <span className="bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
                   جميع الحلول
                 </span>
               </h2>
-              <div className="w-24 h-1 bg-gradient-to-r from-orange-400 via-yellow-400 to-cyan-400 mx-auto rounded-full"></div>
+              <div className="w-24 h-1 bg-gradient-to-r from-primary-400 to-secondary-400 mx-auto rounded-full"></div>
             </MotionCard>
 
             {/* Solutions Grid */}

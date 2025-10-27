@@ -45,6 +45,25 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    // Map sort options to database fields
+    let orderBy: any = {};
+    switch (sortBy) {
+      case 'newest':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'popular':
+        orderBy = { downloadCount: 'desc' };
+        break;
+      case 'rating':
+        orderBy = { rating: 'desc' };
+        break;
+      case 'title':
+        orderBy = { title: 'asc' };
+        break;
+      default:
+        orderBy = { createdAt: 'desc' };
+    }
+
     // Get total count
     const total = await prisma.solution.count({ where });
 
@@ -53,7 +72,7 @@ export async function GET(request: NextRequest) {
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       select: {
         id: true,
         title: true,
