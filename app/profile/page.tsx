@@ -211,13 +211,16 @@ export default function ProfilePage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
+      const response = await fetch('/api/user/profile/password', {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(passwordData),
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
       });
 
       const data = await response.json();
@@ -226,12 +229,21 @@ export default function ProfilePage() {
         throw new Error(data.error || 'Failed to change password');
       }
 
-      setSuccess('تم تغيير كلمة المرور بنجاح');
+      setSuccess('تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول مرة أخرى.');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
+
+      // Clear tokens and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth-change'));
+      setTimeout(() => {
+        router.push('/auth');
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {

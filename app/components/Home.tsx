@@ -474,13 +474,14 @@ export default function Home() {
             </div>
 
             <MotionCard className="text-center mt-12" delay={0.8}>
-              <motion.button
+              <motion.a
+                href="/lessons"
                 whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-primary-600 to-secondary-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-primary-500/25 transition-all duration-300"
+                className="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
               >
-                تصفح المزيد &gt;&gt;
-              </motion.button>
+                تصفح جميع الدروس &gt;&gt;
+              </motion.a>
             </MotionCard>
           </div>
         </section>
