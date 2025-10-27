@@ -8,6 +8,7 @@ import Footer from '@/app/components/Footer';
 import AnimatedBackground from '@/app/components/AnimatedBackground';
 import ReviewForm from '@/app/components/ReviewForm';
 import ReviewsDisplay from '@/app/components/ReviewsDisplay';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface Solution {
   id: string;
@@ -79,8 +80,9 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string>('');
   const [downloading, setDownloading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Use auth store instead of manual auth checking
+  const { user, isAuthenticated, checkAuth } = useAuthStore();
 
   useEffect(() => {
     async function initializeParams() {
@@ -95,8 +97,9 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
     if (!slug) return;
 
     fetchSolution();
-    checkUserAuth();
-  }, [slug]);
+    // Check authentication using the auth store - this will properly handle token
+    checkAuth();
+  }, [slug, checkAuth]);
 
   const fetchSolution = async () => {
     try {
@@ -110,20 +113,6 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
       setError(err instanceof Error ? err.message : 'Failed to load solution');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkUserAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/check');
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.user);
-        setIsLoggedIn(true);
-      }
-    } catch (err) {
-      // User not logged in
-      setIsLoggedIn(false);
     }
   };
 
@@ -523,7 +512,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
           <ReviewForm
             solutionSlug={slug}
             userId={user?.id}
-            isLoggedIn={isLoggedIn}
+            isLoggedIn={isAuthenticated}
             className="mb-8"
           />
         </motion.div>

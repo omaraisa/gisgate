@@ -274,7 +274,7 @@ export default function MarketplacePage() {
                       className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       {SOLUTION_TYPES.map(type => (
-                        <option key={type.value} value={type.value} className="bg-gray-800">
+                        <option key={type.value} value={type.value} className="bg-white text-gray-900">
                           {type.label}
                         </option>
                       ))}
