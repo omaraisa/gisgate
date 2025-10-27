@@ -7,6 +7,7 @@ import { Package, Download, DollarSign, Filter, Search, Star } from 'lucide-reac
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
+import { RatingDisplay } from '../components/StarRating';
 
 interface Solution {
   id: string;
@@ -442,13 +443,13 @@ export default function MarketplacePage() {
                                   <span>{solution.downloadCount}</span>
                                 </div>
                                 
-                                {solution.rating && solution.rating > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span>{solution.rating.toFixed(1)}</span>
-                                    <span className="text-white/40">({solution.reviewCount})</span>
-                                  </div>
-                                )}
+                                <RatingDisplay
+                                  rating={solution.rating || 0}
+                                  reviewCount={solution.reviewCount || 0}
+                                  size="sm"
+                                  showCount={true}
+                                  className="text-white/60"
+                                />
                               </div>
 
                               {solution.category && (

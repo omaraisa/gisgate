@@ -6,6 +6,8 @@ import { ArrowLeft, Download, ExternalLink, Package, Star, DollarSign, Code, Fil
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
 import AnimatedBackground from '@/app/components/AnimatedBackground';
+import ReviewForm from '@/app/components/ReviewForm';
+import ReviewsDisplay from '@/app/components/ReviewsDisplay';
 
 interface Solution {
   id: string;
@@ -45,9 +47,9 @@ interface Solution {
     rating: number;
     comment?: string;
     createdAt: string;
-    user: {
+    user?: {
       fullName?: string;
-      email: string;
+      email?: string;
     };
   }>;
 }
@@ -77,6 +79,8 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string>('');
   const [downloading, setDownloading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     async function initializeParams() {
@@ -90,23 +94,38 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
   useEffect(() => {
     if (!slug) return;
 
-    async function fetchSolution() {
-      try {
-        const response = await fetch(`/api/marketplace/${slug}`);
-        if (!response.ok) {
-          throw new Error('Solution not found');
-        }
-        const data = await response.json();
-        setSolution(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load solution');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchSolution();
+    checkUserAuth();
   }, [slug]);
+
+  const fetchSolution = async () => {
+    try {
+      const response = await fetch(`/api/marketplace/${slug}`);
+      if (!response.ok) {
+        throw new Error('Solution not found');
+      }
+      const data = await response.json();
+      setSolution(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load solution');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkUserAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/check');
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.user);
+        setIsLoggedIn(true);
+      }
+    } catch (err) {
+      // User not logged in
+      setIsLoggedIn(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!solution?.fileUrl) return;
@@ -431,7 +450,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <div className="font-semibold text-white">
-                        {review.user.fullName || review.user.email.split('@')[0]}
+                        {review.user?.fullName || review.user?.email?.split('@')[0] || 'مستخدم مجهول'}
                       </div>
                       <div className="flex items-center gap-1 mt-1">
                         {Array.from({ length: 5 }).map((_, i) => (
@@ -488,6 +507,26 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
             </div>
           </motion.div>
         )}
+
+        {/* Reviews Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="mt-8"
+        >
+          <ReviewsDisplay 
+            solutionSlug={slug}
+            className="mb-8"
+          />
+          
+          <ReviewForm
+            solutionSlug={slug}
+            userId={user?.id}
+            isLoggedIn={isLoggedIn}
+            className="mb-8"
+          />
+        </motion.div>
       </div>
 
       <Footer />

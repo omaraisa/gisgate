@@ -5,6 +5,7 @@ import { ArticleStatus } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Package, Plus, Search, Filter, Download, DollarSign, Eye, Star } from 'lucide-react'
+import { RatingDisplay } from '../../components/StarRating'
 
 interface Solution {
   id: string
@@ -245,6 +246,9 @@ export default function AdminMarketplacePage() {
                     السعر
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    التقييم
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     الإحصائيات
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -291,6 +295,14 @@ export default function AdminMarketplacePage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
+                        <RatingDisplay
+                          rating={solution.rating || 0}
+                          reviewCount={solution.reviewCount || 0}
+                          size="sm"
+                          showCount={true}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex flex-col gap-1 text-xs text-gray-600">
                           <div className="flex items-center gap-1">
                             <Download className="w-3 h-3" />
@@ -299,10 +311,6 @@ export default function AdminMarketplacePage() {
                           <div className="flex items-center gap-1">
                             <Eye className="w-3 h-3" />
                             {solution.viewCount}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3" />
-                            {solution.rating?.toFixed(1) || 0} ({solution.reviewCount})
                           </div>
                         </div>
                       </td>
