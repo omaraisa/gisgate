@@ -125,11 +125,31 @@ export class AuthService {
     const hashedPassword = await this.hashPassword(userData.password);
     const verificationToken = this.generateSecureToken();
 
+    // Extract firstName and lastName from fullNameArabic (primary) or fullNameEnglish (fallback)
+    let firstName = '';
+    let lastName = '';
+
+    // Try to extract from Arabic name first
+    if (userData.fullNameArabic && userData.fullNameArabic.trim()) {
+      const arabicParts = userData.fullNameArabic.trim().split(/\s+/);
+      firstName = arabicParts[0] || '';
+      lastName = arabicParts.slice(1).join(' ') || '';
+    }
+
+    // If Arabic extraction didn't work or is incomplete, try English as fallback
+    if (!firstName || !lastName) {
+      const englishParts = userData.fullNameEnglish.trim().split(/\s+/);
+      if (!firstName) firstName = englishParts[0] || '';
+      if (!lastName) lastName = englishParts.slice(1).join(' ') || '';
+    }
+
     return prisma.user.create({
       data: {
         email: userData.email.toLowerCase(),
         password: hashedPassword,
         username: userData.username,
+        firstName,
+        lastName,
         fullNameArabic: userData.fullNameArabic,
         fullNameEnglish: userData.fullNameEnglish.toUpperCase(),
         emailVerificationToken: verificationToken,
@@ -315,12 +335,6 @@ export class AuthService {
                 },
               },
             },
-            template: {
-              select: {
-                name: true,
-                language: true,
-              },
-            },
           },
         },
         payments: {
@@ -368,14 +382,35 @@ export class AuthService {
     fullNameEnglish: string;
     meta?: Record<string, unknown>;
   }): Promise<User> {
+    // Extract firstName and lastName if not already provided
+    let firstName = wordpressUser.firstName || '';
+    let lastName = wordpressUser.lastName || '';
+
+    // If not provided in WordPress data, extract from names
+    if (!firstName || !lastName) {
+      // Try to extract from Arabic name first
+      if (wordpressUser.fullNameArabic && wordpressUser.fullNameArabic.trim()) {
+        const arabicParts = wordpressUser.fullNameArabic.trim().split(/\s+/);
+        if (!firstName) firstName = arabicParts[0] || '';
+        if (!lastName) lastName = arabicParts.slice(1).join(' ') || '';
+      }
+
+      // If still missing, try English as fallback
+      if (!firstName || !lastName) {
+        const englishParts = wordpressUser.fullNameEnglish.trim().split(/\s+/);
+        if (!firstName) firstName = englishParts[0] || '';
+        if (!lastName) lastName = englishParts.slice(1).join(' ') || '';
+      }
+    }
+
     return prisma.user.create({
       data: {
         wordpressId: wordpressUser.id,
         email: wordpressUser.email.toLowerCase(),
         username: wordpressUser.username,
         password: wordpressUser.password, // Already hashed from WordPress
-        firstName: wordpressUser.firstName,
-        lastName: wordpressUser.lastName,
+        firstName,
+        lastName,
         fullNameArabic: wordpressUser.fullNameArabic,
         fullNameEnglish: wordpressUser.fullNameEnglish.toUpperCase(),
         wordpressMeta: wordpressUser.meta ? JSON.stringify(wordpressUser.meta) : null,

@@ -7,7 +7,8 @@ import Link from 'next/link';
 interface User {
   id: string;
   email: string;
-  username?: string;
+  firstName?: string;
+  lastName?: string;
   fullNameArabic?: string;
   fullNameEnglish?: string;
   bio?: string;
@@ -43,6 +44,8 @@ interface Certificate {
   templateName: string;
   language: string;
   earnedAt: string;
+  hasArabic?: boolean;
+  hasEnglish?: boolean;
 }
 
 interface EnrolledCourse {
@@ -92,7 +95,8 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     fullNameArabic: '',
     fullNameEnglish: '',
-    username: '',
+    firstName: '',
+    lastName: '',
     bio: '',
     website: '',
     avatar: '',
@@ -142,7 +146,8 @@ export default function ProfilePage() {
       setFormData({
         fullNameArabic: userData.fullNameArabic || '',
         fullNameEnglish: userData.fullNameEnglish || '',
-        username: userData.username || '',
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
         bio: userData.bio || '',
         website: userData.website || '',
         avatar: userData.avatar || '',
@@ -175,6 +180,10 @@ export default function ProfilePage() {
         body: JSON.stringify({
           ...formData,
           fullNameEnglish: formData.fullNameEnglish.toUpperCase(),
+          // Convert empty strings to undefined
+          bio: formData.bio || undefined,
+          website: formData.website || undefined,
+          avatar: formData.avatar || undefined,
         }),
       });
 
@@ -644,16 +653,31 @@ export default function ProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      اسم المستخدم
+                      الاسم الأول
                     </label>
                     <input
                       type="text"
-                      name="username"
-                      value={formData.username}
+                      name="firstName"
+                      value={formData.firstName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                      placeholder="username"
+                      placeholder="الاسم الأول"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      الاسم الأخير
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      placeholder="الاسم الأخير"
                     />
                   </div>
 
@@ -713,7 +737,8 @@ export default function ProfilePage() {
                           setFormData({
                             fullNameArabic: user.fullNameArabic || '',
                             fullNameEnglish: user.fullNameEnglish || '',
-                            username: user.username || '',
+                            firstName: user.firstName || '',
+                            lastName: user.lastName || '',
                             bio: user.bio || '',
                             website: user.website || '',
                             avatar: user.avatar || '',

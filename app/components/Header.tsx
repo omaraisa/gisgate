@@ -119,10 +119,10 @@ export default function Header() {
                       className="flex items-center space-x-2 space-x-reverse text-white hover:text-secondary-400 transition-colors duration-200 focus:outline-none"
                     >
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white text-sm font-bold">
-                        {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                        {(user.firstName?.charAt(0) || user.lastName?.charAt(0)) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
                       </div>
                       <span className="hidden lg:inline text-sm">
-                        {user.fullNameArabic || user.fullNameEnglish || 'المستخدم'}
+                        {(user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : user.fullNameEnglish || 'المستخدم'}
                       </span>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -133,7 +133,7 @@ export default function Header() {
                     {isUserMenuOpen && (
                       <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
                         <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                          <p className="font-medium">{user.fullNameArabic || user.fullNameEnglish}</p>
+                          <p className="font-medium">{(user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : user.fullNameEnglish}</p>
                           <p className="text-gray-500">{user.email}</p>
                         </div>
 
@@ -242,11 +242,11 @@ export default function Header() {
             <div className="px-6 py-4 border-b border-green-700">
               <div className="flex items-center space-x-3 space-x-reverse">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-green-500 flex items-center justify-center text-white font-bold">
-                  {user.fullNameArabic?.charAt(0) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                  {(user.firstName?.charAt(0) || user.lastName?.charAt(0)) || user.fullNameEnglish?.charAt(0) || user.email.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <p className="text-white font-medium text-lg">
-                    {user.fullNameArabic || user.fullNameEnglish || 'مستخدم'}
+                    {(user.firstName && user.lastName) ? `${user.firstName} ${user.lastName}` : user.fullNameEnglish || 'مستخدم'}
                   </p>
                   <p className="text-green-200 text-sm">{user.email}</p>
                   <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${

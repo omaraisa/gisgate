@@ -5,14 +5,28 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 
 const updateProfileSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').optional(),
-  lastName: z.string().min(1, 'Last name is required').optional(),
-  fullNameArabic: z.string().min(1, 'Full name in Arabic is required').optional(),
-  fullNameEnglish: z.string().min(1, 'Full name in English is required').optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  fullNameArabic: z.string().optional(),
+  fullNameEnglish: z.string().optional(),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
-  website: z.string().url('Invalid website URL').optional(),
-  avatar: z.string().url('Invalid avatar URL').optional(),
-});
+  website: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: "Invalid website URL"
+  }).optional(),
+  avatar: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
+    message: "Invalid avatar URL"
+  }).optional(),
+}).transform((data) => ({
+  ...data,
+  // Convert empty strings to undefined
+  firstName: data.firstName || undefined,
+  lastName: data.lastName || undefined,
+  fullNameArabic: data.fullNameArabic || undefined,
+  fullNameEnglish: data.fullNameEnglish || undefined,
+  bio: data.bio || undefined,
+  website: data.website || undefined,
+  avatar: data.avatar || undefined,
+}));
 
 // GET /api/user/profile - Get current user profile
 export async function GET(request: NextRequest) {
