@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Download, ExternalLink, Package, Star, DollarSign, Code, FileText, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, Package, Star, DollarSign, Code, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
 import AnimatedBackground from '@/app/components/AnimatedBackground';
@@ -234,7 +234,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
               )}
 
               {/* External Links */}
-              <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="grid grid-cols-2 gap-3 mt-4">
                 {solution.demoUrl && (
                   <a
                     href={solution.demoUrl}
@@ -244,17 +244,6 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
                   >
                     <Globe className="w-4 h-4" />
                     تجربة
-                  </a>
-                )}
-                {solution.documentationUrl && (
-                  <a
-                    href={solution.documentationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-white/5 hover:bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    التوثيق
                   </a>
                 )}
                 {solution.sourceCodeUrl && (
@@ -386,7 +375,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
           className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 md:p-12 shadow-2xl mb-8"
         >
           <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-orange-400" />
+            <Package className="w-8 h-8 text-orange-400" />
             الوصف
           </h2>
           <div className="prose prose-lg prose-invert max-w-none">
