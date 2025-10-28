@@ -503,7 +503,7 @@ export default function UserDetailsPage() {
                             <p className="font-semibold">{certificate.enrollment.course.title}</p>
                             <p className="text-sm text-gray-600">معرف الشهادة: {certificate.certificateId}</p>
                             <p className="text-sm text-gray-600">
-                              القالب: {certificate.template.name} ({certificate.template.language === 'ar' ? 'عربي' : 'إنجليزي'})
+                              القالب: {certificate.template ? `${certificate.template.name} (${certificate.template.language === 'ar' ? 'عربي' : 'إنجليزي'})` : 'غير محدد'}
                             </p>
                             <p className="text-sm text-gray-600">
                               تاريخ الإصدار: {new Date(certificate.createdAt).toLocaleDateString('ar-SA')}

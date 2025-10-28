@@ -65,7 +65,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         completedAt: certificate.enrollment.completedAt,
         duration: certificate.enrollment.course.duration,
         instructor: certificate.enrollment.course.authorName,
-        language: certificate.template.language
+        language: certificate.template?.language || 'ar'
       }
     });
 

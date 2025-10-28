@@ -3,9 +3,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaClient } from '@prisma/client';
 
+// Load environment variables
+require('dotenv').config();
+
+// Validate required environment variables
+if (!process.env.SERVER_IP) {
+  throw new Error('SERVER_IP environment variable is required')
+}
+
 // Configuration
 const MINIO_CONFIG = {
-  endPoint: '13.61.185.194',
+  endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
   accessKey: 'miniomar',
@@ -14,8 +22,10 @@ const MINIO_CONFIG = {
 
 const BUCKET_NAME = 'images';
 const LOCAL_IMAGES_PATH = 'C:\\Users\\GIS_J\\Downloads\\images';
-const NEW_DOMAIN = 'http://13.61.185.194:9000';
-const OLD_URL_PATTERN = 'http://13.61.185.194/static/image/';
+
+// Use NEXT_PUBLIC_APP_URL for the new domain to avoid migration disruption
+const NEW_DOMAIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const OLD_URL_PATTERN = `http://${process.env.SERVER_IP}/static/image/`;
 
 const minioClient = new Minio.Client(MINIO_CONFIG);
 const prisma = new PrismaClient();
@@ -242,8 +252,12 @@ export class ImageMigrationUtils {
     let invalidArticles = 0;
     const brokenUrls: string[] = [];
 
+    // Use the same NEW_DOMAIN pattern for validation
+    const expectedUrlPattern = `${NEW_DOMAIN}/images/`;
+    const escapedPattern = expectedUrlPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     for (const article of articles) {
-      const urls = article.content.match(/http:\/\/13\.61\.185\.194:9000\/images\/[^"'\s]+/g) || [];
+      const urls = article.content.match(new RegExp(`${escapedPattern}[^"'\s]+`, 'g')) || [];
       let articleValid = true;
 
       for (const url of urls) {

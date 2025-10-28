@@ -465,13 +465,13 @@ export class WordPressMigrator {
   /**
    * Transform WordPress image URLs to use your server
    * Converts: https://gis-gate.com/wp-content/uploads/2025/02/image.jpg
-   * To: http://13.61.185.194/static/image/2025/02/image.jpg
+   * To: http://${SERVER_IP}/static/image/2025/02/image.jpg (uses SERVER_IP from .env)
    */
   private transformImageUrls(content: string): string {
     const imageUrlRegex = /https?:\/\/gis-gate\.com\/wp-content\/uploads\/([^"'\s>]+)/g;
     
     return content.replace(imageUrlRegex, (match, path) => {
-      return `http://13.61.185.194/static/image/${path}`;
+      return `http://${process.env.SERVER_IP}/static/image/${path}`;
     });
   }
 
@@ -486,7 +486,7 @@ export class WordPressMigrator {
     // Extract the path after /wp-content/uploads/
     const match = originalUrl.match(/\/wp-content\/uploads\/(.+)$/);
     if (match) {
-      return `http://13.61.185.194/static/image/${match[1]}`;
+      return `http://${process.env.SERVER_IP}/static/image/${match[1]}`;
     }
 
     return originalUrl;

@@ -3,9 +3,14 @@ import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus } from '@prisma/client'
 import * as Minio from 'minio'
 
+// Validate required environment variables
+if (!process.env.SERVER_IP) {
+  throw new Error('SERVER_IP environment variable is required')
+}
+
 // MinIO configuration
 const minioClient = new Minio.Client({
-  endPoint: '13.61.185.194',
+  endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
   accessKey: 'miniomar',
@@ -174,7 +179,7 @@ async function uploadImagesToMinIO(files: File[]): Promise<string[]> {
       'Content-Type': file.type
     })
 
-    const imageUrl = `http://13.61.185.194:9000/${BUCKET_NAME}/${objectKey}`
+    const imageUrl = `http://${process.env.SERVER_IP}:9000/${BUCKET_NAME}/${objectKey}`
     uploadedUrls.push(imageUrl)
   }
 

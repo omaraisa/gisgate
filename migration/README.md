@@ -40,12 +40,14 @@ npm run validate:migration
 
 ## Configuration
 
-The script is configured for:
-- **MinIO Server**: http://13.61.185.194:9000
+The script uses environment variables for server configuration:
+- **MinIO Server**: http://`${SERVER_IP}`:9000 (from .env SERVER_IP variable)
 - **Bucket**: images
 - **Local Images Path**: C:\Users\GIS_J\Downloads\images
-- **Old URL Pattern**: http://13.61.185.194/static/image/
-- **New URL Pattern**: http://13.61.185.194:9000/images/
+- **Old URL Pattern**: http://`${SERVER_IP}`/static/image/
+- **New URL Pattern**: http://`${SERVER_IP}`:9000/images/
+
+To change the server IP, update the `SERVER_IP` variable in your `.env` file.
 
 ## What It Does
 

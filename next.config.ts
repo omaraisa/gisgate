@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Validate required environment variables at build time
+if (!process.env.SERVER_IP) {
+  throw new Error('SERVER_IP environment variable is required');
+}
+
 const nextConfig: NextConfig = {
   typescript: {
     // Dangerously allow production builds to successfully complete even if
@@ -16,13 +21,13 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'http',
-        hostname: '13.61.185.194',
+        hostname: process.env.SERVER_IP,
         port: '',
         pathname: '/static/image/**',
       },
       {
         protocol: 'http',
-        hostname: '13.61.185.194',
+        hostname: process.env.SERVER_IP,
         port: '9000',
         pathname: '/images/**',
       },
