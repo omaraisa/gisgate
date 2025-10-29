@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
             featuredImage: true,
             category: true,
             totalLessons: true,
-            duration: true,
+            durationValue: true,
+            durationUnit: true,
             level: true
           }
         },

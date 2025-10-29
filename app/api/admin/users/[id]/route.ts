@@ -38,6 +38,13 @@ export async function GET(
     // Get user with enrollments and certificates
     const userWithDetails = await AuthService.getUserWithDetails(userId);
 
+    if (!userWithDetails) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = userWithDetails; // eslint-disable-line @typescript-eslint/no-unused-vars
 
