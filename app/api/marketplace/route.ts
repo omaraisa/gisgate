@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma, ArticleStatus, SolutionType } from '@prisma/client';
 
 // GET /api/marketplace - Get all solutions with filtering
 export async function GET(request: NextRequest) {
@@ -21,11 +22,11 @@ export async function GET(request: NextRequest) {
     const where: Prisma.SolutionWhereInput = {};
     
     if (status !== undefined) {
-      where.status = status;
+      where.status = status as ArticleStatus;
     }
     
     if (solutionType) {
-      where.solutionType = solutionType;
+      where.solutionType = solutionType as SolutionType;
     }
     
     if (category) {

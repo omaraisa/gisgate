@@ -133,7 +133,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                   id: userEnrollment.id,
                   progress: userEnrollment.progress?.percentage || 0,
                   isCompleted: userEnrollment.isCompleted || false,
-                  lessonProgress: userEnrollment.lessons?.map((lesson) => ({
+                  lessonProgress: userEnrollment.lessons?.map((lesson: { id: string; isCompleted?: boolean; watchedTime?: number; completedAt?: string }) => ({
                     lessonId: lesson.id,
                     isCompleted: lesson.isCompleted || false,
                     watchedTime: lesson.watchedTime || 0,
@@ -348,8 +348,6 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                           controls
                           className="w-full h-full"
                           onTimeUpdate={(e) => setWatchTime(Math.floor(e.currentTarget.currentTime))}
-                          onPlay={() => setIsVideoPlaying(true)}
-                          onPause={() => setIsVideoPlaying(false)}
                         />
                       )}
                     </div>

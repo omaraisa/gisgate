@@ -329,7 +329,9 @@ export default function FabricCertificateCanvas({
     if (backgroundImage) {
       fabric.Image.fromURL(backgroundImage, (img: fabric.Image) => {
         // Scale image to fit certificate dimensions
-        const imgScale = Math.min(CERT_WIDTH / img.width, CERT_HEIGHT / img.height);
+        const imgWidth = img.width || CERT_WIDTH;
+        const imgHeight = img.height || CERT_HEIGHT;
+        const imgScale = Math.min(CERT_WIDTH / imgWidth, CERT_HEIGHT / imgHeight);
         
         img.set({
           left: 0,

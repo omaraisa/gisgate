@@ -10,11 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Find certificate with related data
     const certificate = await prisma.certificate.findUnique({
       where: { certificateId },
-      select: {
-        id: true,
-        certificateId: true,
-        createdAt: true,
-        data: true,
+      include: {
         user: {
           select: {
             id: true,
@@ -29,7 +25,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             course: {
               select: {
                 title: true,
-                duration: true,
+                durationValue: true,
+                durationUnit: true,
                 authorName: true,
                 language: true
               }
@@ -69,7 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           : certificate.user.fullNameEnglish,
         courseTitle: certificate.enrollment.course.title,
         completedAt: certificate.enrollment.completedAt,
-        duration: certificate.enrollment.course.duration,
+        durationValue: certificate.enrollment.course.durationValue,
+        durationUnit: certificate.enrollment.course.durationUnit,
         instructor: certificate.enrollment.course.authorName,
         language: certificate.arTemplate?.language || certificate.enTemplate?.language || 'ar'
       }

@@ -13,11 +13,8 @@ interface PayPalButtonProps {
   isCartCheckout?: boolean; // New prop to indicate cart checkout
 }
 
-interface PayPalCartItem {
-  courseId: string;
-  quantity: number;
-  price: number;
-  currency: string;
+interface PayPalOnApproveData {
+  orderID: string;
 }
 
 export default function PayPalButton({
@@ -78,23 +75,28 @@ export default function PayPalButton({
               }
               return cartOrderId;
             } else {
-              // Handle single course purchase
-              if (!courseId) {
-                throw new Error('Course ID is required');
+              // Handle single course purchase - call API directly
+              if (!courseId || !amount) {
+                throw new Error('Course ID and amount are required');
               }
-              // For single course, create a cart item array
-              const singleCourseItem: PayPalCartItem[] = [{
-                courseId: courseId,
-                quantity: 1,
-                price: amount || 0,
-                currency: currency
-              }];
-              console.log('PayPal Button - Single course item:', singleCourseItem);
-              const paypalOrderId = await createOrder(singleCourseItem);
-              if (!paypalOrderId) {
-                throw new Error('Failed to create payment order');
+              console.log('PayPal Button - Creating single course order');
+              
+              const response = await fetch('/api/payments/create-order', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${currentToken}`,
+                },
+                body: JSON.stringify({ courseId }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create payment order');
               }
-              return paypalOrderId;
+
+              const data = await response.json();
+              return data.paypalOrderId;
             }
           }}
           onApprove={async (data: PayPalOnApproveData) => {

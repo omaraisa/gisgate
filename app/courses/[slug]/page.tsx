@@ -9,6 +9,30 @@ import AnimatedBackground from '../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 
+interface Course {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  excerpt?: string;
+  featuredImage?: string;
+  category?: string;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  isFree: boolean;
+  price?: number;
+  currency?: string;
+  totalLessons: number;
+  enrollmentCount?: number;
+  publishedAt?: string;
+  language?: string;
+  lessons: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    order: number;
+  }>;
+}
+
 export default function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -291,7 +315,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                         whileTap={{ scale: 0.95 }}
                         className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
                       >
-                        متابعة الدورة ({Math.round(enrollment.progress.percentage || 0)}%)
+                        متابعة الدورة ({Math.round(enrollment.progress || 0)}%)
                       </motion.button>
                     )}
                   </>

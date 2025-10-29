@@ -45,13 +45,17 @@ export default function CertificateCanvas({
 }: CertificateCanvasProps) {
   const [bgImage] = useImage(backgroundImage, 'anonymous');
   const transformerRef = useRef<Konva.Transformer>(null);
-  const selectedNodeRef = useRef<Konva.Text | Konva.Rect | null>(null);
+  const selectedTextRef = useRef<Konva.Text>(null);
+  const selectedRectRef = useRef<Konva.Rect>(null);
 
   // Update transformer when selection changes
   useEffect(() => {
-    if (transformerRef.current && selectedNodeRef.current) {
-      transformerRef.current.nodes([selectedNodeRef.current]);
-      transformerRef.current.getLayer()?.batchDraw();
+    if (transformerRef.current) {
+      const selectedNode = selectedTextRef.current || selectedRectRef.current;
+      if (selectedNode) {
+        transformerRef.current.nodes([selectedNode]);
+        transformerRef.current.getLayer()?.batchDraw();
+      }
     }
   }, [selectedFieldId]);
 
@@ -126,7 +130,7 @@ export default function CertificateCanvas({
               return (
                 <Rect
                   key={field.id}
-                  ref={isSelected ? selectedNodeRef : undefined}
+                  ref={isSelected ? selectedRectRef : undefined}
                   x={field.x}
                   y={field.y}
                   width={field.width || 150}
@@ -149,7 +153,7 @@ export default function CertificateCanvas({
             return (
               <KonvaText
                 key={field.id}
-                ref={isSelected ? selectedNodeRef : undefined}
+                ref={isSelected ? selectedTextRef : undefined}
                 x={field.x}
                 y={field.y}
                 text={displayText}
@@ -174,7 +178,7 @@ export default function CertificateCanvas({
           {selectedFieldId && (
             <Transformer
               ref={transformerRef}
-              boundBoxFunc={(oldBox: Konva.Box, newBox: Konva.Box) => {
+              boundBoxFunc={(oldBox, newBox) => {
                 // Limit resize
                 if (newBox.width < 5 || newBox.height < 5) {
                   return oldBox;
