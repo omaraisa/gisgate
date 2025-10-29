@@ -72,18 +72,21 @@ def parse_prisma_schema(schema_path: str) -> Dict:
                     field_name = field_parts[0]
                     field_type = field_parts[1]
 
+                    # Skip compound unique constraints
+                    if field_name.startswith('@@'):
+                        continue
+
                     # Handle optional fields (type ends with ?)
                     is_optional = field_type.endswith('?')
                     if is_optional:
                         field_type = field_type[:-1]
 
-                    # Handle array types
-                    if field_type.endswith('[]'):
-                        # Keep as is, will be handled in generate_sql_type
-                        pass
-
                     # Handle relations
                     is_relation = '@relation(' in line
+
+                    # Skip array types for now (relations)
+                    if field_type.endswith('[]') and not field_type[:-2] in ['String', 'Int', 'Float', 'Boolean']:
+                        continue
 
                     fields.append({
                         'name': field_name,
@@ -114,18 +117,18 @@ def generate_sql_type(prisma_type: str) -> str:
         'UUID': 'UUID'
     }
 
-    # Handle enums
+    # Handle enums - keep original case
     if prisma_type in ['ArticleStatus', 'UserRole', 'CourseLevel', 'PaymentStatus', 'RefundStatus', 'SolutionType']:
-        return prisma_type.upper()
+        return prisma_type
 
-    # Handle arrays
+    # Handle arrays - for now, skip or handle differently
     if prisma_type.endswith('[]'):
         base_type = prisma_type[:-2]
         if base_type in type_mapping:
             return f'{type_mapping[base_type]}[]'
-        return f'{base_type.upper()}[]'
+        return 'TEXT'  # Default for unknown array types
 
-    return type_mapping.get(prisma_type, prisma_type.upper())
+    return type_mapping.get(prisma_type, 'TEXT')
 
 def create_database():
     """Create the database if it doesn't exist"""
@@ -164,17 +167,18 @@ def create_enums(cursor, enums: Dict):
     for enum_name, values in enums.items():
         try:
             # Drop enum if exists
-            cursor.execute(sql.SQL("DROP TYPE IF EXISTS {} CASCADE").format(sql.Identifier(enum_name.upper())))
+            cursor.execute(f'DROP TYPE IF EXISTS "{enum_name}" CASCADE')
 
             # Create enum
-            enum_values = [sql.Literal(v.strip()) for v in values if v.strip()]
-            cursor.execute(sql.SQL("CREATE TYPE {} AS ENUM ({})").format(
-                sql.Identifier(enum_name.upper()),
-                sql.SQL(', ').join(enum_values)
-            ))
-            print(f"✅ Created enum {enum_name.upper()}")
+            enum_values = [f"'{v.strip()}'" for v in values if v.strip()]
+            create_enum_stmt = f'CREATE TYPE "{enum_name}" AS ENUM ({", ".join(enum_values)})'
+            print(f"DEBUG: Creating enum: {create_enum_stmt}")
+            cursor.execute(create_enum_stmt)
+            cursor.connection.commit()
+            print(f"✅ Created enum {enum_name}")
         except Exception as e:
             print(f"❌ Error creating enum {enum_name}: {e}")
+            cursor.connection.rollback()
 
 def create_tables(cursor, models: Dict):
     """Create all tables"""
@@ -184,7 +188,7 @@ def create_tables(cursor, models: Dict):
 
         try:
             # Drop table if exists
-            cursor.execute(sql.SQL("DROP TABLE IF EXISTS {} CASCADE").format(sql.Identifier(table_name)))
+            cursor.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE')
 
             # Build CREATE TABLE statement
             columns = []
@@ -207,10 +211,14 @@ def create_tables(cursor, models: Dict):
                     columns.append(f'"{col_name}" {col_type} DEFAULT NOW()')
                 else:
                     nullable = '' if field['optional'] else 'NOT NULL'
+                    # Quote enum types
+                    if col_type in ['ArticleStatus', 'UserRole', 'CourseLevel', 'PaymentStatus', 'RefundStatus', 'SolutionType']:
+                        col_type = f'"{col_type}"'
                     columns.append(f'"{col_name}" {col_type} {nullable}'.strip())
 
             if columns:
                 create_stmt = f'CREATE TABLE "{table_name}" ({", ".join(columns)})'
+                print(f"DEBUG: Executing: {create_stmt}")
                 cursor.execute(create_stmt)
                 cursor.connection.commit()  # Commit immediately after successful table creation
                 print(f"✅ Created table {table_name}")
