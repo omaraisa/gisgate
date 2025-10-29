@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { ArticleStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, Save, Eye, ArrowLeft, Upload, X, Plus, Trash2, ExternalLink } from 'lucide-react'
+import { Package, Save, Eye, ArrowLeft, Upload, X, Trash2, ExternalLink } from 'lucide-react'
 
 const SOLUTION_TYPES = [
   { value: 'TOOL', label: 'أداة' },
@@ -140,23 +140,6 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
     } finally {
       setSaving(false)
     }
-  }
-
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .replace(/[أ-ي]/g, (match) => {
-        const arabicToLatin: { [key: string]: string } = {
-          'أ': 'a', 'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
-          'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
-          'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
-          'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'y', 'ة': 'h'
-        };
-        return arabicToLatin[match] || match;
-      }) || `solution-${Date.now()}`;
   }
 
   const handleTitleChange = (title: string) => {
@@ -403,7 +386,7 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
                         value={solution.category || ''}
                         onChange={(e) => setSolution(prev => ({ ...prev, category: e.target.value }))}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="مثال: ArcGIS, QGIS..."
+                        placeholder="مثال: &quot;ArcGIS&quot;, &quot;QGIS&quot;..."
                       />
                     </div>
                   </div>

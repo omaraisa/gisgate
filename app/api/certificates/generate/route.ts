@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { CertificateService } from '@/lib/certificate-service';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
 

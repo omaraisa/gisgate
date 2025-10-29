@@ -115,9 +115,7 @@ export async function generateCertificatePDF(
 }
 
 export async function generateCertificateFromCanvas(
-  canvasImageDataUrl: string,
-  backgroundWidth?: number,
-  backgroundHeight?: number
+  canvasImageDataUrl: string
 ): Promise<Uint8Array> {
   // Create a new PDF document
   const pdfDoc = await PDFDocument.create();

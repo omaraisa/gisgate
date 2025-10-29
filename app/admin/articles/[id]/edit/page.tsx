@@ -223,7 +223,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       if (videoIdMatch) {
         url = clipboardText
       }
-    } catch (error) {
+    } catch {
       // Clipboard access failed, continue with prompt
     }
 

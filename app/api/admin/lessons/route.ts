@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 
+interface LessonWithStats {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  videoUrl: string | null;
+  duration: string | null;
+  status: string;
+  publishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  authorName: string | null;
+  images: Array<{ id: string }>;
+  author: {
+    fullNameArabic: string | null;
+    fullNameEnglish: string | null;
+    email: string;
+  } | null;
+}
+
 export async function GET() {
   try {
     const lessons = await prisma.video.findMany({
@@ -24,7 +45,7 @@ export async function GET() {
     })
 
     // Add image count to each lesson
-    const lessonsWithStats = lessons.map((lesson: any) => ({
+    const lessonsWithStats = lessons.map((lesson: LessonWithStats) => ({
       ...lesson,
       imageCount: lesson.images.length,
       authorName: lesson.authorName || lesson.author?.fullNameArabic || lesson.author?.fullNameEnglish || 'مجهول',

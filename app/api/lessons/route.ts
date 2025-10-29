@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // GET /api/lessons - Get all lessons
 export async function GET(request: NextRequest) {
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
     const total = await prisma.video.count({ where });
 
     // Format the response to match the expected structure
-    const formattedLessons = lessons.map((lesson: any) => ({
+    const formattedLessons = lessons.map((lesson: Prisma.VideoGetPayload<{ include: { author: { select: { fullNameArabic: true, fullNameEnglish: true, email: true } } } }>) => ({
       id: lesson.id,
       title: lesson.title,
       slug: lesson.slug,

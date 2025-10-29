@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // GET /api/payments - Get user's payment history
 export async function GET(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.PaymentOrderWhereInput = {
       userId: user.id,
     };
 

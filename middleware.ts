@@ -13,15 +13,6 @@ const protectedRoutes = [
 // Routes that should redirect to home if authenticated
 const authRoutes = ['/auth'];
 
-// Routes that are public
-const publicRoutes = [
-  '/',
-  '/articles',
-  '/lessons',
-  '/courses',
-  '/courses/*', // Allow course viewing but not lessons
-];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth-token')?.value ||

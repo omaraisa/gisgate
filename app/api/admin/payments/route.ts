@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import { prisma } from '@/lib/prisma';
+import { Prisma, PaymentStatus } from '@prisma/client';
 
 // GET /api/admin/payments - Get all payments (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const admin = await requireAdmin(request);
+    await requireAdmin(request);
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -15,10 +16,10 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId');
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.PaymentOrderWhereInput = {};
 
     if (status) {
-      where.status = status;
+      where.status = status as PaymentStatus;
     }
 
     if (userId) {

@@ -70,7 +70,7 @@ export default function AddToCartButton({
         title: 'تمت الإضافة للعربة',
         message: `${course.title} تم إضافتها إلى عربة التسوق`,
       });
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: 'خطأ في الإضافة',

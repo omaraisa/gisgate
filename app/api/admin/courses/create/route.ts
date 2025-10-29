@@ -19,6 +19,19 @@ const minioClient = new Minio.Client({
 
 const BUCKET_NAME = 'images'
 
+interface LessonData {
+  title: string;
+  excerpt?: string;
+  content?: string;
+  videoUrl?: string;
+  duration?: string;
+  order?: number;
+  attachments?: Array<{
+    url: string;
+    title?: string;
+  }>;
+}
+
 interface CourseData {
   title?: string
   titleEnglish?: string
@@ -37,7 +50,7 @@ interface CourseData {
   language?: string
   durationValue?: number
   durationUnit?: string
-  lessons?: any[]
+  lessons?: LessonData[]
 }
 
 export async function POST(request: NextRequest) {

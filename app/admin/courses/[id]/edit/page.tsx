@@ -23,6 +23,22 @@ interface Attachment {
   title: string
 }
 
+interface ApiLesson {
+  id?: string
+  title: string
+  slug?: string
+  excerpt?: string
+  content?: string
+  videoUrl?: string
+  order: number
+  images?: Array<{
+    id: string
+    url: string
+    alt?: string
+    caption?: string
+  }>
+}
+
 interface ExtendedCourse {
   id?: string
   title: string
@@ -111,9 +127,9 @@ export default function CourseEditor({ params }: CourseEditorProps) {
           language: courseData.language || 'ar',
           durationValue: courseData.durationValue || undefined,
           durationUnit: courseData.durationUnit || 'hours',
-          lessons: courseData.lessons?.map((lesson: any) => ({
+          lessons: courseData.lessons?.map((lesson: ApiLesson) => ({
             ...lesson,
-            attachments: lesson.images?.map((image: any) => ({
+            attachments: lesson.images?.map((image) => ({
               id: image.id,
               url: image.url,
               title: image.caption || image.alt || ''
@@ -150,7 +166,6 @@ export default function CourseEditor({ params }: CourseEditorProps) {
       })
 
       if (response.ok) {
-        const savedCourse = await response.json()
         router.push('/admin/courses')
       } else {
         const error = await response.json()
@@ -701,7 +716,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
               ))}
               {(!course.lessons || course.lessons.length === 0) && (
                 <div className="text-center py-8 text-gray-500">
-                  لا توجد دروس بعد. اضغط على "إضافة درس جديد" لبدء إضافة المحتوى.
+                  لا توجد دروس بعد. اضغط على &quot;إضافة درس جديد&quot; لبدء إضافة المحتوى.
                 </div>
               )}
             </div>

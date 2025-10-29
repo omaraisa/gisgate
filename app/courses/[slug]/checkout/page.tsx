@@ -22,7 +22,6 @@ export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +29,11 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     // Check authentication status using auth store
-    const { token, user: authUser, isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
+    const { isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
     if (!authIsAuthenticated) {
       router.push('/auth');
       return;
     }
-    setUser(authUser);
     setIsAuthenticated(authIsAuthenticated);
     setAuthChecked(true);
   }, [router]);
@@ -186,7 +184,6 @@ export default function CheckoutPage() {
                   courseId={course.id}
                   amount={course.price || 0}
                   currency={course.currency || 'USD'}
-                  courseTitle={course.title}
                 />
               </div>
 

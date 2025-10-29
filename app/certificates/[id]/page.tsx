@@ -41,6 +41,13 @@ interface CertificateData {
   language: string;
 }
 
+// Extend window interface to include the export function
+declare global {
+  interface Window {
+    exportCertificateCanvas?: () => string | null;
+  }
+}
+
 const translations = {
   en: {
     certificateVerification: 'Certificate Verification',
@@ -143,7 +150,7 @@ export default function CertificateViewPage() {
       setDownloading(true);
       
       // Get canvas image from the Fabric canvas
-      const canvasImageDataUrl = (window as any).exportCertificateCanvas?.();
+      const canvasImageDataUrl = window.exportCertificateCanvas?.();
       if (!canvasImageDataUrl) {
         throw new Error('Failed to export canvas');
       }
@@ -162,7 +169,7 @@ export default function CertificateViewPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-    } catch (err) {
+    } catch {
       setError('Failed to generate PDF');
     } finally {
       setDownloading(false);
@@ -237,8 +244,6 @@ export default function CertificateViewPage() {
           <div className="flex justify-center overflow-auto">
             <FabricCertificateCanvas
               backgroundImage={template.backgroundImage}
-              backgroundWidth={template.backgroundWidth}
-              backgroundHeight={template.backgroundHeight}
               fields={template.fields}
               selectedFieldId={null}
               onSelectField={() => {}}

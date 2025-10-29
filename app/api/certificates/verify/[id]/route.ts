@@ -36,7 +36,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             }
           }
         },
-        template: {
+        arTemplate: {
+          select: {
+            name: true,
+            language: true
+          }
+        },
+        enTemplate: {
           select: {
             name: true,
             language: true
@@ -65,7 +71,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         completedAt: certificate.enrollment.completedAt,
         duration: certificate.enrollment.course.duration,
         instructor: certificate.enrollment.course.authorName,
-        language: certificate.template?.language || 'ar'
+        language: certificate.arTemplate?.language || certificate.enTemplate?.language || 'ar'
       }
     });
 

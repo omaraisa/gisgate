@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { Stage, Layer, Text as KonvaText, Image as KonvaImage, Rect, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import type Konva from 'konva';
@@ -20,7 +20,7 @@ interface CertificateField {
   rotation?: number;
 }
 
-interface CertificateCanvasProps {
+export interface CertificateCanvasProps {
   backgroundImage: string;
   backgroundWidth: number;
   backgroundHeight: number;
@@ -63,16 +63,15 @@ export default function CertificateCanvas({
     onSelectField(null);
   };
 
-  const handleDragEnd = (id: string, e: any) => {
+  const handleDragEnd = (id: string, e: Konva.KonvaEventObject<MouseEvent>) => {
     onUpdateField(id, {
       x: e.target.x(),
       y: e.target.y()
     });
   };
 
-  const handleTransformEnd = (id: string, e: any) => {
-    const node = e.target;
-    const scaleX = node.scaleX();
+  const handleTransformEnd = (id: string, e: Konva.KonvaEventObject<MouseEvent>) => {
+    const node = e.target as Konva.Text | Konva.Rect;
     const scaleY = node.scaleY();
 
     // Reset scale
@@ -83,7 +82,7 @@ export default function CertificateCanvas({
       x: node.x(),
       y: node.y(),
       rotation: node.rotation(),
-      fontSize: Math.round(node.fontSize() * scaleY) // For text
+      fontSize: Math.round((node as Konva.Text).fontSize() * scaleY) // For text
     });
   };
 
@@ -100,7 +99,7 @@ export default function CertificateCanvas({
         height={displayHeight}
         scaleX={scale}
         scaleY={scale}
-        onClick={(e) => {
+        onClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
           // Deselect when clicking on empty area
           if (e.target === e.target.getStage()) {
             handleDeselect();
@@ -138,8 +137,8 @@ export default function CertificateCanvas({
                   dash={[10, 5]}
                   draggable
                   onClick={() => handleSelect(field.id)}
-                  onDragEnd={(e) => handleDragEnd(field.id, e)}
-                  onTransformEnd={(e) => handleTransformEnd(field.id, e)}
+                  onDragEnd={(e: Konva.KonvaEventObject<MouseEvent>) => handleDragEnd(field.id, e)}
+                  onTransformEnd={(e: Konva.KonvaEventObject<MouseEvent>) => handleTransformEnd(field.id, e)}
                   rotation={field.rotation || 0}
                 />
               );
@@ -161,8 +160,8 @@ export default function CertificateCanvas({
                 fontStyle={field.fontWeight === 'bold' ? 'bold' : 'normal'}
                 draggable
                 onClick={() => handleSelect(field.id)}
-                onDragEnd={(e) => handleDragEnd(field.id, e)}
-                onTransformEnd={(e) => handleTransformEnd(field.id, e)}
+                onDragEnd={(e: Konva.KonvaEventObject<MouseEvent>) => handleDragEnd(field.id, e)}
+                onTransformEnd={(e: Konva.KonvaEventObject<MouseEvent>) => handleTransformEnd(field.id, e)}
                 rotation={field.rotation || 0}
                 // Offset for text alignment
                 offsetX={field.textAlign === 'center' ? displayText.length * field.fontSize * 0.3 : 
@@ -175,7 +174,7 @@ export default function CertificateCanvas({
           {selectedFieldId && (
             <Transformer
               ref={transformerRef}
-              boundBoxFunc={(oldBox, newBox) => {
+              boundBoxFunc={(oldBox: Konva.Box, newBox: Konva.Box) => {
                 // Limit resize
                 if (newBox.width < 5 || newBox.height < 5) {
                   return oldBox;

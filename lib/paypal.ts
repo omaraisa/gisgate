@@ -5,8 +5,7 @@ import {
   PaymentsController,
   CheckoutPaymentIntent,
   OrderApplicationContextUserAction,
-  OrderApplicationContextShippingPreference,
-  ApiError
+  OrderApplicationContextShippingPreference
 } from '@paypal/paypal-server-sdk';
 
 export class PayPalService {

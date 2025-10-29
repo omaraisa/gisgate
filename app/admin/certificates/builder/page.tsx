@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { 
   ArrowLeftIcon, 
   DocumentArrowDownIcon, 
-  EyeIcon, 
   CloudArrowUpIcon, 
   PlusIcon, 
   TrashIcon,
@@ -18,6 +17,13 @@ import Footer from '../../../components/Footer';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { generateCertificateFromCanvas } from '@/lib/pdf-generator';
+
+// Extend window interface to include the export function
+declare global {
+  interface Window {
+    exportCertificateCanvas?: () => string | null;
+  }
+}
 
 interface CertificateField {
   id: string;
@@ -106,8 +112,8 @@ export default function CertificateBuilderPage() {
       } else {
         throw new Error('Failed to load template');
       }
-    } catch (err) {
-      alert('فشل في تحميل القالب');
+    } catch {
+      alert('فشل في حفظ القالب');
     } finally {
       setLoading(false);
     }
@@ -266,7 +272,7 @@ export default function CertificateBuilderPage() {
       setIsExporting(true);
       
       // Get canvas image from the Fabric canvas
-      const canvasImageDataUrl = (window as any).exportCertificateCanvas?.();
+      const canvasImageDataUrl = window.exportCertificateCanvas?.();
       if (!canvasImageDataUrl) {
         throw new Error('Failed to export canvas');
       }
@@ -535,7 +541,7 @@ export default function CertificateBuilderPage() {
                             <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
                             <select
                               value={field.textAlign}
-                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
+                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as 'left' | 'center' | 'right' })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
                               <option value="left">يسار</option>
@@ -623,8 +629,6 @@ export default function CertificateBuilderPage() {
                   {template.backgroundImage ? (
                     <FabricCertificateCanvas
                       backgroundImage={template.backgroundImage}
-                      backgroundWidth={template.backgroundWidth}
-                      backgroundHeight={template.backgroundHeight}
                       fields={template.fields}
                       selectedFieldId={selectedField}
                       onSelectField={setSelectedField}
@@ -753,7 +757,7 @@ export default function CertificateBuilderPage() {
                             <label className="block text-xs font-medium text-white/60 mb-1">محاذاة</label>
                             <select
                               value={field.textAlign}
-                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as any })}
+                              onChange={(e) => updateField(field.id, { textAlign: e.target.value as 'left' | 'center' | 'right' })}
                               className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white"
                             >
                               <option value="left">يسار</option>

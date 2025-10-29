@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ArticleStatus } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Package, Plus, Search, Filter, Download, DollarSign, Eye, Star } from 'lucide-react'
+import { Package, Plus, Search, Download, Eye } from 'lucide-react'
 import { RatingDisplay } from '../../components/StarRating'
 
 interface Solution {
@@ -32,7 +32,6 @@ export default function AdminMarketplacePage() {
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchSolutions()
@@ -61,11 +60,6 @@ export default function AdminMarketplacePage() {
 
       if (response.ok) {
         setSolutions(prev => prev.filter(solution => solution.id !== id))
-        setSelectedItems(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(id)
-          return newSet
-        })
       }
     } catch (error) {
       console.error('Error deleting solution:', error)
@@ -202,7 +196,7 @@ export default function AdminMarketplacePage() {
               {/* Status Filter */}
               <select
                 value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'PUBLISHED' | 'DRAFT')}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="all">جميع الحالات</option>

@@ -5,6 +5,13 @@ import { useParams, useSearchParams } from 'next/navigation';
 import FabricCertificateCanvas from '@/app/admin/certificates/builder/FabricCertificateCanvas';
 import { generateCertificateFromCanvas } from '@/lib/pdf-generator';
 
+// Extend window interface to include the export function
+declare global {
+  interface Window {
+    exportCertificateCanvas?: () => string | null;
+  }
+}
+
 interface CertificateField {
   id: string;
   type: 'STUDENT_NAME' | 'COURSE_TITLE' | 'COMPLETION_DATE' | 'DURATION' | 'INSTRUCTOR' | 'CERTIFICATE_ID' | 'QR_CODE';
@@ -40,16 +47,6 @@ interface CertificateData {
   certificateId: string;
   language: string;
 }
-
-const FIELD_TYPES = [
-  { type: 'STUDENT_NAME', label: 'اسم الطالب', defaultText: 'محمد أحمد علي' },
-  { type: 'COURSE_TITLE', label: 'عنوان الدورة', defaultText: 'مقدمة في نظم المعلومات الجغرافية' },
-  { type: 'COMPLETION_DATE', label: 'تاريخ الإكمال', defaultText: '15 سبتمبر 2025' },
-  { type: 'DURATION', label: 'مدة الدورة', defaultText: '8 ساعات' },
-  { type: 'INSTRUCTOR', label: 'المدرب', defaultText: 'عمر الهادي' },
-  { type: 'CERTIFICATE_ID', label: 'رقم الشهادة', defaultText: 'CERT-2025-ABC123' },
-  { type: 'QR_CODE', label: 'رمز QR', defaultText: '[QR]' }
-];
 
 export default function CertificateDownloadPage() {
   const params = useParams();
@@ -119,7 +116,7 @@ export default function CertificateDownloadPage() {
       setDownloading(true);
       
       // Get canvas image from the Fabric canvas (same as certificate builder)
-      const canvasImageDataUrl = (window as any).exportCertificateCanvas?.();
+      const canvasImageDataUrl = window.exportCertificateCanvas?.();
       if (!canvasImageDataUrl) {
         throw new Error('Failed to export canvas');
       }
@@ -242,8 +239,6 @@ export default function CertificateDownloadPage() {
           <div className="flex justify-center overflow-auto">
             <FabricCertificateCanvas
               backgroundImage={template.backgroundImage}
-              backgroundWidth={template.backgroundWidth}
-              backgroundHeight={template.backgroundHeight}
               fields={template.fields}
               selectedFieldId={null}
               onSelectField={() => {}} // Disabled for download view

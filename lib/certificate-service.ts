@@ -2,6 +2,7 @@ import { fabric } from 'fabric';
 import QRCode from 'qrcode';
 import { prisma } from './prisma';
 import { generateCertificateFromCanvas } from './pdf-generator';
+import { Prisma } from '@prisma/client';
 
 export interface CertificateField {
   id: string;
@@ -25,6 +26,20 @@ export interface CertificateTemplate {
   language: string;
   backgroundImage: string;
   fields: CertificateField[];
+}
+
+interface OldCertificateFieldConfig {
+  x: number;
+  y: number;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  maxWidth?: number;
+  width?: number;
+  height?: number;
+  fontWeight?: 'normal' | 'bold';
+  rotation?: number;
 }
 
 export interface CertificateData {
@@ -85,6 +100,12 @@ export class CertificateService {
       throw new Error('Certificate template not found');
     }
 
+    // Process fields to ensure they are in the correct format
+    const processedTemplate: CertificateTemplate = {
+      ...template,
+      fields: this.processTemplateFields(template.fields as unknown as CertificateField[] | Record<string, OldCertificateFieldConfig>)
+    };
+
     // Generate QR code for verification
     const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/certificates/verify/${data.certificateId}`;
     const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
@@ -97,7 +118,7 @@ export class CertificateService {
     });
 
     // Create canvas and render certificate exactly like the builder
-    const canvasDataUrl = await this.generateCertificateCanvas(template, data, qrCodeDataUrl);
+    const canvasDataUrl = await this.generateCertificateCanvas(processedTemplate, data, qrCodeDataUrl);
     
     // Convert canvas to PDF using the same function as the builder
     const pdfBytes = await generateCertificateFromCanvas(canvasDataUrl);
@@ -105,7 +126,7 @@ export class CertificateService {
     return Buffer.from(pdfBytes);
   }
 
-  private static async generateCertificateCanvas(template: any, data: CertificateData, qrCodeDataUrl: string): Promise<string> {
+  private static async generateCertificateCanvas(template: CertificateTemplate, data: CertificateData, qrCodeDataUrl: string): Promise<string> {
     return new Promise((resolve, reject) => {
       // Create fabric canvas with FIXED certificate dimensions (same as builder)
       const canvasElement = fabric.util.createCanvasElement();
@@ -167,7 +188,7 @@ export class CertificateService {
 
         // Add each field to canvas (scaled to fixed dimensions)
         fields.forEach((field: CertificateField) => {
-          const fieldContent = this.getFieldContentForCanvas(field, data, qrCodeDataUrl);
+          const fieldContent = this.getFieldContentForCanvas(field, data);
           
           if (field.type === 'QR_CODE') {
             // Add QR code as image
@@ -232,12 +253,12 @@ export class CertificateService {
     });
   }
 
-  private static processTemplateFields(fields: any): CertificateField[] {
+  private static processTemplateFields(fields: CertificateField[] | Record<string, OldCertificateFieldConfig>): CertificateField[] {
     if (Array.isArray(fields)) {
       return fields;
     } else if (typeof fields === 'object' && fields !== null) {
       // Convert old object format to array format
-      return Object.entries(fields).map(([key, config]: [string, any]) => ({
+      return Object.entries(fields).map(([key, config]: [string, OldCertificateFieldConfig]) => ({
         id: key,
         type: this.mapFieldKeyToType(key) as CertificateField['type'],
         x: config.x,
@@ -256,7 +277,7 @@ export class CertificateService {
     return [];
   }
 
-  private static getFieldContentForCanvas(field: CertificateField, data: CertificateData, qrCodeDataUrl: string): string {
+  private static getFieldContentForCanvas(field: CertificateField, data: CertificateData): string {
     switch (field.type) {
       case 'STUDENT_NAME':
         return data.studentName;
@@ -379,10 +400,9 @@ export class CertificateService {
       : enrollment.course.titleEnglish || enrollment.course.title; // English title or fallback
 
     // Format duration based on certificate language
-    const course = enrollment.course as any; // Type assertion for new duration fields
     const duration = CertificateService.formatDuration(
-      course.durationValue, 
-      course.durationUnit, 
+      enrollment.course.durationValue, 
+      enrollment.course.durationUnit, 
       isArabic
     );
 
@@ -401,22 +421,17 @@ export class CertificateService {
     };
 
     // Create certificate record with template IDs for both languages
-    const updateData: any = {
-      userId: enrollment.userId,
-      enrollmentId: enrollment.id,
+    const createData: Prisma.CertificateCreateInput = {
+      user: { connect: { id: enrollment.userId } },
+      enrollment: { connect: { id: enrollment.id } },
       certificateId,
-      data: certificateData as any
+      data: certificateData as unknown as Prisma.InputJsonValue,
+      ...(template.language === 'ar' && { arTemplate: { connect: { id: template.id } } }),
+      ...(template.language === 'en' && { enTemplate: { connect: { id: template.id } } })
     };
 
-    // Track which template was used for which language
-    if (template.language === 'ar') {
-      updateData.arTemplateId = template.id;
-    } else if (template.language === 'en') {
-      updateData.enTemplateId = template.id;
-    }
-
     await prisma.certificate.create({
-      data: updateData
+      data: createData
     });
 
     return certificateId;

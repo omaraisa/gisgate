@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, Play, Pause, CheckCircle, Clock, FileText, Download, BookOpen, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, FileText, Download, BookOpen, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Footer from '../../../../components/Footer';
@@ -48,6 +48,20 @@ interface Enrollment {
   lessonProgress: LessonProgress[];
 }
 
+interface EnrolledCourseFromAPI {
+  id: string;
+  progress: {
+    percentage: number;
+  };
+  isCompleted: boolean;
+  lessons: Array<{
+    id: string;
+    isCompleted: boolean;
+    watchedTime: number;
+    completedAt?: string;
+  }>;
+}
+
 export default function CourseLessonPage({ params }: { params: Promise<{ slug: string; lessonSlug: string }> }) {
   const [course, setCourse] = useState<Course | null>(null);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
@@ -55,11 +69,9 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [courseSlug, setCourseSlug] = useState<string>('');
   const [lessonSlug, setLessonSlug] = useState<string>('');
   const [watchTime, setWatchTime] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   
   const router = useRouter();
 
@@ -74,8 +86,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
 
   useEffect(() => {
     // Check authentication status using auth store
-    const { token, user: authUser, isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
-    setUser(authUser);
+    const { isAuthenticated: authIsAuthenticated } = useAuthStore.getState();
     setIsAuthenticated(authIsAuthenticated);
   }, []);
 
@@ -114,7 +125,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
 
             if (profileResponse.ok) {
               const profileData = await profileResponse.json();
-              const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: any) => e.id === courseData.id);
+              const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: EnrolledCourseFromAPI) => e.id === courseData.id);
               
               if (userEnrollment) {
                 // Transform the data to match our interface
@@ -122,7 +133,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                   id: userEnrollment.id,
                   progress: userEnrollment.progress?.percentage || 0,
                   isCompleted: userEnrollment.isCompleted || false,
-                  lessonProgress: userEnrollment.lessons?.map((lesson: any) => ({
+                  lessonProgress: userEnrollment.lessons?.map((lesson) => ({
                     lessonId: lesson.id,
                     isCompleted: lesson.isCompleted || false,
                     watchedTime: lesson.watchedTime || 0,
@@ -164,8 +175,6 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
       });
 
       if (response.ok) {
-        const result = await response.json();
-        
         // Update local state
         if (enrollment) {
           const updatedProgress = enrollment.lessonProgress.map(p =>

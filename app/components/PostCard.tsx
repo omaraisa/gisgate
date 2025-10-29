@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
@@ -10,7 +9,6 @@ interface PostCardProps {
   slug: string;
   publishedAt?: Date | null;
   featuredImage?: string | null;
-  authorName?: string | null;
   category?: string | null;
   type?: 'article' | 'video' | 'course';
 }
@@ -21,7 +19,6 @@ export default function PostCard({
   slug,
   publishedAt,
   featuredImage,
-  authorName,
   category,
   type = 'article'
 }: PostCardProps) {

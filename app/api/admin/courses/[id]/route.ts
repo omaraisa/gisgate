@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 
+interface LessonInput {
+  id?: string;
+  title: string;
+  slug?: string;
+  excerpt?: string;
+  content: string;
+  videoUrl: string;
+  duration: string;
+  attachments?: Array<{
+    url: string;
+    title?: string;
+  }>;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -99,7 +113,7 @@ export async function PUT(
         select: { id: true }
       })
       const existingLessonIds = existingLessons.map(l => l.id)
-      const newLessonIds = data.lessons.filter((l: any) => l.id).map((l: any) => l.id)
+      const newLessonIds = data.lessons.filter((l: LessonInput) => l.id).map((l: LessonInput) => l.id)
 
       // Delete lessons that are no longer in the list
       const lessonsToDelete = existingLessonIds.filter(id => !newLessonIds.includes(id))
@@ -115,7 +129,15 @@ export async function PUT(
 
         if (lessonData.id) {
           // Update existing lesson
-          const updateData: any = {
+          const updateData: Partial<{
+            title: string;
+            excerpt: string;
+            content: string;
+            videoUrl: string;
+            duration: string;
+            order: number;
+            slug?: string;
+          }> = {
             title: lessonData.title,
             excerpt: lessonData.excerpt,
             content: lessonData.content,

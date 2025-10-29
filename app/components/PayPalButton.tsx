@@ -10,22 +10,26 @@ interface PayPalButtonProps {
   courseId?: string; // Made optional for cart checkout
   amount?: number; // Made optional for cart checkout
   currency?: string;
-  courseTitle?: string; // Made optional for cart checkout
   isCartCheckout?: boolean; // New prop to indicate cart checkout
+}
+
+interface PayPalCartItem {
+  courseId: string;
+  quantity: number;
+  price: number;
+  currency: string;
 }
 
 export default function PayPalButton({
   courseId,
   amount,
   currency = 'USD',
-  courseTitle,
   isCartCheckout = false,
 }: PayPalButtonProps) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuthStore();
   const { createOrder, processPayment } = usePaymentStore();
-  const { items, getTotalPrice, clearCart } = useCartStore();
-  const totalPrice = isCartCheckout ? getTotalPrice() : amount || 0;
+  const { items, clearCart } = useCartStore();
 
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
@@ -79,12 +83,12 @@ export default function PayPalButton({
                 throw new Error('Course ID is required');
               }
               // For single course, create a cart item array
-              const singleCourseItem = [{
+              const singleCourseItem: PayPalCartItem[] = [{
                 courseId: courseId,
                 quantity: 1,
                 price: amount || 0,
                 currency: currency
-              }] as any;
+              }];
               console.log('PayPal Button - Single course item:', singleCourseItem);
               const paypalOrderId = await createOrder(singleCourseItem);
               if (!paypalOrderId) {
@@ -93,7 +97,7 @@ export default function PayPalButton({
               return paypalOrderId;
             }
           }}
-          onApprove={async (data: any) => {
+          onApprove={async (data: PayPalOnApproveData) => {
             const success = await processPayment(data.orderID);
             if (success) {
               if (isCartCheckout) {

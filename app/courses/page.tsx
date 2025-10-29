@@ -3,9 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
-import { Calendar, Eye, Users, Clock, Star } from 'lucide-react';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { Eye, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';

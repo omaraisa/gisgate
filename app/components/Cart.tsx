@@ -10,12 +10,11 @@ import { useUIStore } from '@/lib/stores/ui-store';
 
 export default function Cart() {
   const router = useRouter();
-  const { items, removeFromCart, clearCart, getTotalItems, getTotalPrice, isOpen, closeCart } = useCartStore();
+  const { items, removeFromCart, clearCart, getTotalPrice, isOpen, closeCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { addNotification } = useUIStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
   // Debug logging
@@ -81,7 +80,7 @@ export default function Cart() {
       // Navigate to checkout page with cart items
       router.push('/checkout');
       closeCart();
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: 'خطأ في التحويل',

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Download, ExternalLink, Package, Star, DollarSign, Code, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Download, Package, Star, DollarSign, Code, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
 import AnimatedBackground from '@/app/components/AnimatedBackground';

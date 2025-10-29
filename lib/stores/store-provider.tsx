@@ -2,10 +2,6 @@
 
 import { ReactNode, useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { useUIStore } from '@/lib/stores/ui-store';
-import { useCourseStore } from '@/lib/stores/course-store';
-import { usePaymentStore } from '@/lib/stores/payment-store';
-import { useCartStore } from '@/lib/stores/cart-store';
 
 interface StoreProviderProps {
   children: ReactNode;

@@ -2,7 +2,6 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRef, ReactNode } from 'react';
-import { Metadata } from 'next';
 import AnimatedBackground from '@/app/components/AnimatedBackground';
 import Footer from '@/app/components/Footer';
 import { Globe, Target, BookOpen, Video, Award, Users, BarChart3, Mail, Linkedin } from 'lucide-react';

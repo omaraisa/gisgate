@@ -199,7 +199,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('auth-storage');
             return false;
 
-          } catch (error) {
+          } catch {
             set({
               user: null,
               token: null,
@@ -230,7 +230,7 @@ export const useAuthStore = create<AuthState>()(
                 error: null,
               });
             }
-          } catch (error) {
+          } catch {
             set({ error: 'Failed to refresh user data' });
           } finally {
             set({ isLoading: false });

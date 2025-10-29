@@ -2,76 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, Star, Play, CheckCircle, Lock } from 'lucide-react';
+import { ArrowLeft, Users, Play, CheckCircle, Lock, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
-import PayPalButton from '../../components/PayPalButton';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
-
-interface Course {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  excerpt: string;
-  featuredImage?: string;
-  category?: string;
-  level: string;
-  language: string;
-  price?: number;
-  currency?: string;
-  isFree: boolean;
-  duration?: string;
-  totalLessons: number;
-  publishedAt?: string;
-  authorName?: string;
-  authorAvatar?: string;
-  enrollmentCount: number;
-  lessons: Array<{
-    id: string;
-    title: string;
-    slug: string;
-    duration?: string;
-  }>;
-}
-
-interface Enrollment {
-  id: string;
-  enrolledAt: string;
-  completedAt?: string;
-  isCompleted: boolean;
-  progress: {
-    percentage: number;
-    completedLessons: number;
-    totalLessons: number;
-    totalWatchTime: number;
-  };
-  lessonProgress: Array<{
-    id: string;
-    lessonId: string;
-    watchedTime: number;
-    isCompleted: boolean;
-    completedAt?: string;
-    lastWatchedAt: string;
-    lesson: {
-      id: string;
-      title: string;
-      slug: string;
-      duration?: string;
-      order: number;
-    };
-  }>;
-  certificates: Array<{
-    id: string;
-    certificateId: string;
-    templateName: string;
-    language: string;
-    earnedAt: string;
-  }>;
-}
 
 export default function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const [course, setCourse] = useState<Course | null>(null);
@@ -81,7 +17,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const [slug, setSlug] = useState<string>('');
 
   // Use auth store
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const { enrollInCourse, fetchEnrollments, enrollments } = useCourseStore();
 
   // Get enrollment for this course
@@ -150,7 +86,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       } else {
         alert('فشل في التسجيل في الدورة');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to enroll in course');
     } finally {
       setEnrolling(false);
@@ -173,7 +109,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       }
       
       const profileData = await profileResponse.json();
-      const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: any) => e.id === course.id);
+      const userEnrollment = profileData.learningProfile?.enrolledCourses?.find((e: { id: string }) => e.id === course.id);
       
       if (!userEnrollment) {
         throw new Error('Enrollment not found');
@@ -355,7 +291,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                         whileTap={{ scale: 0.95 }}
                         className="bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300"
                       >
-                        متابعة الدورة ({Math.round((enrollment.progress as any).percentage || 0)}%)
+                        متابعة الدورة ({Math.round(enrollment.progress.percentage || 0)}%)
                       </motion.button>
                     )}
                   </>

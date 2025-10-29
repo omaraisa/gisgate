@@ -3,7 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
-import { Package, Download, DollarSign, Filter, Search, Star } from 'lucide-react';
+import { Package, Download, DollarSign, Search } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';

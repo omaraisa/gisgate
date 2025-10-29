@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { ArticleStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, Save, Eye, ArrowLeft, Upload, X, Plus, Trash2, ExternalLink } from 'lucide-react'
+import { Package, Save, Eye, ArrowLeft, Upload, X, Trash2, ExternalLink } from 'lucide-react'
 
 const SOLUTION_TYPES = [
   { value: 'TOOL', label: 'أداة' },
@@ -409,9 +409,9 @@ export default function SolutionEditor() {
                         value={solution.compatibility || ''}
                         onChange={(e) => setSolution(prev => ({ ...prev, compatibility: e.target.value }))}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder='["ArcGIS Pro 3.x", "QGIS 3.x"]'
+                        placeholder='[&quot;ArcGIS Pro 3.x&quot;, &quot;QGIS 3.x&quot;]'
                       />
-                      <p className="text-xs text-gray-500 mt-1">أدخل JSON array مثال: ["ArcGIS Pro 3.x"]</p>
+                      <p className="text-xs text-gray-500 mt-1">أدخل JSON array مثال: [&quot;ArcGIS Pro 3.x&quot;]</p>
                     </div>
                   </div>
 

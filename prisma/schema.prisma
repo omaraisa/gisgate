@@ -226,6 +226,8 @@ model CertificateTemplate {
   updatedAt        DateTime @updatedAt
   backgroundHeight Int      @default(3508)
   backgroundWidth  Int      @default(2480)
+  arCertificates   Certificate[] @relation("ArCertificateTemplate")
+  enCertificates   Certificate[] @relation("EnCertificateTemplate")
 
   @@map("certificate_templates")
 }
@@ -241,6 +243,8 @@ model Certificate {
   enTemplateId  String?
   enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   user          User             @relation("UserCertificates", fields: [userId], references: [id])
+  arTemplate    CertificateTemplate? @relation("ArCertificateTemplate", fields: [arTemplateId], references: [id])
+  enTemplate    CertificateTemplate? @relation("EnCertificateTemplate", fields: [enTemplateId], references: [id])
 
   @@unique([userId, enrollmentId])
   @@map("certificates")

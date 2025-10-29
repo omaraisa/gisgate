@@ -15,8 +15,8 @@ export interface Notification {
 interface ModalState {
   id: string;
   isOpen: boolean;
-  component: React.ComponentType<any> | null;
-  props?: Record<string, any>;
+  component: React.ComponentType<unknown> | null;
+  props?: Record<string, unknown>;
 }
 
 interface UIState {

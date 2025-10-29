@@ -1,23 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { usePaymentStore } from '@/lib/stores/payment-store';
 import { useUIStore } from '@/lib/stores/ui-store';
 import PayPalButton from '@/app/components/PayPalButton';
 import Cart from '@/app/components/Cart';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice } = useCartStore();
   const totalPrice = getTotalPrice();
   const { isAuthenticated, user } = useAuthStore();
-  const { createOrder } = usePaymentStore();
   const { addNotification } = useUIStore();
-  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -40,39 +37,6 @@ export default function CheckoutPage() {
       return;
     }
   }, [isAuthenticated, items.length, router, addNotification]);
-
-  const handlePaymentSuccess = async (paypalOrderId: string) => {
-    setIsProcessing(true);
-    try {
-      const success = await createOrder(items); // Pass all cart items
-      if (success) {
-        clearCart();
-        router.push('/payment/success');
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'فشل في إنشاء الطلب',
-          message: 'حدث خطأ أثناء إنشاء طلب الدفع',
-        });
-      }
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'خطأ في المعالجة',
-        message: 'حدث خطأ أثناء معالجة الدفع',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handlePaymentError = () => {
-    addNotification({
-      type: 'error',
-      title: 'فشل في الدفع',
-      message: 'حدث خطأ أثناء عملية الدفع',
-    });
-  };
 
   if (!isAuthenticated || items.length === 0) {
     return (

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { UserRole, PaymentStatus } from '@prisma/client';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Trash2, X, CheckCircle, XCircle, CreditCard, BookOpen, Award } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, CreditCard, BookOpen, Award } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface Enrollment {
@@ -85,7 +85,6 @@ interface UserDetails {
 
 export default function UserDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const userId = params.id as string;
   const [user, setUser] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,8 +110,8 @@ export default function UserDetailsPage() {
 
       const data = await response.json();
       setUser(data.user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load user details');
+    } catch {
+      setError('Failed to load user details');
     } finally {
       setLoading(false);
     }
@@ -138,7 +137,7 @@ export default function UserDetailsPage() {
 
       setUser({ ...user, role: newRole });
       alert('User role updated successfully');
-    } catch (err) {
+    } catch {
       alert('Failed to update user role');
     }
   };
@@ -163,7 +162,7 @@ export default function UserDetailsPage() {
 
       setUser({ ...user, isActive });
       alert(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
-    } catch (err) {
+    } catch {
       alert('Failed to update user status');
     }
   };
@@ -187,7 +186,7 @@ export default function UserDetailsPage() {
       // Refresh user details
       await fetchUserDetails();
       alert('تم إزالة التسجيل بنجاح');
-    } catch (err) {
+    } catch {
       alert('فشل في إزالة التسجيل');
     }
   };

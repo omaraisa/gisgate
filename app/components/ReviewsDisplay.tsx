@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, User, CheckCircle, Calendar, MessageSquare } from 'lucide-react';
+import { Star, CheckCircle, Calendar, MessageSquare } from 'lucide-react';
 import { RatingDisplay, RatingBreakdown } from './StarRating';
 
 interface Review {
@@ -26,13 +26,11 @@ interface ReviewStatistics {
 
 interface ReviewsDisplayProps {
   solutionSlug: string;
-  onNewReview?: (review: Review) => void;
   className?: string;
 }
 
 export default function ReviewsDisplay({
   solutionSlug,
-  onNewReview,
   className = ''
 }: ReviewsDisplayProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -171,7 +169,7 @@ export default function ReviewsDisplay({
             </h4>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="newest">الأحدث أولاً</option>

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       const updatedOrder = await prisma.paymentOrder.update({
         where: { id: paymentOrder.id },
         data: {
-          status: 'COMPLETED' as any,
+          status: 'COMPLETED',
           paypalPaymentId: captureResult.id,
           paidAt: new Date(),
         },
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
           paypalTransactionId: captureResult.id || orderId,
           amount: paymentOrder.amount,
           currency: paymentOrder.currency,
-          status: 'COMPLETED' as any,
+          status: 'COMPLETED',
         },
       });
 

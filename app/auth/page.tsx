@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function AuthPage() {
@@ -37,7 +36,6 @@ export default function AuthPage() {
   const passwordValidation = validatePassword(formData.password);
   const passwordsMatch = formData.password === formData.confirmPassword;
 
-  const router = useRouter();
   const { login, isAuthenticated, user, checkAuth } = useAuthStore();
 
   // Check if user is already authenticated

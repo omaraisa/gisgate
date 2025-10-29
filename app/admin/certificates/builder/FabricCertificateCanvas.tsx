@@ -22,8 +22,6 @@ interface CertificateField {
 
 interface FabricCertificateCanvasProps {
   backgroundImage: string;
-  backgroundWidth: number;
-  backgroundHeight: number;
   fields: CertificateField[];
   selectedFieldId: string | null;
   onSelectField: (fieldId: string | null) => void;
@@ -35,8 +33,6 @@ interface FabricCertificateCanvasProps {
 
 export default function FabricCertificateCanvas({
   backgroundImage,
-  backgroundWidth,
-  backgroundHeight,
   fields,
   selectedFieldId,
   onSelectField,
@@ -98,14 +94,14 @@ export default function FabricCertificateCanvas({
 
     // Canvas event handlers - only attach if not in read-only mode
     if (!readOnly) {
-      canvas.on('selection:created', (e: any) => {
+      canvas.on('selection:created', (e: fabric.IEvent) => {
         const activeObject = e.selected?.[0];
         if (activeObject && activeObject.data?.fieldId) {
           onSelectField(activeObject.data.fieldId);
         }
       });
 
-      canvas.on('selection:updated', (e: any) => {
+      canvas.on('selection:updated', (e: fabric.IEvent) => {
         const activeObject = e.selected?.[0];
         if (activeObject && activeObject.data?.fieldId) {
           onSelectField(activeObject.data.fieldId);
@@ -116,7 +112,7 @@ export default function FabricCertificateCanvas({
         onSelectField(null);
       });
 
-      canvas.on('object:modified', (e: any) => {
+      canvas.on('object:modified', (e: fabric.IEvent) => {
         const target = e.target;
         if (target && target.data?.fieldId) {
           // Convert canvas coordinates back to actual image coordinates
@@ -137,7 +133,7 @@ export default function FabricCertificateCanvas({
             updates.height = (target.height || 150) * (target.scaleY || 1) / actualScale;
             
             // Also update the QR text position
-            const qrText = canvas.getObjects().find((obj: any) => obj.data?.parentId === target.data.fieldId);
+            const qrText = canvas.getObjects().find((obj: fabric.Object) => obj.data?.parentId === target.data.fieldId);
             if (qrText) {
               const qrWidth = (target.width || 150) * (target.scaleX || 1);
               const qrHeight = (target.height || 150) * (target.scaleY || 1);
@@ -177,7 +173,7 @@ export default function FabricCertificateCanvas({
 
     const canvas = fabricCanvasRef.current;
 
-    fabric.Image.fromURL(backgroundImage, (img: any) => {
+    fabric.Image.fromURL(backgroundImage, (img: fabric.Image) => {
       // Scale the image to fit the fixed canvas size
       const imageScale = displayScale * zoom;
       
@@ -202,14 +198,14 @@ export default function FabricCertificateCanvas({
     const canvas = fabricCanvasRef.current;
     
     // Remove existing field objects (but keep background)
-    const objects = canvas.getObjects().filter((obj: any) => obj.data?.fieldId || obj.data?.parentId);
-    objects.forEach((obj: any) => canvas.remove(obj));
+    const objects = canvas.getObjects().filter((obj: fabric.Object) => obj.data?.fieldId || obj.data?.parentId);
+    objects.forEach((obj: fabric.Object) => canvas.remove(obj));
 
     // Calculate the actual scale for positioning fields
     const actualScale = displayScale * zoom;
 
     // Add field objects
-    fields.forEach((field, index) => {
+    fields.forEach((field) => {
       
       if (field.type === 'QR_CODE') {
         const qrWidth = (field.width || 150) * actualScale;
@@ -222,7 +218,7 @@ export default function FabricCertificateCanvas({
         generateQRCode(certificateId).then((qrDataUrl) => {
           if (qrDataUrl) {
             // Create QR code as image
-            fabric.Image.fromURL(qrDataUrl, (qrImg) => {
+            fabric.Image.fromURL(qrDataUrl, (qrImg: fabric.Image) => {
               if (qrImg) {
                 qrImg.set({
                   left: field.x * actualScale,
@@ -308,7 +304,7 @@ export default function FabricCertificateCanvas({
 
     // Select the currently selected field
     if (selectedFieldId) {
-      const targetObject = canvas.getObjects().find((obj: any) => obj.data?.fieldId === selectedFieldId);
+      const targetObject = canvas.getObjects().find((obj: fabric.Object) => obj.data?.fieldId === selectedFieldId);
       if (targetObject) {
         canvas.setActiveObject(targetObject);
       }
@@ -331,7 +327,7 @@ export default function FabricCertificateCanvas({
     
     // Load background at full resolution
     if (backgroundImage) {
-      fabric.Image.fromURL(backgroundImage, (img: any) => {
+      fabric.Image.fromURL(backgroundImage, (img: fabric.Image) => {
         // Scale image to fit certificate dimensions
         const imgScale = Math.min(CERT_WIDTH / img.width, CERT_HEIGHT / img.height);
         
@@ -357,7 +353,7 @@ export default function FabricCertificateCanvas({
               try {
                 const qrDataUrl = await generateQRCode(certificateId);
                 if (qrDataUrl) {
-                  fabric.Image.fromURL(qrDataUrl, (qrImg) => {
+                  fabric.Image.fromURL(qrDataUrl, (qrImg: fabric.Image) => {
                     if (qrImg) {
                       qrImg.set({
                         left: field.x,
@@ -373,7 +369,7 @@ export default function FabricCertificateCanvas({
                 } else {
                   throw new Error('QR generation failed');
                 }
-              } catch (error) {
+              } catch {
                 // Fallback: Add placeholder rectangle if QR generation fails
                 const qrRect = new fabric.Rect({
                   left: field.x,
@@ -437,9 +433,9 @@ export default function FabricCertificateCanvas({
   // Expose export function to parent
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).exportCertificateCanvas = exportCanvasImage;
+      (window as Window & typeof globalThis & { exportCertificateCanvas: () => string | null }).exportCertificateCanvas = exportCanvasImage;
     }
-  }, []);
+  }, [exportCanvasImage]);
 
   return (
     <div className="flex justify-center items-center bg-gray-100 p-4">

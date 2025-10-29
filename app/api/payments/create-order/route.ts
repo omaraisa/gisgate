@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
           courseId: item.courseId,
           amount: item.price * item.quantity,
           currency: 'USD',
-          status: 'PENDING' as any,
+          status: 'PENDING',
           paypalOrderId: paypalOrder.id,
         },
       });

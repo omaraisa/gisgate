@@ -2,9 +2,10 @@ import * as Minio from 'minio';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaClient } from '@prisma/client';
+import { config } from 'dotenv';
 
 // Load environment variables
-require('dotenv').config();
+config();
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -16,8 +17,8 @@ const MINIO_CONFIG = {
   endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
-  accessKey: 'miniomar',
-  secretKey: '123wasd#@!WDSA'
+  accessKey: 'omarminioadmin',
+  secretKey: 'k939kdVKF*#(@)_gmdik32'
 };
 
 const BUCKET_NAME = 'images';

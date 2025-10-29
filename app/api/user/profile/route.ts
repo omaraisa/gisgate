@@ -3,6 +3,56 @@ import { AuthService } from '@/lib/auth';
 import { requireAuth } from '@/lib/api-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+
+type EnrollmentWithDetails = Prisma.CourseEnrollmentGetPayload<{
+  include: {
+    course: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        excerpt: true,
+        featuredImage: true,
+        category: true,
+        level: true,
+        language: true,
+        totalLessons: true,
+        createdAt: true,
+      },
+    },
+    lessonProgress: {
+      select: {
+        id: true,
+        lessonId: true,
+        watchedTime: true,
+        isCompleted: true,
+        completedAt: true,
+        lastWatchedAt: true,
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            duration: true,
+            order: true,
+          },
+        },
+      },
+      orderBy: { lesson: { order: 'asc' } },
+    },
+    certificates: {
+      select: {
+        id: true,
+        certificateId: true,
+        createdAt: true,
+        arTemplateId: true,
+        enTemplateId: true,
+      },
+    },
+  },
+}>;
 
 const updateProfileSchema = z.object({
   firstName: z.string().optional(),
@@ -149,8 +199,8 @@ export async function GET(request: NextRequest) {
     }, 0);
 
     // Format enrolled courses with progress
-    const enrolledCourses = enrollments.map((enrollment: any) => {
-      const completedLessons = enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
+    const enrolledCourses = enrollments.map((enrollment: EnrollmentWithDetails) => {
+      const completedLessons = enrollment.lessonProgress.filter((lp) => lp.isCompleted).length;
       const totalLessons = enrollment.course.totalLessons || enrollment.lessonProgress.length;
       const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
@@ -171,9 +221,9 @@ export async function GET(request: NextRequest) {
           percentage: progressPercentage,
           completedLessons,
           totalLessons,
-          totalWatchTime: enrollment.lessonProgress.reduce((total: number, lp: any) => total + lp.watchedTime, 0),
+          totalWatchTime: enrollment.lessonProgress.reduce((total: number, lp) => total + lp.watchedTime, 0),
         },
-        lessons: enrollment.lessonProgress.map((lp: any) => ({
+        lessons: enrollment.lessonProgress.map((lp) => ({
           id: lp.lesson.id,
           title: lp.lesson.title,
           slug: lp.lesson.slug,
@@ -184,7 +234,7 @@ export async function GET(request: NextRequest) {
           completedAt: lp.completedAt,
           lastWatchedAt: lp.lastWatchedAt,
         })),
-        certificates: enrollment.certificates.map((cert: any) => ({
+        certificates: enrollment.certificates.map((cert) => ({
           id: cert.id,
           certificateId: cert.certificateId,
           hasArabic: !!cert.arTemplateId,
@@ -196,17 +246,17 @@ export async function GET(request: NextRequest) {
 
     // Calculate learning statistics
     const totalEnrolledCourses = enrollments.length;
-    const completedCourses = enrollments.filter((e: any) => e.isCompleted).length;
-    const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.lessonProgress.filter((lp: any) => lp.isCompleted).length;
+    const completedCourses = enrollments.filter((e: EnrollmentWithDetails) => e.isCompleted).length;
+    const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
+      return total + enrollment.lessonProgress.filter((lp) => lp.isCompleted).length;
     }, 0);
-    const totalLessonsWatched = enrollments.reduce((total: number, enrollment: any) => {
+    const totalLessonsWatched = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
       return total + enrollment.lessonProgress.length;
     }, 0);
-    const totalWatchTime = enrollments.reduce((total: number, enrollment: any) => {
-      return total + enrollment.lessonProgress.reduce((sum: number, lp: any) => sum + lp.watchedTime, 0);
+    const totalWatchTime = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
+      return total + enrollment.lessonProgress.reduce((sum: number, lp) => sum + lp.watchedTime, 0);
     }, 0);
-    const certificatesEarned = enrollments.reduce((total: number, enrollment: any) => {
+    const certificatesEarned = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
       return total + enrollment.certificates.length;
     }, 0);
     // Don't return sensitive information

@@ -41,7 +41,7 @@ export default function CertificateVerifyPage() {
       const response = await fetch(`/api/certificates/verify/${certificateId}`);
       const data = await response.json();
       setVerification(data);
-    } catch (err) {
+    } catch {
       setVerification({
         valid: false,
         error: 'فشل في التحقق من الشهادة'

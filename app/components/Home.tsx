@@ -109,36 +109,6 @@ interface Course {
   price?: number;
 }
 
-interface ArticlesResponse {
-  articles: Article[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-interface LessonsResponse {
-  lessons: Lesson[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-interface CoursesResponse {
-  courses: Course[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
 interface Solution {
   id: string;
   title: string;
@@ -151,16 +121,6 @@ interface Solution {
   price?: number;
   currency?: string;
   downloadCount: number;
-}
-
-interface SolutionsResponse {
-  solutions: Solution[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
 }
 
 export default function Home() {

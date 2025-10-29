@@ -9,7 +9,6 @@ interface ReviewFormProps {
   solutionSlug: string;
   userId?: string;
   isLoggedIn: boolean;
-  onReviewSubmitted?: (review: any) => void;
   className?: string;
 }
 
@@ -17,7 +16,6 @@ export default function ReviewForm({
   solutionSlug,
   userId,
   isLoggedIn,
-  onReviewSubmitted,
   className = ''
 }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
@@ -64,7 +62,6 @@ export default function ReviewForm({
       setSubmitted(true);
       setRating(0);
       setComment('');
-      onReviewSubmitted?.(data.review);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
     } finally {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WordPressUserMigrator, WordPressUser } from '@/lib/wordpress-user-migrator';
 import { requireAdmin } from '@/lib/api-auth';
-import { UserRole } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {

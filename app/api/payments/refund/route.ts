@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         amount: amount,
         currency: paymentOrder.currency,
         reason: reason,
-        status: 'COMPLETED' as any,
+        status: 'COMPLETED',
         processedAt: new Date(),
       },
     });
@@ -113,12 +113,12 @@ export async function POST(request: NextRequest) {
     if (newTotalRefunded >= paymentOrder.amount) {
       await prisma.paymentOrder.update({
         where: { id: orderId },
-        data: { status: 'REFUNDED' as any },
+        data: { status: 'REFUNDED' },
       });
     } else if (newTotalRefunded > 0) {
       await prisma.paymentOrder.update({
         where: { id: orderId },
-        data: { status: 'PARTIALLY_REFUNDED' as any },
+        data: { status: 'PARTIALLY_REFUNDED' },
       });
     }
 

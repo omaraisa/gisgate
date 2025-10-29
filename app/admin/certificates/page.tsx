@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Star } from 'lucide-react';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
+import { CertificateField } from '@/lib/certificate-service';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface CertificateTemplate {
@@ -13,11 +14,25 @@ interface CertificateTemplate {
   name: string;
   language: string;
   backgroundImage: string;
-  fields: any[];
+  fields: CertificateField[] | Record<string, OldCertificateFieldConfig>;
   isActive: boolean;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface OldCertificateFieldConfig {
+  x: number;
+  y: number;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  maxWidth?: number;
+  width?: number;
+  height?: number;
+  fontWeight?: 'normal' | 'bold';
+  rotation?: number;
 }
 
 export default function CertificateTemplatesPage() {
@@ -69,7 +84,7 @@ export default function CertificateTemplatesPage() {
       } else {
         throw new Error('Failed to delete template');
       }
-    } catch (err) {
+    } catch {
       alert('فشل في حذف القالب');
     }
   };
@@ -92,7 +107,7 @@ export default function CertificateTemplatesPage() {
       } else {
         throw new Error('Failed to update template');
       }
-    } catch (err) {
+    } catch {
       alert('فشل في تحديث القالب');
     }
   };

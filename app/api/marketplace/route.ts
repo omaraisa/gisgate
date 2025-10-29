@@ -14,12 +14,11 @@ export async function GET(request: NextRequest) {
     const isFree = searchParams.get('isFree');
     const search = searchParams.get('search');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.SolutionWhereInput = {};
     
     if (status !== undefined) {
       where.status = status;
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Map sort options to database fields
-    let orderBy: any = {};
+    let orderBy: Prisma.SolutionOrderByWithRelationInput = {};
     switch (sortBy) {
       case 'newest':
         orderBy = { createdAt: 'desc' };

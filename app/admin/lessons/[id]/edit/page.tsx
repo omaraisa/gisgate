@@ -229,7 +229,7 @@ export default function LessonEditor({ params }: LessonEditorProps) {
       if (videoIdMatch) {
         url = clipboardText
       }
-    } catch (error) {
+    } catch {
       // Clipboard access failed, continue with prompt
     }
 

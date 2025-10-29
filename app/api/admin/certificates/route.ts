@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
 import { CertificateService } from '@/lib/certificate-service';

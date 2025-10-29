@@ -2,36 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-interface CertificateField {
-  id: string;
-  type: 'STUDENT_NAME' | 'COURSE_TITLE' | 'COMPLETION_DATE' | 'DURATION' | 'INSTRUCTOR' | 'CERTIFICATE_ID' | 'QR_CODE';
-  x: number;
-  y: number;
-  fontSize: number;
-  fontFamily: string;
-  color: string;
-  textAlign: 'left' | 'center' | 'right';
-  maxWidth?: number;
-  width?: number;
-  height?: number;
-  fontWeight?: 'normal' | 'bold';
-  rotation?: number;
-}
+import type { CertificateCanvasProps } from './CertificateCanvas';
 
-interface CertificateCanvasWrapperProps {
-  backgroundImage: string;
-  backgroundWidth: number;
-  backgroundHeight: number;
-  fields: CertificateField[];
-  selectedFieldId: string | null;
-  onSelectField: (id: string | null) => void;
-  onUpdateField: (id: string, updates: Partial<CertificateField>) => void;
-  getFieldDisplayText: (field: CertificateField) => string;
-  zoom: number;
-}
-
-export default function CertificateCanvasWrapper(props: CertificateCanvasWrapperProps) {
-  const [CanvasComponent, setCanvasComponent] = useState<any>(null);
+export default function CertificateCanvasWrapper(props: CertificateCanvasProps) {
+  const [CanvasComponent, setCanvasComponent] = useState<React.ComponentType<CertificateCanvasProps> | null>(null);
 
   useEffect(() => {
     // Only import on client side after mount
