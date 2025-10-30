@@ -1,11 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { CertificateService } from '@/lib/certificate-service';
+
+// Force dynamic rendering to prevent build-time pre-rendering
+export const dynamic = 'force-dynamic';
+
+// Conditional imports to avoid build-time errors
+let prisma: any;
+let CertificateService: any;
+
+if (process.env.NODE_ENV !== 'production' || process.env.SKIP_BUILD_STATIC_GENERATION !== 'true') {
+  try {
+    const { prisma: _prisma } = require('@/lib/prisma');
+    const { CertificateService: _CertificateService } = require('@/lib/certificate-service');
+    prisma = _prisma;
+    CertificateService = _CertificateService;
+  } catch (error) {
+    console.warn('Failed to import dependencies during build:', error);
+  }
+}
 
 // GET /api/certificates/[id]/download - Download certificate PDF
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Handle missing dependencies during build
+    if (!prisma || !CertificateService) {
+      return NextResponse.json({ 
+        error: 'Service temporarily unavailable during build' 
+      }, { status: 503 });
+    }
+
+    // Handle build-time pre-rendering
+    if (!params) {
+      return NextResponse.json({ error: 'No parameters provided' }, { status: 400 });
+    }
+
     const resolvedParams = await params;
+    
+    if (!resolvedParams?.id) {
+      return NextResponse.json({ error: 'Certificate ID is required' }, { status: 400 });
+    }
+    
     const certificateId = resolvedParams.id;
     
     // Get language from query params, default to 'ar'
