@@ -6,6 +6,9 @@ if (!process.env.SERVER_IP) {
 }
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  
   typescript: {
     // Dangerously allow production builds to successfully complete even if
     // your project has type errors.

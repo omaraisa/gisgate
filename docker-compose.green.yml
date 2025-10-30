@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  gisgate-green:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: gisgate_green
+    ports:
+      - "8002:3000"
+    volumes:
+      # Mount the existing image directory
+      - /var/www/static/image:/app/public/static/image:ro
+      - /var/www/uploads/images:/app/public/uploads/images
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
