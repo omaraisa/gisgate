@@ -8,6 +8,7 @@ import { StoreProvider } from "@/lib/stores/store-provider";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToTopButton from "./components/ScrollToTopButton";
+import AuthChecker from "./components/AuthChecker";
 
 const kufi = localFont({
   src: "../fonts/kufi.ttf",
@@ -36,6 +37,7 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <StoreProvider>
+            <AuthChecker />
             <Header />
             <Cart />
             <ScrollToTop />

@@ -13,33 +13,73 @@ const protectedRoutes = [
 // Routes that should redirect to home if authenticated
 const authRoutes = ['/auth'];
 
+// Static and API routes to skip
+const skipRoutes = [
+  '/api/',
+  '/_next/',
+  '/favicon.ico',
+  '/images/',
+  '/fonts/',
+  '/certificate_templates/',
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Skip middleware for static files, API routes, and Next.js internals
+  if (skipRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  const url = new URL(request.url);
+  
+  // Prevent infinite redirects - skip middleware for auth redirects
+  if (url.searchParams.has('auth-redirect') || url.searchParams.has('_rsc')) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('auth-token')?.value ||
                 request.headers.get('authorization')?.replace('Bearer ', '');
 
   // Check if user is authenticated (JWT verification only for performance)
-  const isAuthenticated = token ? (await JWTUtils.verifyToken(token)) !== null : false;
+  let isAuthenticated = false;
+  try {
+    if (token) {
+      const payload = await JWTUtils.verifyToken(token);
+      isAuthenticated = payload !== null;
+    }
+  } catch (error) {
+    // JWT verification failed - treat as unauthenticated but don't log in production
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('JWT verification failed in middleware:', error);
+    }
+    isAuthenticated = false;
+  }
 
-  // Handle auth routes - redirect to home if already authenticated
+  // Handle auth routes - only redirect if we're certain user is authenticated
   if (authRoutes.some(route => pathname.startsWith(route))) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (isAuthenticated && token) {
+      const redirectUrl = new URL('/', request.url);
+      redirectUrl.searchParams.set('auth-redirect', 'true');
+      return NextResponse.redirect(redirectUrl);
     }
     return NextResponse.next();
   }
 
-  // Handle protected routes
-  if (protectedRoutes.some(route => {
+  // Handle protected routes - only redirect if we're certain user is NOT authenticated
+  const isProtectedRoute = protectedRoutes.some(route => {
     if (route.includes('*')) {
       const pattern = route.replace('*', '.*');
       return new RegExp(`^${pattern}`).test(pathname);
     }
     return pathname.startsWith(route);
-  })) {
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL('/auth', request.url));
-    }
+  });
+
+  if (isProtectedRoute && !isAuthenticated) {
+    const redirectUrl = new URL('/auth', request.url);
+    redirectUrl.searchParams.set('auth-redirect', 'true');
+    redirectUrl.searchParams.set('returnTo', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return NextResponse.next();
