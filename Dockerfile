@@ -1,49 +1,51 @@
-# Use Node.js 18 Alpine for smaller image size
-FROM node:18-alpine AS base
+# Use Node.js 20 Alpine for smaller image size
+FROM node:20-alpine AS base
 
-# Install dependencies only when needed
+# Dependencies stage - install only production dependencies
 FROM base AS deps
-RUN apk add --no-cache libc6-compat python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps && npm cache clean --force
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
-# Rebuild the source code only when needed
+# Builder stage - build the application
 FROM base AS builder
 WORKDIR /app
+
+# Copy installed dependencies from deps stage (not from host!)
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code from host project directory
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client for build
 RUN npx prisma generate
 
-# Build the application
+# Build Next.js application
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV SERVER_IP="204.12.205.110"
-RUN npm run build:production
+ENV NODE_ENV=production
+RUN npm run build
 
-# Production image, copy all the files and run next
+# Production runtime - minimal final image
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy the built application
+# Copy ONLY the built application (standalone includes everything needed)
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy .env file if it exists
-COPY --from=builder /app/.env* ./
-
-# Create uploads directory for mounted volumes
-RUN mkdir -p /app/public/uploads/images && chown -R nextjs:nodejs /app/public/uploads
+# Set ownership for non-root user
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
@@ -52,4 +54,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# The standalone build includes a server.js file
 CMD ["node", "server.js"]
