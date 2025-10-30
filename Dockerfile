@@ -3,7 +3,8 @@ FROM node:20-alpine AS base
 
 # Dependencies stage - install only production dependencies
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Install Python and build tools needed for canvas compilation
+RUN apk add --no-cache libc6-compat python3 py3-pip build-base
 WORKDIR /app
 
 # Copy package files and install dependencies
@@ -12,6 +13,8 @@ RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 # Builder stage - build the application
 FROM base AS builder
+# Install Python for canvas compilation
+RUN apk add --no-cache python3
 WORKDIR /app
 
 # Copy installed dependencies from deps stage (not from host!)
