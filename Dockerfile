@@ -22,7 +22,7 @@ RUN npx prisma generate
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SERVER_IP="204.12.205.110"
-RUN npm run build
+RUN npm run build:production
 
 # Production image, copy all the files and run next
 FROM base AS runner

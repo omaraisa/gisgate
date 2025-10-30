@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "npm run lint && next build --turbopack",
+    "build:production": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "migrate:wp": "node scripts/wp-migrator.mjs migrate",
