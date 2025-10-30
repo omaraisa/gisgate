@@ -19,6 +19,38 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  webpack: (config, { isServer }) => {
+    // Handle canvas and fabric native modules
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        canvas: 'commonjs canvas',
+        'fabric/node': 'commonjs fabric/node',
+        fabric: 'commonjs fabric',
+      });
+    }
+
+    // Add fallbacks for client-side
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      canvas: false,
+      'fabric/node': false,
+      fs: false,
+      path: false,
+      os: false,
+    };
+
+    // Ignore specific binary files that can't be parsed by webpack
+    config.module.rules.push({
+      test: /\.node$/,
+      use: 'file-loader',
+    });
+
+    return config;
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['canvas', 'fabric'],
+  },
   images: {
     remotePatterns: [
       {
