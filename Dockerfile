@@ -35,6 +35,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy .env file if it exists
+COPY --from=builder /app/.env* ./
+
 # Create uploads directory for mounted volumes
 RUN mkdir -p /app/public/uploads/images && chown -R nextjs:nodejs /app/public/uploads
 
