@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { 
   ArrowLeftIcon, 
   DocumentArrowDownIcon, 
@@ -12,8 +13,13 @@ import {
   MagnifyingGlassPlusIcon,
   MagnifyingGlassMinusIcon
 } from '@heroicons/react/24/outline';
-import FabricCertificateCanvas from './FabricCertificateCanvas';
 import Footer from '../../../components/Footer';
+
+// Dynamically import the FabricCertificateCanvas to avoid SSR issues with canvas
+const FabricCertificateCanvas = dynamic(() => import('./FabricCertificateCanvas'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-96">Loading canvas...</div>
+});
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { generateCertificateFromCanvas } from '@/lib/pdf-generator';
