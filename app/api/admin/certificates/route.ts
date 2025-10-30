@@ -1,7 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
-import { CertificateService } from '@/lib/certificate-service';
+
+// Force dynamic rendering to prevent build-time pre-rendering
+export const dynamic = 'force-dynamic';
+
+// Dynamic import to avoid build-time issues
+async function getCertificateService() {
+  try {
+    const { CertificateService } = await import('@/lib/certificate-service');
+    return CertificateService;
+  } catch (error) {
+    console.warn('Failed to import CertificateService:', error);
+    return null;
+  }
+}
 
 // POST /api/admin/certificates/generate - Generate certificate for completed course
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
@@ -15,6 +28,14 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
 
     if (!enrollmentId) {
       return NextResponse.json({ error: 'Enrollment ID is required' }, { status: 400 });
+    }
+
+    // Load CertificateService dynamically
+    const CertificateService = await getCertificateService();
+    if (!CertificateService) {
+      return NextResponse.json({ 
+        error: 'Certificate service temporarily unavailable' 
+      }, { status: 503 });
     }
 
     // Generate certificate
@@ -48,7 +69,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
     const skip = (page - 1) * limit;
 
     const [certificates, total] = await Promise.all([
-      prisma.certificate.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).certificate.findMany({
         skip,
         take: limit,
         select: {
@@ -81,7 +103,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
         },
         orderBy: { createdAt: 'desc' }
       }),
-      prisma.certificate.count()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma as any).certificate.count()
     ]);
 
     return NextResponse.json({

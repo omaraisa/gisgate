@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
-import { CertificateService } from '@/lib/certificate-service';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
+
+// Force dynamic rendering to prevent build-time pre-rendering
+export const dynamic = 'force-dynamic';
+
+// Dynamic import to avoid build-time issues
+async function getCertificateService() {
+  try {
+    const { CertificateService } = await import('@/lib/certificate-service');
+    return CertificateService;
+  } catch (error) {
+    console.warn('Failed to import CertificateService:', error);
+    return null;
+  }
+}
 
 // POST /api/certificates/generate - Generate certificate for completed course
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
@@ -21,7 +34,8 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     // If courseId is provided instead of enrollmentId, find the enrollment
     if (courseId && !enrollmentId) {
       const { prisma } = await import('@/lib/prisma');
-      const enrollment = await prisma.courseEnrollment.findFirst({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const enrollment = await (prisma as any).courseEnrollment.findFirst({
         where: {
           userId: user.id,
           courseId: courseId
@@ -33,6 +47,14 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       }
       
       targetEnrollmentId = enrollment.id;
+    }
+
+    // Load CertificateService dynamically
+    const CertificateService = await getCertificateService();
+    if (!CertificateService) {
+      return NextResponse.json({ 
+        error: 'Certificate service temporarily unavailable' 
+      }, { status: 503 });
     }
 
     // Generate certificate

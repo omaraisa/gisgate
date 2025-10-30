@@ -48,9 +48,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  experimental: {
-    serverComponentsExternalPackages: ['canvas', 'fabric'],
-  },
+  serverExternalPackages: ['canvas', 'fabric'],
   images: {
     remotePatterns: [
       {
