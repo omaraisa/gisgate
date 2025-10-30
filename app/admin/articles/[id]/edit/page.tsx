@@ -1,7 +1,18 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { ArticleStatus } from '@prisma/client'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+
+// Local type definitions to avoid Prisma client dependency issues
+enum ArticleStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED'
+}lient'
+
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
