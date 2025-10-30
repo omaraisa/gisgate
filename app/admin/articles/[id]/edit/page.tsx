@@ -12,7 +12,7 @@ enum ArticleStatus {
   ARCHIVED = 'ARCHIVED'
 }
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import LinkExtension from '@tiptap/extension-link'
 import ImageExtension from '@tiptap/extension-image'
@@ -98,7 +98,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
       Typography,
     ],
     content: article.content,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       setArticle(prev => ({ ...prev, content: editor.getHTML() }))
     },
     immediatelyRender: false,
