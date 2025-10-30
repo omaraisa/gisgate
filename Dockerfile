@@ -18,6 +18,7 @@ COPY . .
 
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV SERVER_IP="204.12.205.110"
 RUN npm run build
 
 # Production image, copy all the files and run next

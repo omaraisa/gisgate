@@ -107,7 +107,7 @@ export class CertificateService {
     };
 
     // Generate QR code for verification
-    const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/certificates/verify/${data.certificateId}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/certificates/verify/${data.certificateId}`;
     const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
       width: 200,
       margin: 1,
