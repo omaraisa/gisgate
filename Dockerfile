@@ -3,13 +3,13 @@ FROM node:20-alpine AS base
 
 # Dependencies stage - install only production dependencies
 FROM base AS deps
-# Install Python and build tools needed for canvas compilation
-RUN apk add --no-cache libc6-compat python3 py3-pip build-base
+# Install Python, build tools, and canvas dependencies (pixman, cairo, etc.)
+RUN apk add --no-cache libc6-compat python3 py3-pip build-base pkgconfig pixman-dev cairo-dev jpeg-dev giflib-dev librsvg-dev pango-dev
 WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Builder stage - build the application
 FROM base AS builder
