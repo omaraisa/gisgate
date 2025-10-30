@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import { AuthService } from '@/lib/auth';
-import { UserRole } from '@prisma/client';
 import { z } from 'zod';
+
+// Force dynamic rendering to prevent build-time pre-rendering
+export const dynamic = 'force-dynamic';
+
+// Define UserRole manually to avoid build-time enum issues
+const UserRoleValues = ['ADMIN', 'EDITOR', 'AUTHOR', 'USER'] as const;
 
 const updateUserSchema = z.object({
   email: z.string().email().optional(),
@@ -11,7 +16,7 @@ const updateUserSchema = z.object({
   lastName: z.string().min(1).optional(),
   fullNameArabic: z.string().min(1).optional(),
   fullNameEnglish: z.string().min(1).optional(),
-  role: z.nativeEnum(UserRole).optional(),
+  role: z.enum(UserRoleValues).optional(),
   isActive: z.boolean().optional(),
   emailVerified: z.boolean().optional(),
 });

@@ -3,30 +3,34 @@ import { NextRequest, NextResponse } from 'next/server';
 // Force dynamic rendering to prevent build-time pre-rendering
 export const dynamic = 'force-dynamic';
 
-// Conditional imports to avoid build-time errors
-let prisma: any;
-let CertificateService: any;
-
-if (process.env.NODE_ENV !== 'production' || process.env.SKIP_BUILD_STATIC_GENERATION !== 'true') {
+// Dynamic imports to avoid build-time errors
+async function getDependencies() {
   try {
-    const { prisma: _prisma } = require('@/lib/prisma');
-    const { CertificateService: _CertificateService } = require('@/lib/certificate-service');
-    prisma = _prisma;
-    CertificateService = _CertificateService;
+    const [{ prisma }, { CertificateService }] = await Promise.all([
+      import('@/lib/prisma'),
+      import('@/lib/certificate-service')
+    ]);
+    return { prisma, CertificateService };
   } catch (error) {
-    console.warn('Failed to import dependencies during build:', error);
+    console.warn('Failed to import dependencies:', error);
+    return null;
   }
 }
 
 // GET /api/certificates/[id]/download - Download certificate PDF
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Load dependencies dynamically
+    const dependencies = await getDependencies();
+    
     // Handle missing dependencies during build
-    if (!prisma || !CertificateService) {
+    if (!dependencies) {
       return NextResponse.json({ 
         error: 'Service temporarily unavailable during build' 
       }, { status: 503 });
     }
+
+    const { prisma, CertificateService } = dependencies;
 
     // Handle build-time pre-rendering
     if (!params) {
@@ -45,7 +49,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const language = (request.nextUrl.searchParams.get('lang') || 'ar') as 'ar' | 'en';
 
     // Find certificate
-    const certificate = await prisma.certificate.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const certificate = await (prisma as any).certificate.findUnique({
       where: { certificateId },
       include: {
         user: true,
@@ -62,7 +67,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Get the appropriate template based on requested language
-    const template = await prisma.certificateTemplate.findFirst({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const template = await (prisma as any).certificateTemplate.findFirst({
       where: {
         language: language,
         isDefault: true,
