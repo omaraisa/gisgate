@@ -29,6 +29,7 @@ RUN npx prisma generate
 # Build Next.js application
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV SERVER_IP=204.12.205.110
 RUN npm run build
 
 # Production runtime - minimal final image
