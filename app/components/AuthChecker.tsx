@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 export default function AuthChecker() {
-  const { checkAuth, isAuthenticated, user, isLoading } = useAuthStore();
+  const { checkAuth, user, isLoading } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
