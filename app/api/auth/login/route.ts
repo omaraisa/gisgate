@@ -44,10 +44,23 @@ export async function POST(request: NextRequest) {
       token: token, // Only return JWT token
     });
 
+    // Determine if we should use secure cookies (only if HTTPS is properly configured)
+    const useSecureCookies = process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true';
+    
+    // Debug logging for cookie settings (remove in production)
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG_AUTH === 'true') {
+      console.log('Cookie settings:', {
+        nodeEnv: process.env.NODE_ENV,
+        httpsEnabled: process.env.HTTPS_ENABLED,
+        useSecureCookies,
+        userRole: user.role
+      });
+    }
+
     // Set HTTP-only cookie for middleware (server-side auth)
     response.cookies.set('auth-token', token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true, // Keep server-side only for security
+      secure: useSecureCookies,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
@@ -56,7 +69,7 @@ export async function POST(request: NextRequest) {
     // Set readable cookie for client-side JavaScript
     response.cookies.set('auth-token-client', token, {
       httpOnly: false, // Allow client-side access
-      secure: process.env.NODE_ENV === 'production',
+      secure: useSecureCookies,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',

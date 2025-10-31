@@ -10,6 +10,8 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # Don't set HTTPS_ENABLED=true until you have proper SSL setup
+      # - HTTPS_ENABLED=false  # Optional: explicitly set to false for HTTP testing
     volumes:
       # Mount .env file from host (secure approach)
       - ./.env:/app/.env:ro

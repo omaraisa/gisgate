@@ -11,10 +11,13 @@ export async function POST(request: NextRequest) {
       message: 'Logout successful',
     });
 
+    // Determine if we should use secure cookies (only if HTTPS is properly configured)
+    const useSecureCookies = process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true';
+
     // Clear the HTTP-only auth-token cookie
     response.cookies.set('auth-token', '', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      secure: useSecureCookies,
       sameSite: 'lax',
       maxAge: 0, // Expire immediately
       path: '/',
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Clear the client-readable auth-token-client cookie
     response.cookies.set('auth-token-client', '', {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: useSecureCookies,
       sameSite: 'lax',
       maxAge: 0, // Expire immediately
       path: '/',

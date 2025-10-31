@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus } from '@prisma/client'
+import { requireAdmin } from '@/lib/api-auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const articles = await prisma.article.findMany({
       include: {
         images: {
@@ -27,6 +31,15 @@ export async function GET() {
     return NextResponse.json(articlesWithStats)
   } catch (error) {
     console.error('Error fetching articles:', error)
+    
+    // Check if it's an authentication error
+    if (error instanceof Error && (error.message.includes('token') || error.message.includes('Admin'))) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch articles' },
       { status: 500 }
@@ -36,6 +49,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id, status } = await request.json()
 
     if (!id || !status) {
@@ -64,6 +80,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(updatedArticle)
   } catch (error) {
     console.error('Error updating article:', error)
+    
+    // Check if it's an authentication error
+    if (error instanceof Error && (error.message.includes('token') || error.message.includes('Admin'))) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to update article' },
       { status: 500 }
@@ -73,6 +98,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id } = await request.json()
 
     if (!id) {
@@ -90,6 +118,15 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting article:', error)
+    
+    // Check if it's an authentication error
+    if (error instanceof Error && (error.message.includes('token') || error.message.includes('Admin'))) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to delete article' },
       { status: 500 }
