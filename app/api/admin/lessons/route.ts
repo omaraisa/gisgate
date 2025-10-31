@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
+import { requireAdmin } from '@/lib/api-auth'
 
 interface LessonWithStats {
   id: string;
@@ -22,8 +23,11 @@ interface LessonWithStats {
   } | null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const lessons = await prisma.video.findMany({
       include: {
         images: {
@@ -64,6 +68,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id, status } = await request.json()
 
     if (!id || !status) {
@@ -101,6 +108,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id } = await request.json()
 
     if (!id) {

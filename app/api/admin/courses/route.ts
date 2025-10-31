@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus } from '@prisma/client'
+import { requireAdmin } from '@/lib/api-auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const courses = await prisma.course.findMany({
       include: {
         lessons: {
@@ -43,6 +47,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id, status } = await request.json()
 
     if (!id || !status) {
@@ -80,6 +87,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Require admin authentication
+    await requireAdmin(request);
+
     const { id } = await request.json()
 
     if (!id) {

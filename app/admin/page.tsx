@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
 interface ArticleWithStats extends Article {
   imageCount?: number
@@ -40,6 +41,7 @@ interface CourseWithStats {
 type ContentType = 'articles' | 'lessons' | 'courses' | 'courses'
 
 export default function AdminPage() {
+  const { token } = useAuthStore()
   const [contentType, setContentType] = useState<ContentType>('articles')
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
@@ -51,16 +53,34 @@ export default function AdminPage() {
   const [bulkAction, setBulkAction] = useState('')
 
   useEffect(() => {
-    fetchArticles()
-    fetchLessons()
-    fetchCourses()
-  }, [])
+    if (token) {
+      fetchArticles()
+      fetchLessons()
+      fetchCourses()
+    }
+  }, [token])
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    return headers
+  }
 
   const fetchArticles = async () => {
     try {
-      const response = await fetch('/api/admin/articles')
-      const data = await response.json()
-      setArticles(data)
+      const response = await fetch('/api/admin/articles', {
+        headers: getAuthHeaders()
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setArticles(data)
+      } else {
+        console.error('Failed to fetch articles:', response.statusText)
+      }
     } catch (error) {
       console.error('Error fetching articles:', error)
     }
@@ -68,9 +88,15 @@ export default function AdminPage() {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('/api/admin/lessons')
-      const data = await response.json()
-      setLessons(data)
+      const response = await fetch('/api/admin/lessons', {
+        headers: getAuthHeaders()
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setLessons(data)
+      } else {
+        console.error('Failed to fetch lessons:', response.statusText)
+      }
     } catch (error) {
       console.error('Error fetching lessons:', error)
     } finally {
@@ -80,9 +106,15 @@ export default function AdminPage() {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch('/api/admin/courses')
-      const data = await response.json()
-      setCourses(data)
+      const response = await fetch('/api/admin/courses', {
+        headers: getAuthHeaders()
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCourses(data)
+      } else {
+        console.error('Failed to fetch courses:', response.statusText)
+      }
     } catch (error) {
       console.error('Error fetching courses:', error)
     }
@@ -92,7 +124,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/articles', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id, status })
       })
 
@@ -114,7 +146,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/articles', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id })
       })
 
@@ -135,7 +167,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/lessons', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id, status })
       })
 
@@ -157,7 +189,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/lessons', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id })
       })
 
@@ -178,7 +210,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id, status })
       })
 
@@ -200,7 +232,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id })
       })
 
@@ -231,7 +263,7 @@ export default function AdminPage() {
         
         const response = await fetch(apiEndpoint, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ ids: itemIds })
         })
 
@@ -249,7 +281,7 @@ export default function AdminPage() {
         // Bulk status change
         const response = await fetch(apiEndpoint, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ ids: itemIds, status: bulkAction })
         })
 
