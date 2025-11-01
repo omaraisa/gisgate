@@ -48,6 +48,11 @@ echo "Target:  $TARGET"
 
 # Build and start target container
 echo "Starting $TARGET container on port $TARGET_PORT..."
+
+# First, stop and remove any existing container with the same name
+docker stop "gisgate_$TARGET" 2>/dev/null || true
+docker rm "gisgate_$TARGET" 2>/dev/null || true
+
 if [ "$TARGET" = "blue" ]; then
     docker compose -f docker-compose.blue.yml up -d --build
 else
