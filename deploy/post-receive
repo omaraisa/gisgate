@@ -1,137 +1,93 @@
 #!/bin/bash
 set -e
 
-# Configuration
-APP_DIR=/opt/apps/gisgate
-BLUE_COMPOSE=$APP_DIR/docker-compose.blue.yml
-GREEN_COMPOSE=$APP_DIR/docker-compose.green.yml
-UPSTREAM_FILE=/etc/nginx/upstreams/gisgate_upstream.conf
-ENV_FILE=$APP_DIR/.env
+WORK_TREE="/opt/apps/gisgate"
+GIT_DIR="/opt/deploy/gisgate.git"
+UPSTREAM_FILE="/etc/nginx/upstreams/gisgate_upstream.conf"
 
-echo "🚀 Starting GIS Gate Blue-Green Deployment..."
+mkdir -p "$WORK_TREE"
 
-# Pull latest code to working directory
-echo "📦 Pulling latest code..."
-git --work-tree=$APP_DIR --git-dir=/opt/deploy/gisgate.git checkout -f main
-cd $APP_DIR
+echo "Checking out latest code"
+git --git-dir="$GIT_DIR" --work-tree="$WORK_TREE" checkout -f main
 
-# Ensure .env file exists
-if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ .env file not found at $ENV_FILE"
-    echo "Please create .env file with required environment variables"
-    exit 1
-fi
+cd "$WORK_TREE"
 
-# Source environment variables
-set -a
-source $ENV_FILE
-set +a
+echo "Detecting current deployment"
+BLUE_ACTIVE=$(docker ps --filter "name=^gisgate_blue$" --filter "status=running" --format '{{.Names}}')
+GREEN_ACTIVE=$(docker ps --filter "name=^gisgate_green$" --filter "status=running" --format '{{.Names}}')
 
-# Detect which container is currently live
-if [ -f "$UPSTREAM_FILE" ] && grep -q "8001" "$UPSTREAM_FILE"; then
-    ACTIVE="blue"
-    NEXT="green"
-    NEXT_PORT=8002
-    COMPOSE_FILE=$GREEN_COMPOSE
-    ACTIVE_PORT=8001
+TARGET=""
+CURRENT=""
+TARGET_COMPOSE=""
+TARGET_PORT=""
+
+if [ -n "$BLUE_ACTIVE" ] && [ -z "$GREEN_ACTIVE" ]; then
+    CURRENT="blue"
+    TARGET="green"
+    TARGET_COMPOSE="docker-compose.green.yml"
+    TARGET_PORT="8002"
+elif [ -n "$GREEN_ACTIVE" ] && [ -z "$BLUE_ACTIVE" ]; then
+    CURRENT="green"
+    TARGET="blue"
+    TARGET_COMPOSE="docker-compose.blue.yml"
+    TARGET_PORT="8001"
 else
-    ACTIVE="green"
-    NEXT="blue" 
-    NEXT_PORT=8001
-    COMPOSE_FILE=$BLUE_COMPOSE
-    ACTIVE_PORT=8002
-fi
-
-echo "🔄 Current active: $ACTIVE (port $ACTIVE_PORT)"
-echo "🚀 Deploying to: $NEXT (port $NEXT_PORT)"
-
-# Stop any existing container of the target environment
-echo "🧹 Cleaning up existing $NEXT container..."
-docker stop gisgate_$NEXT 2>/dev/null || true
-docker rm gisgate_$NEXT 2>/dev/null || true
-
-# Build and start new container
-echo "🔨 Building and starting $NEXT container..."
-docker compose -f $COMPOSE_FILE up -d --build
-
-# Wait for new container to be healthy
-echo "⏳ Waiting for $NEXT container to be healthy..."
-HEALTH_URL="http://127.0.0.1:$NEXT_PORT/api/health"
-TIMEOUT=120  # 2 minutes timeout
-INTERVAL=5   # Check every 5 seconds
-
-for i in $(seq 1 $((TIMEOUT / INTERVAL))); do
-    if curl -s -f "$HEALTH_URL" > /dev/null 2>&1; then
-        echo "✅ $NEXT container is healthy!"
-        break
+    if grep -q "127.0.0.1:8001" "$UPSTREAM_FILE" 2>/dev/null; then
+        CURRENT="blue"
+        TARGET="green"
+        TARGET_COMPOSE="docker-compose.green.yml"
+        TARGET_PORT="8002"
+    elif grep -q "127.0.0.1:8002" "$UPSTREAM_FILE" 2>/dev/null; then
+        CURRENT="green"
+        TARGET="blue"
+        TARGET_COMPOSE="docker-compose.blue.yml"
+        TARGET_PORT="8001"
+    else
+        CURRENT="none"
+        TARGET="blue"
+        TARGET_COMPOSE="docker-compose.blue.yml"
+        TARGET_PORT="8001"
     fi
-    
-    if [ $i -eq $((TIMEOUT / INTERVAL)) ]; then
-        echo "❌ Timeout waiting for $NEXT container to be healthy"
-        echo "🔍 Container logs:"
-        docker logs gisgate_$NEXT --tail 20
-        exit 1
-    fi
-    
-    echo "⏱️  Attempt $i/$((TIMEOUT / INTERVAL)): Container not ready yet..."
-    sleep $INTERVAL
-done
-
-# Verify container is actually responding with expected response
-echo "🔍 Verifying container response..."
-HEALTH_RESPONSE=$(curl -s "$HEALTH_URL" || echo "")
-if echo "$HEALTH_RESPONSE" | grep -q '"status":"healthy"'; then
-    echo "✅ Health check passed!"
-else
-    echo "❌ Health check failed. Response: $HEALTH_RESPONSE"
-    exit 1
 fi
 
-# Create upstream directory if it doesn't exist
-sudo mkdir -p /etc/nginx/upstreams
+echo "Current slot: $CURRENT"
+echo "Target slot:  $TARGET"
 
-# Switch Nginx upstream
-echo "🔄 Switching Nginx upstream to $NEXT (port $NEXT_PORT)..."
-echo "server 127.0.0.1:$NEXT_PORT;" | sudo tee $UPSTREAM_FILE > /dev/null
-
-# Test nginx configuration
-if sudo nginx -t; then
-    # Reload nginx
-    sudo nginx -s reload
-    echo "✅ Nginx reloaded successfully"
-else
-    echo "❌ Nginx configuration test failed"
-    exit 1
-fi
-
-# Give a moment for the switch to take effect
+# Give a moment for any previous operations to settle
 sleep 2
 
-# Verify the switch worked
-echo "🔍 Verifying deployment..."
-if curl -s -f "http://localhost/api/health" > /dev/null 2>&1; then
-    echo "✅ New deployment is live and responding!"
-    
-    # Stop and remove old container
-    if [ "$ACTIVE" != "unknown" ]; then
-        echo "🧹 Stopping old $ACTIVE container..."
-        docker stop gisgate_$ACTIVE 2>/dev/null || true
-        docker rm gisgate_$ACTIVE 2>/dev/null || true
+docker-compose -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
+docker-compose -f "$TARGET_COMPOSE" up -d --build
+
+TARGET_CONTAINER="gisgate_${TARGET}"
+
+echo "Waiting for $TARGET_CONTAINER to report running"
+for attempt in {1..30}; do
+    STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
+    if [ "$STATUS" = "running" ]; then
+        echo "$TARGET_CONTAINER is running"
+        # Give it a few more seconds to fully initialize
+        sleep 5
+        break
     fi
-    
-    # Clean up old images (keep last 3)
-    echo "🧹 Cleaning up old Docker images..."
-    docker image prune -f
-    
-    echo ""
-    echo "🎉 Deployment completed successfully!"
-    echo "🏃 Now running: $NEXT environment on port $NEXT_PORT"
-    echo "📊 Application health: $(curl -s http://localhost/api/health | jq -r .status 2>/dev/null || echo 'Unknown')"
-    
-else
-    echo "❌ Deployment verification failed"
-    echo "🔄 Rolling back to previous version..."
-    echo "server 127.0.0.1:$ACTIVE_PORT;" | sudo tee $UPSTREAM_FILE > /dev/null
-    sudo nginx -s reload
+    echo "Attempt $attempt/30 -> status $STATUS"
+    sleep 2
+done
+
+STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
+if [ "$STATUS" != "running" ]; then
+    echo "Target container did not reach running state"
+    docker-compose -f "$TARGET_COMPOSE" down
     exit 1
 fi
+
+echo "Switching nginx upstream to $TARGET"
+/opt/apps/switch-upstream.sh "$TARGET"
+
+if [ "$CURRENT" = "blue" ]; then
+    docker-compose -f docker-compose.blue.yml down 2>/dev/null || true
+elif [ "$CURRENT" = "green" ]; then
+    docker-compose -f docker-compose.green.yml down 2>/dev/null || true
+fi
+
+echo "Deployment finished -> active slot $TARGET on port $TARGET_PORT"

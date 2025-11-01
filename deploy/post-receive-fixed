@@ -56,8 +56,15 @@ echo "Target slot:  $TARGET"
 # Give a moment for any previous operations to settle
 sleep 2
 
-docker-compose -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
-docker-compose -f "$TARGET_COMPOSE" up -d --build
+# Use different project names to avoid conflicts
+if [ "$TARGET" = "blue" ]; then
+    PROJECT_NAME="gisgate-blue"
+else
+    PROJECT_NAME="gisgate-green"
+fi
+
+docker-compose -p "$PROJECT_NAME" -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
+docker-compose -p "$PROJECT_NAME" -f "$TARGET_COMPOSE" up -d --build
 
 TARGET_CONTAINER="gisgate_${TARGET}"
 
@@ -85,9 +92,9 @@ echo "Switching nginx upstream to $TARGET"
 /opt/apps/switch-upstream.sh "$TARGET"
 
 if [ "$CURRENT" = "blue" ]; then
-    docker-compose -f docker-compose.blue.yml down 2>/dev/null || true
+    docker-compose -p "gisgate-blue" -f docker-compose.blue.yml down 2>/dev/null || true
 elif [ "$CURRENT" = "green" ]; then
-    docker-compose -f docker-compose.green.yml down 2>/dev/null || true
+    docker-compose -p "gisgate-green" -f docker-compose.green.yml down 2>/dev/null || true
 fi
 
 echo "Deployment finished -> active slot $TARGET on port $TARGET_PORT"
