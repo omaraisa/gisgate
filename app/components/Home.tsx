@@ -209,18 +209,7 @@ export default function Home() {
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              <span 
-                className="font-extrabold text-white drop-shadow-lg"
-                style={{
-                  background: 'linear-gradient(135deg, #ADD900 0%, #8BB500 50%, #699100 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  textShadow: '0 0 30px rgba(173, 217, 0, 0.5)'
-                }}
-              >
-                بوابة نظم
-              </span>
+              
               <br />
               <span 
                 className="font-extrabold text-white drop-shadow-lg"
