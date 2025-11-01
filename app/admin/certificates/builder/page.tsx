@@ -308,7 +308,19 @@ export default function CertificateBuilderPage() {
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-        <AnimatedBackground />
+        {/* Desktop Animated Background */}
+        <div className="hidden md:block">
+          <AnimatedBackground />
+        </div>
+        {/* Mobile Lightweight Background */}
+        <div className="block md:hidden absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-600">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.05),transparent_50%)]"></div>
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}></div>
+        </div>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -320,7 +332,19 @@ export default function CertificateBuilderPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
+      {/* Desktop Animated Background */}
+      <div className="hidden md:block">
+        <AnimatedBackground />
+      </div>
+      {/* Mobile Lightweight Background */}
+      <div className="block md:hidden absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-600">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.05),transparent_50%)]"></div>
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px'
+        }}></div>
+      </div>
 
       {/* Header */}
       <section className="relative z-10 pt-16 pb-4 px-4">
@@ -825,7 +849,9 @@ export default function CertificateBuilderPage() {
         </div>
       </section>
 
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }
