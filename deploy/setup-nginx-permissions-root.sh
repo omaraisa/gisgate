@@ -15,7 +15,7 @@ if ! id "$DEPLOY_USER" >/dev/null 2>&1; then
     echo "❌ User '$DEPLOY_USER' does not exist"
     exit 1
 fi
-
+ 
 # Create sudoers file
 SUDOERS_FILE="/etc/sudoers.d/gisgate-deploy"
 echo "📝 Creating sudoers file: $SUDOERS_FILE"
