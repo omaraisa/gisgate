@@ -1,182 +1,88 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting blue-green deployment..."
-
-# Set variables
 WORK_TREE="/opt/apps/gisgate"
 GIT_DIR="/opt/deploy/gisgate.git"
 UPSTREAM_FILE="/etc/nginx/upstreams/gisgate_upstream.conf"
 
-# Ensure working directory exists
-mkdir -p $WORK_TREE
+mkdir -p "$WORK_TREE"
 
-# Checkout latest code
-echo "📥 Checking out latest code..."
-git --git-dir=$GIT_DIR --work-tree=$WORK_TREE checkout -f main
+echo "Checking out latest code"
+git --git-dir="$GIT_DIR" --work-tree="$WORK_TREE" checkout -f main
 
-# Change to working directory
-cd $WORK_TREE
+cd "$WORK_TREE"
 
-# Determine current active environment with better logic
-echo "🔍 Determining current active environment..."
+echo "Detecting current deployment"
+BLUE_ACTIVE=$(docker ps --filter "name=^gisgate_blue$" --filter "status=running" --format '{{.Names}}')
+GREEN_ACTIVE=$(docker ps --filter "name=^gisgate_green$" --filter "status=running" --format '{{.Names}}')
 
-CURRENT=""
 TARGET=""
-CURRENT_PORT=""
-TARGET_PORT=""
+CURRENT=""
 TARGET_COMPOSE=""
+TARGET_PORT=""
 
-# First, check the nginx upstream file
-if [ -f "$UPSTREAM_FILE" ]; then
-    if grep -q "127.0.0.1:8001" "$UPSTREAM_FILE"; then
+if [ -n "$BLUE_ACTIVE" ] && [ -z "$GREEN_ACTIVE" ]; then
+    CURRENT="blue"
+    TARGET="green"
+    TARGET_COMPOSE="docker-compose.green.yml"
+    TARGET_PORT="8002"
+elif [ -n "$GREEN_ACTIVE" ] && [ -z "$BLUE_ACTIVE" ]; then
+    CURRENT="green"
+    TARGET="blue"
+    TARGET_COMPOSE="docker-compose.blue.yml"
+    TARGET_PORT="8001"
+else
+    if grep -q "127.0.0.1:8001" "$UPSTREAM_FILE" 2>/dev/null; then
         CURRENT="blue"
         TARGET="green"
-        CURRENT_PORT="8001"
-        TARGET_PORT="8002"
         TARGET_COMPOSE="docker-compose.green.yml"
-        echo "📄 Nginx upstream shows BLUE (8001) is currently active"
-    elif grep -q "127.0.0.1:8002" "$UPSTREAM_FILE"; then
-        CURRENT="green"
-        TARGET="blue"
-        CURRENT_PORT="8002"
-        TARGET_PORT="8001"
-        TARGET_COMPOSE="docker-compose.blue.yml"
-        echo "📄 Nginx upstream shows GREEN (8002) is currently active"
-    fi
-fi
-
-# If we couldn't determine from nginx config, check running containers
-if [ -z "$CURRENT" ]; then
-    echo "🔍 Nginx upstream unclear, checking running containers..."
-    
-    BLUE_RUNNING=$(docker ps -q -f name=gisgate_blue 2>/dev/null || echo "")
-    GREEN_RUNNING=$(docker ps -q -f name=gisgate_green 2>/dev/null || echo "")
-    
-    if [ -n "$BLUE_RUNNING" ] && [ -z "$GREEN_RUNNING" ]; then
-        CURRENT="blue"
-        TARGET="green"
-        CURRENT_PORT="8001"
         TARGET_PORT="8002"
-        TARGET_COMPOSE="docker-compose.green.yml"
-        echo "🐳 Container check shows BLUE is running, GREEN is not"
-    elif [ -n "$GREEN_RUNNING" ] && [ -z "$BLUE_RUNNING" ]; then
+    elif grep -q "127.0.0.1:8002" "$UPSTREAM_FILE" 2>/dev/null; then
         CURRENT="green"
         TARGET="blue"
-        CURRENT_PORT="8002"
-        TARGET_PORT="8001"
         TARGET_COMPOSE="docker-compose.blue.yml"
-        echo "🐳 Container check shows GREEN is running, BLUE is not"
-    elif [ -n "$BLUE_RUNNING" ] && [ -n "$GREEN_RUNNING" ]; then
-        # Both running, default to switching to blue (prefer blue when uncertain)
-        CURRENT="green"
-        TARGET="blue"
-        CURRENT_PORT="8002"
         TARGET_PORT="8001"
-        TARGET_COMPOSE="docker-compose.blue.yml"
-        echo "🐳 Both containers running, defaulting to deploy BLUE"
     else
-        # Nothing running, start with blue
         CURRENT="none"
         TARGET="blue"
-        CURRENT_PORT="none"
-        TARGET_PORT="8001"
         TARGET_COMPOSE="docker-compose.blue.yml"
-        echo "🐳 No containers running, starting with BLUE"
+        TARGET_PORT="8001"
     fi
 fi
 
-echo "🎯 Current: $CURRENT ($CURRENT_PORT) → Deploying to: $TARGET ($TARGET_PORT)"
+echo "Current slot: $CURRENT"
+echo "Target slot:  $TARGET"
 
-# Build and start target environment
-echo "🔨 Building and starting $TARGET environment..."
-docker-compose -f $TARGET_COMPOSE down --remove-orphans 2>/dev/null || true
+docker-compose -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
+docker-compose -f "$TARGET_COMPOSE" up -d --build
 
-if ! docker-compose -f $TARGET_COMPOSE up -d --build; then
-    echo "❌ Failed to build/start $TARGET environment"
-    exit 1
-fi
+TARGET_CONTAINER="gisgate_${TARGET}"
 
-# Wait for container to be ready with better feedback
-echo "⏳ Waiting for $TARGET container to be ready..."
-HEALTH_CHECK_COUNT=0
-MAX_ATTEMPTS=60
-
-while [ $HEALTH_CHECK_COUNT -lt $MAX_ATTEMPTS ]; do
-    if curl -f -s http://localhost:$TARGET_PORT/api/health >/dev/null 2>&1; then
-        echo "✅ $TARGET environment is healthy!"
+echo "Waiting for $TARGET_CONTAINER to report running"
+for attempt in {1..30}; do
+    STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
+    if [ "$STATUS" = "running" ]; then
+        echo "$TARGET_CONTAINER is running"
         break
     fi
-    HEALTH_CHECK_COUNT=$((HEALTH_CHECK_COUNT + 1))
-    echo "Waiting... ($HEALTH_CHECK_COUNT/$MAX_ATTEMPTS)"
+    echo "Attempt $attempt/30 -> status $STATUS"
     sleep 2
 done
 
-# Final health check
-if ! curl -f -s http://localhost:$TARGET_PORT/api/health >/dev/null 2>&1; then
-    echo "❌ Health check failed for $TARGET environment after $MAX_ATTEMPTS attempts"
-    echo "🔄 Rolling back..."
-    docker-compose -f $TARGET_COMPOSE down
+STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
+if [ "$STATUS" != "running" ]; then
+    echo "Target container did not reach running state"
+    docker-compose -f "$TARGET_COMPOSE" down
     exit 1
 fi
 
-# Additional verification - make sure container is actually running
-TARGET_CONTAINER_NAME="gisgate_${TARGET}"
-if ! docker ps -q -f name=$TARGET_CONTAINER_NAME | grep -q .; then
-    echo "❌ $TARGET container is not running despite health check"
-    echo "🔄 Rolling back..."
-    docker-compose -f $TARGET_COMPOSE down
-    exit 1
+echo "Switching nginx upstream to $TARGET"
+/opt/apps/switch-upstream.sh "$TARGET"
+
+if [ "$CURRENT" = "blue" ]; then
+    docker-compose -f docker-compose.blue.yml down 2>/dev/null || true
+elif [ "$CURRENT" = "green" ]; then
+    docker-compose -f docker-compose.green.yml down 2>/dev/null || true
 fi
 
-# Switch nginx upstream (this should be instantaneous)
-echo "🔄 Switching nginx to $TARGET environment..."
-if ! /opt/apps/switch-upstream.sh $TARGET; then
-    echo "❌ Failed to switch nginx upstream"
-    echo "🔄 Rolling back..."
-    docker-compose -f $TARGET_COMPOSE down
-    exit 1
-fi
-
-# Give nginx a moment to apply the configuration
-echo "⏳ Waiting for nginx to apply new configuration..."
-sleep 3
-
-# Verify the switch worked by checking nginx config
-if [ -f "$UPSTREAM_FILE" ]; then
-    if [ "$TARGET" = "blue" ] && ! grep -q "127.0.0.1:8001" "$UPSTREAM_FILE"; then
-        echo "⚠️  Warning: Nginx upstream may not have switched to blue correctly"
-    elif [ "$TARGET" = "green" ] && ! grep -q "127.0.0.1:8002" "$UPSTREAM_FILE"; then
-        echo "⚠️  Warning: Nginx upstream may not have switched to green correctly"
-    else
-        echo "✅ Nginx upstream successfully switched to $TARGET"
-    fi
-fi
-
-# Only stop old environment if we had one running
-if [ "$CURRENT" != "none" ]; then
-    echo "🛑 Stopping $CURRENT environment..."
-    if [ "$CURRENT" = "blue" ]; then
-        docker-compose -f docker-compose.blue.yml down
-    else
-        docker-compose -f docker-compose.green.yml down
-    fi
-    echo "✅ $CURRENT environment stopped"
-else
-    echo "ℹ️  No previous environment to stop"
-fi
-
-# Final verification
-echo "🔍 Final verification..."
-if curl -f -s http://localhost:$TARGET_PORT/api/health >/dev/null 2>&1; then
-    echo "🎉 Deployment complete! Now serving from $TARGET environment on port $TARGET_PORT"
-    echo "🌐 Site should be accessible and healthy"
-else
-    echo "⚠️  Warning: Final health check failed, but deployment completed"
-fi
-
-# Clean up any dangling images to save space
-echo "🧹 Cleaning up dangling images..."
-docker image prune -f >/dev/null 2>&1 || true
-
-echo "✨ Deployment finished successfully!"
+echo "Deployment finished -> active slot $TARGET on port $TARGET_PORT"
