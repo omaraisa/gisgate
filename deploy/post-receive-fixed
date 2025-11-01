@@ -79,7 +79,18 @@ done
 
 # Switch nginx upstream
 echo "Switching nginx to $TARGET..."
-bash /opt/apps/gisgate/deploy/switch-upstream.sh "$TARGET"
+if bash /opt/apps/gisgate/deploy/switch-upstream.sh "$TARGET"; then
+    echo "✅ Nginx switch successful"
+else
+    echo "❌ Nginx switch failed - keeping old container running"
+    # Stop the new container since nginx switch failed
+    if [ "$TARGET" = "blue" ]; then
+        docker compose -f docker-compose.blue.yml down
+    else
+        docker compose -f docker-compose.green.yml down
+    fi
+    exit 1
+fi
 
 # Stop old container only after successful switch
 if [ "$CURRENT" != "none" ] && [ "$CURRENT" != "$TARGET" ]; then
