@@ -36,7 +36,7 @@ echo "📋 Setting up post-receive hook..."
 sudo cp "/opt/apps/gisgate/deploy/post-receive-staging" "$GIT_DIR/hooks/post-receive"
 sudo chmod +x "$GIT_DIR/hooks/post-receive"
 sudo chown $DEPLOY_USER:$DEPLOY_USER "$GIT_DIR/hooks/post-receive"
-
+ 
 echo "🌐 Adding staging to nginx (optional)..."
 # Create nginx config for staging subdomain (optional)
 sudo tee /etc/nginx/sites-available/gisgate-staging > /dev/null <<EOF
