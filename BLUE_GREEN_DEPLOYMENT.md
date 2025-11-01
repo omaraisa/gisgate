@@ -284,9 +284,128 @@ Git Push → Post-Receive Hook → Detect Active → Build Target → Health Che
 - Update health check logic as needed
 - Monitor nginx configuration changes
 
----
+## Staging Environment
 
-**Last Updated:** November 1, 2025  
-**Version:** 1.0  
-**Status:** ✅ Production Ready</content>
+### Overview
+The staging environment provides a simple single-container deployment for testing new features before production deployment.
+
+### Architecture
+```
+┌─────────────────┐
+│ Staging Container │
+│    (Port 8003)   │
+└─────────────────┘
+         │
+    ┌────────────┐
+    │   Direct   │
+    │   Access   │
+    │ Port 8003  │
+    └────────────┘
+```
+
+### Files
+
+#### `docker-compose.staging.yml`
+**Location:** `docker-compose.staging.yml`  
+**Purpose:** Single container staging environment  
+**Network:** `gisgate-staging-network`  
+**Port:** `8003`
+
+#### `deploy/post-receive-staging`
+**Location:** `deploy/post-receive-staging`  
+**Purpose:** Git hook for staging deployments  
+**Features:** Simple single-container deployment with health checks
+
+#### `deploy/setup-staging.sh`
+**Location:** `deploy/setup-staging.sh`  
+**Purpose:** One-time setup script for staging environment
+
+### Setup Process
+
+#### 1. Run Setup Script on VPS
+```bash
+# On your VPS
+cd /opt/apps/gisgate
+sudo bash deploy/setup-staging.sh
+```
+
+#### 2. Add Git Remote Locally
+```bash
+# On your local machine
+git remote add staging omartheadminuser@your-server-ip:/opt/deploy/gisgate-staging.git
+```
+
+#### 3. Deploy to Staging
+```bash
+git push staging main
+```
+
+### Access Staging
+
+#### Direct IP Access
+```
+http://your-server-ip:8003
+```
+
+#### Health Check
+```
+http://your-server-ip:8003/api/health
+```
+
+#### Optional: Subdomain Setup
+```bash
+# On VPS
+sudo ln -s /etc/nginx/sites-available/gisgate-staging /etc/nginx/sites-enabled/
+sudo systemctl reload nginx
+```
+Then access at: `https://staging.yourdomain.com`
+
+### Workflow
+
+```
+Feature Development → Git Push Staging → Test Online → Git Push Production
+        ↓                    ↓                ↓              ↓
+    Local Code         http://ip:8003    Manual Testing   Blue-Green Deploy
+```
+
+### Key Differences from Production
+
+| Feature | Staging | Production |
+|---------|---------|------------|
+| Containers | 1 | 2 (Blue-Green) |
+| Port | 8003 | 8001/8002 |
+| Environment | development | production |
+| Deployment | Simple rebuild | Zero-downtime switch |
+| Access | Direct IP | Nginx proxy |
+
+### Benefits
+
+✅ **Simple**: Single container, easy to manage  
+✅ **Fast**: Quick deployments for testing  
+✅ **Isolated**: Separate from production  
+✅ **Cost-effective**: Uses same server resources  
+
+### Maintenance
+
+#### Check Status
+```bash
+# See staging container
+docker ps | grep staging
+
+# Check logs
+docker logs gisgate_staging
+
+# Test health
+curl http://localhost:8003/api/health
+```
+
+#### Cleanup
+```bash
+# Stop staging
+docker compose -f docker-compose.staging.yml down
+
+# Remove staging setup
+sudo rm -rf /opt/apps/gisgate-staging
+sudo rm -rf /opt/deploy/gisgate-staging.git
+```</content>
 <parameter name="filePath">d:\sandbox\gisgate\BLUE_GREEN_DEPLOYMENT.md

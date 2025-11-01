@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+WORK_TREE="/opt/apps/gisgate-staging"
+GIT_DIR="/opt/deploy/gisgate-staging.git"
+
+mkdir -p "$WORK_TREE"
+
+echo "Checking out latest code to staging"
+git --git-dir="$GIT_DIR" --work-tree="$WORK_TREE" checkout -f main
+
+cd "$WORK_TREE"
+
+echo "Building and deploying to staging..."
+
+# Stop and remove existing staging container
+docker stop gisgate_staging 2>/dev/null || true
+docker rm gisgate_staging 2>/dev/null || true
+
+# Build and start new staging container
+docker compose -f docker-compose.staging.yml up -d --build
+
+# Wait for container to be healthy
+echo "Waiting for staging container to be healthy..."
+for i in {1..60}; do
+    if docker inspect "gisgate_staging" --format='{{.State.Health.Status}}' 2>/dev/null | grep -q "healthy"; then
+        echo "✅ Staging container is healthy!"
+        echo "🌐 Staging available at: http://your-server-ip:8003"
+        echo "📊 Health check: http://your-server-ip:8003/api/health"
+        break
+    fi
+    if [ $i -eq 60 ]; then
+        echo "❌ Timeout waiting for staging container to be healthy"
+        docker logs gisgate_staging --tail 20
+        exit 1
+    fi
+    echo "Waiting... ($i/60)"
+    sleep 2
+done
+
+echo "🎉 Staging deployment complete!"

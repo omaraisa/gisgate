@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  gisgate-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gisgate_staging
+    ports:
+      - "8003:3000"
+    volumes:
+      # Mount the existing image directory
+      - /var/www/static/image:/app/public/static/image:ro
+      - /var/www/uploads/images:/app/public/uploads/images
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+    # Enable host.docker.internal on Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - gisgate-staging-network
+
+networks:
+  gisgate-staging-network:
+    driver: bridge
