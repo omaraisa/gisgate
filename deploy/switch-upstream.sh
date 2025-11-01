@@ -16,5 +16,6 @@ else
     exit 1
 fi
 
-sudo nginx -t && sudo systemctl reload nginx
+# Test nginx configuration and reload
+nginx -t && systemctl reload nginx
 echo "Switched to $TARGET environment"
