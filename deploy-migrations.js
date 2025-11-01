@@ -6,7 +6,7 @@
  * This script safely deploys Prisma migrations to production database.
  * It includes safety checks and rollback capabilities.
  */
-
+   
 const { execSync } = require('child_process');
 const fs = require('fs');
  
