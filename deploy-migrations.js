@@ -9,7 +9,7 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
- 
+
 // Color codes for console output
 const colors = {
   reset: '\x1b[0m',
