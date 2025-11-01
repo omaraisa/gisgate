@@ -22,6 +22,9 @@ sudo mkdir -p "$GIT_DIR"
 sudo mkdir -p /var/www/uploads/images
 sudo mkdir -p /var/www/static/image
 
+# Set proper ownership for staging directory
+sudo chown -R $DEPLOY_USER:$DEPLOY_USER "$APP_DIR"
+
 echo "🔧 Setting up bare git repository..."
 cd /opt/deploy
 sudo git init --bare gisgate-staging.git
