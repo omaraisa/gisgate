@@ -79,21 +79,7 @@ done
 
 # Switch nginx upstream
 echo "Switching nginx to $TARGET..."
-if [ "$TARGET" = "blue" ]; then
-    cat > /etc/nginx/upstreams/gisgate_upstream.conf << EOF
-server 127.0.0.1:8001;  # blue container
-# server 127.0.0.1:8002;  # green container (inactive)
-EOF
-elif [ "$TARGET" = "green" ]; then
-    cat > /etc/nginx/upstreams/gisgate_upstream.conf << EOF
-# server 127.0.0.1:8001;  # blue container (inactive)
-server 127.0.0.1:8002;  # green container
-EOF
-fi
-
-# Test and reload nginx
-nginx -t && systemctl reload nginx
-echo "Nginx switched to $TARGET environment"
+bash /opt/apps/gisgate/deploy/switch-upstream.sh "$TARGET"
 
 # Stop old container only after successful switch
 if [ "$CURRENT" != "none" ] && [ "$CURRENT" != "$TARGET" ]; then
