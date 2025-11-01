@@ -76,7 +76,7 @@ for i in {1..60}; do
     echo "Waiting... ($i/60)"
     sleep 2
 done
-
+ 
 # Switch nginx upstream
 echo "Switching nginx to $TARGET..."
 bash /opt/apps/gisgate/deploy/switch-upstream.sh "$TARGET"
