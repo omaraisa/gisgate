@@ -13,88 +13,77 @@ git --git-dir="$GIT_DIR" --work-tree="$WORK_TREE" checkout -f main
 cd "$WORK_TREE"
 
 echo "Detecting current deployment"
-BLUE_ACTIVE=$(docker ps --filter "name=^gisgate_blue$" --filter "status=running" --format '{{.Names}}')
-GREEN_ACTIVE=$(docker ps --filter "name=^gisgate_green$" --filter "status=running" --format '{{.Names}}')
+# Check which container is running
+BLUE_RUNNING=$(docker ps -q --filter "name=gisgate_blue" --filter "status=running")
+GREEN_RUNNING=$(docker ps -q --filter "name=gisgate_green" --filter "status=running")
 
-TARGET=""
-CURRENT=""
-TARGET_COMPOSE=""
-TARGET_PORT=""
-
-if [ -n "$BLUE_ACTIVE" ] && [ -z "$GREEN_ACTIVE" ]; then
+if [ -n "$BLUE_RUNNING" ] && [ -z "$GREEN_RUNNING" ]; then
     CURRENT="blue"
     TARGET="green"
-    TARGET_COMPOSE="docker-compose.green.yml"
     TARGET_PORT="8002"
-elif [ -n "$GREEN_ACTIVE" ] && [ -z "$BLUE_ACTIVE" ]; then
+elif [ -n "$GREEN_RUNNING" ] && [ -z "$BLUE_RUNNING" ]; then
     CURRENT="green"
     TARGET="blue"
-    TARGET_COMPOSE="docker-compose.blue.yml"
     TARGET_PORT="8001"
-else
+elif [ -n "$BLUE_RUNNING" ] && [ -n "$GREEN_RUNNING" ]; then
+    # Both running - check nginx config to see which is active
     if grep -q "127.0.0.1:8001" "$UPSTREAM_FILE" 2>/dev/null; then
         CURRENT="blue"
         TARGET="green"
-        TARGET_COMPOSE="docker-compose.green.yml"
         TARGET_PORT="8002"
-    elif grep -q "127.0.0.1:8002" "$UPSTREAM_FILE" 2>/dev/null; then
+    else
         CURRENT="green"
         TARGET="blue"
-        TARGET_COMPOSE="docker-compose.blue.yml"
-        TARGET_PORT="8001"
-    else
-        CURRENT="none"
-        TARGET="blue"
-        TARGET_COMPOSE="docker-compose.blue.yml"
         TARGET_PORT="8001"
     fi
-fi
-
-echo "Current slot: $CURRENT"
-echo "Target slot:  $TARGET"
-
-# Give a moment for any previous operations to settle
-sleep 2
-
-# Use different project names to avoid conflicts
-if [ "$TARGET" = "blue" ]; then
-    PROJECT_NAME="gisgate-blue"
 else
-    PROJECT_NAME="gisgate-green"
+    # Nothing running - start with blue
+    CURRENT="none"
+    TARGET="blue"
+    TARGET_PORT="8001"
 fi
 
-docker-compose -p "$PROJECT_NAME" -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
-docker-compose -p "$PROJECT_NAME" -f "$TARGET_COMPOSE" up -d --build
+echo "Current: $CURRENT"
+echo "Target:  $TARGET"
 
-TARGET_CONTAINER="gisgate_${TARGET}"
+# Build and start target container
+echo "Starting $TARGET container on port $TARGET_PORT..."
+if [ "$TARGET" = "blue" ]; then
+    docker compose -f docker-compose.blue.yml up -d --build
+else
+    docker compose -f docker-compose.green.yml up -d --build
+fi
 
-echo "Waiting for $TARGET_CONTAINER to report running"
-for attempt in {1..30}; do
-    STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
-    if [ "$STATUS" = "running" ]; then
-        echo "$TARGET_CONTAINER is running"
-        # Give it a few more seconds to fully initialize
-        sleep 5
+# Wait for container to be healthy
+echo "Waiting for $TARGET container to be healthy..."
+TARGET_CONTAINER="gisgate_$TARGET"
+
+for i in {1..60}; do
+    if docker inspect "$TARGET_CONTAINER" --format='{{.State.Health.Status}}' 2>/dev/null | grep -q "healthy"; then
+        echo "$TARGET container is healthy!"
         break
     fi
-    echo "Attempt $attempt/30 -> status $STATUS"
+    if [ $i -eq 60 ]; then
+        echo "Timeout waiting for $TARGET container to be healthy"
+        docker logs "$TARGET_CONTAINER" --tail 20
+        exit 1
+    fi
+    echo "Waiting... ($i/60)"
     sleep 2
 done
 
-STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
-if [ "$STATUS" != "running" ]; then
-    echo "Target container did not reach running state"
-    docker-compose -f "$TARGET_COMPOSE" down
-    exit 1
+# Switch nginx upstream
+echo "Switching nginx to $TARGET..."
+bash /opt/apps/gisgate/deploy/switch-upstream.sh "$TARGET"
+
+# Stop old container only after successful switch
+if [ "$CURRENT" != "none" ] && [ "$CURRENT" != "$TARGET" ]; then
+    echo "Stopping old $CURRENT container..."
+    if [ "$CURRENT" = "blue" ]; then
+        docker compose -f docker-compose.blue.yml down
+    else
+        docker compose -f docker-compose.green.yml down
+    fi
 fi
 
-echo "Switching nginx upstream to $TARGET"
-/opt/apps/switch-upstream.sh "$TARGET"
-
-if [ "$CURRENT" = "blue" ]; then
-    docker-compose -p "gisgate-blue" -f docker-compose.blue.yml down 2>/dev/null || true
-elif [ "$CURRENT" = "green" ]; then
-    docker-compose -p "gisgate-green" -f docker-compose.green.yml down 2>/dev/null || true
-fi
-
-echo "Deployment finished -> active slot $TARGET on port $TARGET_PORT"
+echo "Deployment complete! Active: $TARGET on port $TARGET_PORT"
