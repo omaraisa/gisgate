@@ -15,7 +15,7 @@ else
     echo "Usage: $0 [blue|green]"
     exit 1
 fi
-
+ 
 # Test nginx configuration and reload
 nginx -t && systemctl reload nginx
 echo "Switched to $TARGET environment"
