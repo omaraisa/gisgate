@@ -26,9 +26,14 @@ echo "🔧 Setting up bare git repository..."
 cd /opt/deploy
 sudo git init --bare gisgate-staging.git
 sudo chown -R $DEPLOY_USER:$DEPLOY_USER gisgate-staging.git
+# Rename default branch to main
+cd gisgate-staging.git
+sudo git branch -m master main
+cd /opt/deploy
 
 echo "📋 Setting up post-receive hook..."
-sudo cp "$APP_DIR/deploy/post-receive-staging" "$GIT_DIR/hooks/post-receive"
+# Copy from current app directory (where this script is run from)
+sudo cp "/opt/apps/gisgate/deploy/post-receive-staging" "$GIT_DIR/hooks/post-receive"
 sudo chmod +x "$GIT_DIR/hooks/post-receive"
 sudo chown $DEPLOY_USER:$DEPLOY_USER "$GIT_DIR/hooks/post-receive"
 
