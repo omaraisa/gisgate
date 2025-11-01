@@ -53,6 +53,9 @@ fi
 echo "Current slot: $CURRENT"
 echo "Target slot:  $TARGET"
 
+# Give a moment for any previous operations to settle
+sleep 2
+
 docker-compose -f "$TARGET_COMPOSE" down --remove-orphans 2>/dev/null || true
 docker-compose -f "$TARGET_COMPOSE" up -d --build
 
@@ -63,6 +66,8 @@ for attempt in {1..30}; do
     STATUS=$(docker inspect -f '{{.State.Status}}' "$TARGET_CONTAINER" 2>/dev/null || echo "missing")
     if [ "$STATUS" = "running" ]; then
         echo "$TARGET_CONTAINER is running"
+        # Give it a few more seconds to fully initialize
+        sleep 5
         break
     fi
     echo "Attempt $attempt/30 -> status $STATUS"
