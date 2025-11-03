@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import * as Minio from 'minio'
-import { Readable } from 'stream'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
