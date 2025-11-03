@@ -11,8 +11,8 @@ const minioClient = new Minio.Client({
   endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
-  accessKey: 'miniomar',
-  secretKey: '123wasd#@!WDSA'
+  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || 'miniomar',
+  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || '123wasd#@!WDSA'
 })
 
 const BUCKET_NAME = 'solutions' // Dedicated bucket for marketplace solution files

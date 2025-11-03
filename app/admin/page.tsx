@@ -439,6 +439,12 @@ export default function AdminPage() {
             >
               إدارة الشهادات
             </Link>
+            <Link
+              href="/admin/resume"
+              className="px-6 py-2 rounded-lg font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+            >
+              رفع السيرة الذاتية
+            </Link>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">

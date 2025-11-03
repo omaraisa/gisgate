@@ -15,30 +15,30 @@ const minioClient = new Minio.Client({
   secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || '123wasd#@!WDSA'
 })
 
-const BUCKET_NAME = 'images'
+const BUCKET_NAME = 'files' // Dedicated bucket for resume files
+const RESUME_FILENAME = 'omar-elhadi.pdf'
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.formData()
-    const file: File | null = data.get('image') as unknown as File
+    const file: File | null = data.get('file') as unknown as File
 
     if (!file) {
       return NextResponse.json(
-        { error: 'No image file provided' },
+        { error: 'No file provided' },
         { status: 400 }
       )
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    // Validate file type (only PDF allowed)
+    if (!file.type || file.type !== 'application/pdf') {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.' },
+        { error: 'Only PDF files are allowed' },
         { status: 400 }
       )
     }
 
-    // Validate file size (max 10MB)
+    // Validate file size (max 10MB for resume)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
@@ -47,21 +47,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate unique filename with year/month structure
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const randomId = Math.random().toString(36).substring(2, 15)
-    const fileExtension = file.name.split('.').pop() || 'jpg'
-    const fileName = `${randomId}.${fileExtension}`
-    const objectKey = `${year}/${month}/${fileName}`
-
     // Ensure bucket exists
     try {
       await minioClient.bucketExists(BUCKET_NAME)
     } catch {
       await minioClient.makeBucket(BUCKET_NAME)
-      // Set public read policy
+      // Set public read policy for downloads
       const policy = {
         Version: '2012-10-17',
         Statement: [{
@@ -78,26 +69,30 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    await minioClient.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
-      'Content-Type': file.type
+    await minioClient.putObject(BUCKET_NAME, RESUME_FILENAME, buffer, buffer.length, {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${RESUME_FILENAME}"`
     })
 
     // Generate public URL
-    const imageUrl = `http://${process.env.SERVER_IP}:9000/${BUCKET_NAME}/${objectKey}`
+    const fileUrl = `http://${process.env.SERVER_IP}:9000/${BUCKET_NAME}/${RESUME_FILENAME}`
+
+    // Calculate file size in human readable format
+    const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2)
 
     return NextResponse.json({
       success: true,
-      imageUrl,
-      objectKey,
-      fileName: file.name,
+      fileUrl,
+      fileName: RESUME_FILENAME,
+      fileSize: `${fileSizeInMB} MB`,
       size: file.size,
-      type: file.type
+      uploadedAt: new Date().toISOString()
     })
 
-  } catch {
-    console.error('Error uploading image')
+  } catch (error) {
+    console.error('Error uploading resume:', error)
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: 'Failed to upload resume' },
       { status: 500 }
     )
   }
