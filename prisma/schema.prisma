@@ -465,3 +465,16 @@ enum SolutionType {
   CONFIGURATION // Configuration files
   OTHER // Other types
 }
+
+model NewsletterSubscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  subscribedAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+  unsubscribedAt DateTime?
+  source    String?  // e.g., 'footer', 'popup', 'landing_page'
+
+  @@map("newsletter_subscribers")
+}

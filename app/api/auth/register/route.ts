@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
+import { EmailService } from '@/lib/email';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -44,6 +45,23 @@ export async function POST(request: NextRequest) {
     // Register the user
     const user = await AuthService.registerUser(validatedData);
 
+    // Send verification email
+    try {
+      const emailSent = await EmailService.sendWelcomeEmail({
+        name: user.fullNameArabic || user.fullNameEnglish || user.firstName || 'User',
+        email: user.email,
+        verificationToken: user.emailVerificationToken!,
+      });
+
+      if (!emailSent) {
+        console.error('Failed to send verification email to:', user.email);
+        // Don't fail registration if email fails, but log it
+      }
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Continue with registration even if email fails
+    }
+
     // Generate JWT token
     const authUser = {
       id: user.id,
@@ -61,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     // Return success response
     return NextResponse.json({
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email for verification.',
       user: {
         id: user.id,
         email: user.email,

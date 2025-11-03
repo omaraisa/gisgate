@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useState } from 'react';
 
 interface FooterProps {
   theme?: 'dark' | 'light';
@@ -6,6 +7,97 @@ interface FooterProps {
 
 export default function Footer({ theme = 'dark' }: FooterProps) {
   const isDark = theme === 'dark';
+
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactMessage, setContactMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Newsletter form state
+  const [newsletterForm, setNewsletterForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+  });
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactLoading(true);
+    setContactMessage(null);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contactForm),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setContactMessage({ type: 'success', text: data.message });
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+      } else {
+        setContactMessage({ type: 'error', text: data.error || 'حدث خطأ أثناء إرسال الرسالة' });
+      }
+    } catch {
+      setContactMessage({ type: 'error', text: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.' });
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewsletterLoading(true);
+    setNewsletterMessage(null);
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newsletterForm),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setNewsletterMessage({ type: 'success', text: data.message });
+        setNewsletterForm({ firstName: '', lastName: '', email: '' });
+      } else {
+        setNewsletterMessage({ type: 'error', text: data.error || 'حدث خطأ أثناء الاشتراك' });
+      }
+    } catch {
+      setNewsletterMessage({ type: 'error', text: 'حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.' });
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+
+  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setContactForm({
+      ...contactForm,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleNewsletterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewsletterForm({
+      ...newsletterForm,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   return (
     <footer className={isDark ? 'bg-primary-900' : 'bg-gray-50 border-t border-gray-200'}>
@@ -31,21 +123,99 @@ export default function Footer({ theme = 'dark' }: FooterProps) {
             </div>
             <div>
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-secondary-400' : 'text-gray-700'}`}>تواصل معنا</h3>
-            <form className="space-y-4">
-              <input type="text" placeholder="اسمك" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <input type="email" placeholder="بريدك الإلكتروني" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <input type="text" placeholder="الموضوع" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <textarea placeholder="رسالتك" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} rows={4}></textarea>
-              <button type="submit" className="bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 px-4 py-2 rounded transition-all duration-200">إرسال</button>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="name"
+                value={contactForm.name}
+                onChange={handleContactChange}
+                placeholder="اسمك"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              <input
+                type="email"
+                name="email"
+                value={contactForm.email}
+                onChange={handleContactChange}
+                placeholder="بريدك الإلكتروني"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              <input
+                type="text"
+                name="subject"
+                value={contactForm.subject}
+                onChange={handleContactChange}
+                placeholder="الموضوع"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              <textarea
+                name="message"
+                value={contactForm.message}
+                onChange={handleContactChange}
+                placeholder="رسالتك"
+                required
+                rows={4}
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              ></textarea>
+              {contactMessage && (
+                <div className={`p-2 rounded text-sm ${contactMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {contactMessage.text}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={contactLoading}
+                className="bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 disabled:opacity-50 px-4 py-2 rounded transition-all duration-200"
+              >
+                {contactLoading ? 'جاري الإرسال...' : 'إرسال'}
+              </button>
             </form>
           </div>
           <div>
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-secondary-400' : 'text-gray-700'}`}>اشترك في النشرة الإخبارية</h3>
-            <form className="space-y-4">
-              <input type="text" placeholder="الاسم الأول" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <input type="text" placeholder="الاسم الأخير" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <input type="email" placeholder="البريد الإلكتروني" className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`} />
-              <button type="submit" className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-4 py-2 rounded transition-all duration-200">إشتراك</button>
+            <form onSubmit={handleNewsletterSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="firstName"
+                value={newsletterForm.firstName}
+                onChange={handleNewsletterChange}
+                placeholder="الاسم الأول"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              <input
+                type="text"
+                name="lastName"
+                value={newsletterForm.lastName}
+                onChange={handleNewsletterChange}
+                placeholder="الاسم الأخير"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              <input
+                type="email"
+                name="email"
+                value={newsletterForm.email}
+                onChange={handleNewsletterChange}
+                placeholder="البريد الإلكتروني"
+                required
+                className={`w-full p-2 rounded focus:outline-none ${isDark ? 'bg-white/10 border border-white/20 focus:border-secondary-500 text-white placeholder-white/50' : 'bg-white border border-gray-300 focus:border-secondary-500 text-gray-900 placeholder-gray-500'}`}
+              />
+              {newsletterMessage && (
+                <div className={`p-2 rounded text-sm ${newsletterMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {newsletterMessage.text}
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={newsletterLoading}
+                className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 px-4 py-2 rounded transition-all duration-200"
+              >
+                {newsletterLoading ? 'جاري الاشتراك...' : 'إشتراك'}
+              </button>
             </form>
           </div>
         </div>
