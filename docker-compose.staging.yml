@@ -16,7 +16,6 @@ services:
       - ./.env.staging:/app/.env:ro
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=${DATABASE_URL}
       - PORT=3000
       - HOSTNAME=0.0.0.0
     restart: unless-stopped
