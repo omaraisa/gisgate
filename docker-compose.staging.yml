@@ -12,8 +12,8 @@ services:
       # Mount the existing image directory
       - /var/www/static/image:/app/public/static/image:ro
       - /var/www/uploads/images:/app/public/uploads/images
-      # Mount .env file from host (secure approach)
-      - ./.env:/app/.env:ro
+      # Mount .env.staging file from host (secure approach)
+      - ./.env.staging:/app/.env:ro
     environment:
       - NODE_ENV=development
       - DATABASE_URL=${DATABASE_URL}
