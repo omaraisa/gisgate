@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import * as Minio from 'minio'
+import { Readable } from 'stream'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -27,7 +28,7 @@ export async function GET() {
     const stat = await minioClient.statObject(BUCKET_NAME, RESUME_FILENAME)
 
     // Return the file with proper headers
-    return new NextResponse(stream as any, {
+    return new NextResponse(stream as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${RESUME_FILENAME}"`,

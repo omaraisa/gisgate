@@ -279,7 +279,7 @@ export default function ResumeUploadPage() {
               تأكد من إعداد التالي في MinIO:
             </p>
             <ul className="text-sm text-yellow-800 mb-3 list-disc list-inside">
-              <li>إنشاء bucket باسم "files"</li>
+              <li>إنشاء bucket باسم &quot;files&quot;</li>
               <li>تفعيل الوصول العام للقراءة</li>
               <li>تعيين متغيرات البيئة الصحيحة</li>
             </ul>
