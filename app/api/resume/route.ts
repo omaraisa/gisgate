@@ -18,7 +18,7 @@ const minioClient = new Minio.Client({
 const BUCKET_NAME = 'files'
 const RESUME_FILENAME = 'omar-elhadi.pdf'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get the file from MinIO
     const stream = await minioClient.getObject(BUCKET_NAME, RESUME_FILENAME)

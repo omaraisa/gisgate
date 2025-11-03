@@ -266,7 +266,7 @@ export default function ResumeUploadPage() {
         <div className="bg-blue-50 rounded-lg p-6 mt-6">
           <h3 className="text-lg font-semibold text-blue-900 mb-3">ملاحظات مهمة</h3>
           <ul className="text-sm text-blue-800 space-y-2">
-            <li>• سيتم حفظ الملف دائماً باسم "omar-elhadi.pdf" في مجلد "files"</li>
+            <li>• سيتم حفظ الملف دائماً باسم &quot;omar-elhadi.pdf&quot; في مجلد &quot;files&quot;</li>
             <li>• سيتم استبدال الملف السابق إذا كان موجوداً</li>
             <li>• الحد الأقصى لحجم الملف هو 10 ميجابايت</li>
             <li>• الرابط النظيف: {currentResumeUrl}</li>
