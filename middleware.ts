@@ -11,7 +11,7 @@ const protectedRoutes = [
 ];
 
 // Routes that should redirect to home if authenticated
-const authRoutes = ['/auth'];
+// const authRoutes = ['/auth'];
 
 // Static and API routes to skip
 const skipRoutes = [

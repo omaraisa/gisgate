@@ -8,14 +8,14 @@ export default function ComingSoon() {
   useEffect(() => {
     try {
       document.body.classList.add('no-header');
-    } catch (e) {
+    } catch {
       // ignore in non-browser environments
     }
 
     return () => {
       try {
         document.body.classList.remove('no-header');
-      } catch (e) {
+      } catch {
         // ignore
       }
     };
