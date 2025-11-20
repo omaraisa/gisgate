@@ -445,3 +445,14 @@ html {
     border-radius: 6px;
   }
 }
+
+/* When the ComingSoon page is active we add `no-header` to <body> to hide the global header/menu */
+.no-header header {
+  display: none !important;
+}
+
+/* Also ensure mobile slide menu and overlays are hidden when header is removed */
+.no-header .mobile-menu-container,
+.no-header .mobile-menu-overlay {
+  display: none !important;
+}

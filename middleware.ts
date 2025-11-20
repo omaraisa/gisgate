@@ -56,7 +56,9 @@ export async function middleware(request: NextRequest) {
     isAuthenticated = false;
   }
 
-  // Handle auth routes - only redirect if we're certain user is authenticated
+  // Handle auth routes - allow access during Coming Soon period
+  // Comment out the redirect so /auth is always accessible
+  /*
   if (authRoutes.some(route => pathname.startsWith(route))) {
     if (isAuthenticated && token) {
       const redirectUrl = new URL('/', request.url);
@@ -65,6 +67,7 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next();
   }
+  */
 
   // Handle protected routes - only redirect if we're certain user is NOT authenticated
   const isProtectedRoute = protectedRoutes.some(route => {
