@@ -1,132 +1,170 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArticleStatus, CourseLevel } from '@prisma/client'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
-interface CourseWithStats {
+interface Lesson {
   id: string
   title: string
   slug: string
-  description?: string | null
-  excerpt?: string | null
-  status: ArticleStatus
-  publishedAt?: Date | null
-  updatedAt: Date
-  price?: number | null
-  currency?: string | null
-  isFree: boolean
-  level: CourseLevel
-  language?: string | null
-  lessonCount?: number
-  enrollmentCount?: number
+  excerpt: string | null
+  publishedAt: Date | null
+  featuredImage: string | null
+  authorName: string | null
+  category: string | null
+  status: string
+  viewCount: number
+  order: number
 }
 
-export default function AdminCoursesPage() {
-  const [courses, setCourses] = useState<CourseWithStats[]>([])
+interface Course {
+  id: string
+  title: string
+  slug: string
+}
+
+export default function AdminCourseLessonsPage() {
+  const params = useParams()
+  const courseId = params.id as string
+
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
 
   useEffect(() => {
-    fetchCourses()
-  }, [])
+    fetchCourse()
+    fetchLessons()
+  }, [courseId])
 
-  const fetchCourses = async () => {
+  const fetchCourse = async () => {
     try {
-      const response = await fetch('/api/admin/courses')
+      const response = await fetch(`/api/admin/courses/${courseId}`)
       const data = await response.json()
-      setCourses(data)
+      setCourse(data)
     } catch (error) {
-      console.error('Error fetching courses:', error)
+      console.error('Error fetching course:', error)
+    }
+  }
+
+  const fetchLessons = async () => {
+    try {
+      const response = await fetch(`/api/admin/courses/${courseId}/lessons`)
+      const data = await response.json()
+      setLessons(data)
+    } catch (error) {
+      console.error('Error fetching lessons:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleStatusChange = async (id: string, status: ArticleStatus) => {
+  const handleStatusChange = async (id: string, status: string) => {
     try {
-      const response = await fetch('/api/admin/courses', {
+      const response = await fetch(`/api/admin/courses/${courseId}/lessons`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status })
+        body: JSON.stringify({ lessonId: id, status })
       })
 
       if (response.ok) {
-        setCourses(prev =>
-          prev.map(course =>
-            course.id === id ? { ...course, status } : course
+        setLessons(prev =>
+          prev.map(lesson =>
+            lesson.id === id ? { ...lesson, status } : lesson
           )
         )
       }
     } catch (error) {
-      console.error('Error updating course status:', error)
+      console.error('Error updating lesson status:', error)
+    }
+  }
+
+  const handleOrderChange = async (id: string, order: number) => {
+    try {
+      const response = await fetch(`/api/admin/courses/${courseId}/lessons`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId: id, order })
+      })
+
+      if (response.ok) {
+        setLessons(prev =>
+          prev.map(lesson =>
+            lesson.id === id ? { ...lesson, order } : lesson
+          ).sort((a, b) => a.order - b.order)
+        )
+      }
+    } catch (error) {
+      console.error('Error updating lesson order:', error)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
+    if (!confirm('هل أنت متأكد من حذف هذا الدرس؟')) return
 
     try {
-      const response = await fetch('/api/admin/courses', {
+      const response = await fetch(`/api/admin/courses/${courseId}/lessons`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ lessonId: id })
       })
 
       if (response.ok) {
-        setCourses(prev => prev.filter(course => course.id !== id))
-        setSelectedItems(prev => {
+        setLessons(prev => prev.filter(lesson => lesson.id !== id))
+        setSelectedLessons(prev => {
           const newSet = new Set(prev)
           newSet.delete(id)
           return newSet
         })
       }
     } catch (error) {
-      console.error('Error deleting course:', error)
+      console.error('Error deleting lesson:', error)
     }
   }
 
   const handleBulkAction = async () => {
-    if (!bulkAction || selectedItems.size === 0) return
+    if (!bulkAction || selectedLessons.size === 0) return
 
-    const itemIds = Array.from(selectedItems)
+    const lessonIds = Array.from(selectedLessons)
 
     try {
       if (bulkAction === 'delete') {
-        if (!confirm(`هل أنت متأكد من حذف ${itemIds.length} كورس؟`)) return
+        if (!confirm(`هل أنت متأكد من حذف ${lessonIds.length} درس؟`)) return
 
-        const response = await fetch('/api/admin/courses/bulk', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: itemIds })
-        })
-
-        if (response.ok) {
-          setCourses(prev => prev.filter(item => !selectedItems.has(item.id)))
-          setSelectedItems(new Set())
+        // For bulk delete, we need to delete each lesson individually
+        for (const lessonId of lessonIds) {
+          await fetch(`/api/admin/courses/${courseId}/lessons`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonId })
+          })
         }
+
+        setLessons(prev => prev.filter(lesson => !selectedLessons.has(lesson.id)))
+        setSelectedLessons(new Set())
       } else {
         // Bulk status change
-        const response = await fetch('/api/admin/courses/bulk', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: itemIds, status: bulkAction })
-        })
-
-        if (response.ok) {
-          setCourses(prev =>
-            prev.map(item =>
-              selectedItems.has(item.id)
-                ? { ...item, status: bulkAction as ArticleStatus }
-                : item
-            )
-          )
-          setSelectedItems(new Set())
+        for (const lessonId of lessonIds) {
+          await fetch(`/api/admin/courses/${courseId}/lessons`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonId, status: bulkAction })
+          })
         }
+
+        setLessons(prev =>
+          prev.map(lesson =>
+            selectedLessons.has(lesson.id)
+              ? { ...lesson, status: bulkAction }
+              : lesson
+          )
+        )
+        setSelectedLessons(new Set())
       }
     } catch (error) {
       console.error('Error performing bulk action:', error)
@@ -136,17 +174,17 @@ export default function AdminCoursesPage() {
   }
 
   const toggleSelectAll = () => {
-    if (selectedItems.size === filteredCourses.length) {
-      setSelectedItems(new Set())
+    if (selectedLessons.size === filteredLessons.length) {
+      setSelectedLessons(new Set())
     } else {
-      setSelectedItems(new Set(filteredCourses.map(item => item.id)))
+      setSelectedLessons(new Set(filteredLessons.map(lesson => lesson.id)))
     }
   }
 
-  const filteredCourses = courses.filter(course => {
-    const matchesFilter = filter === 'all' || course.status === filter
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredLessons = lessons.filter(lesson => {
+    const matchesFilter = filter === 'all' || lesson.status === filter
+    const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (lesson.excerpt && lesson.excerpt.toLowerCase().includes(searchTerm.toLowerCase()))
     return matchesFilter && matchesSearch
   })
 
@@ -155,7 +193,7 @@ export default function AdminCoursesPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل الكورسات...</p>
+          <p className="mt-4 text-gray-600">جاري تحميل الدروس...</p>
         </div>
       </div>
     )
@@ -166,13 +204,19 @@ export default function AdminCoursesPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Link
+              href="/admin/courses"
+              className="text-blue-600 hover:text-blue-800"
+            >
+              ← العودة للكورسات
+            </Link>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            إدارة الكورسات
+            إدارة دروس الكورس: {course?.title}
           </h1>
           <p className="text-gray-600">
-            إجمالي الكورسات: {courses.length} | 
-            المنشور: {courses.filter(course => course.status === ArticleStatus.PUBLISHED).length} | 
-            المسودة: {courses.filter(course => course.status === ArticleStatus.DRAFT).length}
+            إجمالي الدروس: {lessons.length} | المنشور: {lessons.filter(l => l.status === 'PUBLISHED').length} | المسودة: {lessons.filter(l => l.status === 'DRAFT').length}
           </p>
         </div>
 
@@ -183,7 +227,7 @@ export default function AdminCoursesPage() {
             <div className="flex-1 max-w-md">
               <input
                 type="text"
-                placeholder="البحث في الكورسات..."
+                placeholder="البحث في الدروس..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -207,21 +251,21 @@ export default function AdminCoursesPage() {
               ))}
             </div>
 
-            {/* Add New */}
+            {/* Add Lesson */}
             <Link
-              href="/admin/courses/new"
+              href={`/admin/courses/${courseId}/lessons/new`}
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              إضافة كورس جديد
+              إضافة درس جديد
             </Link>
           </div>
 
           {/* Bulk Actions */}
-          {selectedItems.size > 0 && (
+          {selectedLessons.size > 0 && (
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium text-blue-900">
-                  تم اختيار {selectedItems.size} كورس
+                  تم اختيار {selectedLessons.size} درس
                 </span>
                 <select
                   value={bulkAction}
@@ -245,7 +289,7 @@ export default function AdminCoursesPage() {
           )}
         </div>
 
-        {/* Courses Table */}
+        {/* Lessons Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -254,24 +298,23 @@ export default function AdminCoursesPage() {
                   <th className="p-4 text-right">
                     <input
                       type="checkbox"
-                      checked={selectedItems.size === filteredCourses.length && filteredCourses.length > 0}
+                      checked={selectedLessons.size === filteredLessons.length && filteredLessons.length > 0}
                       onChange={toggleSelectAll}
                       className="rounded border-gray-300"
                     />
                   </th>
+                  <th className="p-4 text-right font-medium text-gray-900">الترتيب</th>
                   <th className="p-4 text-right font-medium text-gray-900">العنوان</th>
-                  <th className="p-4 text-right font-medium text-gray-900">المستوى</th>
-                  <th className="p-4 text-right font-medium text-gray-900">السعر</th>
+                  <th className="p-4 text-right font-medium text-gray-900">تاريخ النشر</th>
                   <th className="p-4 text-right font-medium text-gray-900">الحالة</th>
-                  <th className="p-4 text-right font-medium text-gray-900">الدروس</th>
-                  <th className="p-4 text-right font-medium text-gray-900">المسجلين</th>
+                  <th className="p-4 text-right font-medium text-gray-900">المشاهدات</th>
                   <th className="p-4 text-right font-medium text-gray-900">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCourses.map((course, index) => (
+                {filteredLessons.map((lesson, index) => (
                   <motion.tr
-                    key={course.id}
+                    key={lesson.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
@@ -280,84 +323,77 @@ export default function AdminCoursesPage() {
                     <td className="p-4">
                       <input
                         type="checkbox"
-                        checked={selectedItems.has(course.id)}
+                        checked={selectedLessons.has(lesson.id)}
                         onChange={(e) => {
-                          const newSet = new Set(selectedItems)
+                          const newSet = new Set(selectedLessons)
                           if (e.target.checked) {
-                            newSet.add(course.id)
+                            newSet.add(lesson.id)
                           } else {
-                            newSet.delete(course.id)
+                            newSet.delete(lesson.id)
                           }
-                          setSelectedItems(newSet)
+                          setSelectedLessons(newSet)
                         }}
                         className="rounded border-gray-300"
                       />
                     </td>
                     <td className="p-4">
+                      <input
+                        type="number"
+                        value={lesson.order}
+                        onChange={(e) => handleOrderChange(lesson.id, parseInt(e.target.value) || 0)}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                        min="0"
+                      />
+                    </td>
+                    <td className="p-4">
                       <div>
                         <Link
-                          href={`/admin/courses/${course.id}/edit`}
+                          href={`/admin/courses/${courseId}/lessons/${lesson.id}/edit`}
                           className="font-medium text-blue-600 hover:text-blue-800 line-clamp-2"
                         >
-                          {course.title}
+                          {lesson.title}
                         </Link>
                         <div className="text-sm text-gray-500 mt-1">
                           <Link
-                            href={`/courses/${course.slug}`}
+                            href={`/courses/${course?.slug}/lessons/${lesson.slug}`}
                             target="_blank"
                             className="hover:text-blue-600"
                           >
-                            عرض الكورس ↗
+                            عرض الدرس ↗
                           </Link>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-gray-600">
-                      {course.level === CourseLevel.BEGINNER ? 'مبتدئ' :
-                       course.level === CourseLevel.INTERMEDIATE ? 'متوسط' : 'متقدم'}
-                    </td>
-                    <td className="p-4 text-gray-600">
-                      {course.isFree ? 'مجاني' : `${course.price} ${course.currency || 'USD'}`}
+                      {lesson.publishedAt ? new Date(lesson.publishedAt).toLocaleDateString('en-US') : 'غير منشور'}
                     </td>
                     <td className="p-4">
                       <select
-                        value={course.status}
-                        onChange={(e) => {
-                          const newStatus = e.target.value as ArticleStatus
-                          handleStatusChange(course.id, newStatus)
-                        }}
+                        value={lesson.status}
+                        onChange={(e) => handleStatusChange(lesson.id, e.target.value)}
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          course.status === ArticleStatus.PUBLISHED
+                          lesson.status === 'PUBLISHED'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
-                        <option value={ArticleStatus.PUBLISHED}>منشور</option>
-                        <option value={ArticleStatus.DRAFT}>مسودة</option>
+                        <option value="PUBLISHED">منشور</option>
+                        <option value="DRAFT">مسودة</option>
                       </select>
                     </td>
                     <td className="p-4 text-gray-600 text-center">
-                      {course.lessonCount || 0}
-                    </td>
-                    <td className="p-4 text-gray-600 text-center">
-                      {course.enrollmentCount || 0}
+                      {lesson.viewCount || 0}
                     </td>
                     <td className="p-4">
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2">
                         <Link
-                          href={`/admin/courses/${course.id}/lessons`}
-                          className="text-green-600 hover:text-green-800 text-sm"
-                        >
-                          إدارة الدروس
-                        </Link>
-                        <Link
-                          href={`/admin/courses/${course.id}/edit`}
+                          href={`/admin/courses/${courseId}/lessons/${lesson.id}/edit`}
                           className="text-blue-600 hover:text-blue-800 text-sm"
                         >
                           تحرير
                         </Link>
                         <button
-                          onClick={() => handleDelete(course.id)}
+                          onClick={() => handleDelete(lesson.id)}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
                           حذف
@@ -370,9 +406,9 @@ export default function AdminCoursesPage() {
             </table>
           </div>
 
-          {filteredCourses.length === 0 && (
+          {filteredLessons.length === 0 && (
             <div className="p-12 text-center text-gray-500">
-              <p>لا توجد كورسات مطابقة للبحث</p>
+              <p>لا توجد دروس مطابقة للبحث</p>
             </div>
           )}
         </div>

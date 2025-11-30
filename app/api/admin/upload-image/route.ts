@@ -19,6 +19,15 @@ const BUCKET_NAME = 'images'
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate environment variables
+    if (!process.env.SERVER_IP) {
+      console.error('SERVER_IP environment variable is not set')
+      return NextResponse.json(
+        { error: 'Server configuration error: SERVER_IP not set' },
+        { status: 500 }
+      )
+    }
+
     const data = await request.formData()
     const file: File | null = data.get('image') as unknown as File
 
@@ -56,34 +65,72 @@ export async function POST(request: NextRequest) {
     const fileName = `${randomId}.${fileExtension}`
     const objectKey = `${year}/${month}/${fileName}`
 
+    console.log('Attempting to upload file:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      objectKey,
+      bucket: BUCKET_NAME,
+      endpoint: process.env.SERVER_IP
+    })
+
     // Ensure bucket exists
     try {
-      await minioClient.bucketExists(BUCKET_NAME)
-    } catch {
-      await minioClient.makeBucket(BUCKET_NAME)
-      // Set public read policy
-      const policy = {
-        Version: '2012-10-17',
-        Statement: [{
-          Effect: 'Allow',
-          Principal: { 'AWS': '*' },
-          Action: ['s3:GetObject'],
-          Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`]
-        }]
+      console.log('Checking if bucket exists:', BUCKET_NAME)
+      const bucketExists = await minioClient.bucketExists(BUCKET_NAME)
+      console.log('Bucket exists:', bucketExists)
+
+      if (!bucketExists) {
+        console.log('Creating bucket:', BUCKET_NAME)
+        await minioClient.makeBucket(BUCKET_NAME)
+
+        // Set public read policy
+        const policy = {
+          Version: '2012-10-17',
+          Statement: [{
+            Effect: 'Allow',
+            Principal: { 'AWS': '*' },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`]
+          }]
+        }
+        console.log('Setting bucket policy')
+        await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
+        console.log('Bucket policy set successfully')
       }
-      await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
+    } catch (bucketError) {
+      console.error('Error with bucket operations:', bucketError)
+      const errorMessage = bucketError instanceof Error ? bucketError.message : 'Unknown bucket error'
+      return NextResponse.json(
+        { error: `Bucket operation failed: ${errorMessage}` },
+        { status: 500 }
+      )
     }
 
     // Convert file to buffer and upload to MinIO
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    try {
+      console.log('Converting file to buffer')
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      console.log('File converted to buffer, size:', buffer.length)
 
-    await minioClient.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
-      'Content-Type': file.type
-    })
+      console.log('Uploading to MinIO...')
+      await minioClient.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
+        'Content-Type': file.type
+      })
+      console.log('Upload to MinIO successful')
+    } catch (uploadError) {
+      console.error('Error uploading to MinIO:', uploadError)
+      const errorMessage = uploadError instanceof Error ? uploadError.message : 'Unknown upload error'
+      return NextResponse.json(
+        { error: `Upload failed: ${errorMessage}` },
+        { status: 500 }
+      )
+    }
 
     // Generate public URL
     const imageUrl = `http://${process.env.SERVER_IP}:9000/${BUCKET_NAME}/${objectKey}`
+    console.log('Generated image URL:', imageUrl)
 
     return NextResponse.json({
       success: true,
@@ -94,10 +141,12 @@ export async function POST(request: NextRequest) {
       type: file.type
     })
 
-  } catch {
-    console.error('Error uploading image')
+  } catch (error) {
+    console.error('Unexpected error in upload-image:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: `Unexpected error: ${errorMessage}`, stack: errorStack },
       { status: 500 }
     )
   }

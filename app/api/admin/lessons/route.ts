@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
     await requireAdmin(request);
 
     const lessons = await prisma.video.findMany({
+      where: {
+        courseId: null // Only standalone lessons
+      },
       include: {
         images: {
           select: {
