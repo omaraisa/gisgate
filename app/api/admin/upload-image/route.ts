@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       endpoint: process.env.SERVER_IP
     })
 
-    // Ensure bucket exists
+    // Ensure bucket exists and has public read policy
     try {
       console.log('Checking if bucket exists:', BUCKET_NAME)
       const bucketExists = await minioClient.bucketExists(BUCKET_NAME)
@@ -83,21 +83,21 @@ export async function POST(request: NextRequest) {
       if (!bucketExists) {
         console.log('Creating bucket:', BUCKET_NAME)
         await minioClient.makeBucket(BUCKET_NAME)
-
-        // Set public read policy
-        const policy = {
-          Version: '2012-10-17',
-          Statement: [{
-            Effect: 'Allow',
-            Principal: { 'AWS': '*' },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`]
-          }]
-        }
-        console.log('Setting bucket policy')
-        await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
-        console.log('Bucket policy set successfully')
       }
+
+      // Always set public read policy (whether bucket is new or existing)
+      const policy = {
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Principal: { 'AWS': '*' },
+          Action: ['s3:GetObject'],
+          Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`]
+        }]
+      }
+      console.log('Setting bucket policy')
+      await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
+      console.log('Bucket policy set successfully')
     } catch (bucketError) {
       console.error('Error with bucket operations:', bucketError)
       const errorMessage = bucketError instanceof Error ? bucketError.message : 'Unknown bucket error'
