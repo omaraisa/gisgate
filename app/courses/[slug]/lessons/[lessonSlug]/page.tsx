@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Footer from '../../../../components/Footer';
 import AnimatedBackground from '../../../../components/AnimatedBackground';
+import YouTubePlayer, { extractYouTubeVideoId, isYouTubeUrl } from '../../../../components/YouTubePlayer';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface Lesson {
@@ -415,13 +416,35 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                 >
                   <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
                     <div className="relative aspect-video">
-                      {currentLesson.videoUrl.includes('youtube.com') || currentLesson.videoUrl.includes('youtu.be') ? (
-                        <iframe
-                          src={currentLesson.videoUrl.replace('watch?v=', 'embed/')}
-                          className="w-full h-full"
-                          allowFullScreen
-                          title={currentLesson.title}
-                        />
+                      {isYouTubeUrl(currentLesson.videoUrl) ? (
+                        (() => {
+                          const videoId = extractYouTubeVideoId(currentLesson.videoUrl);
+                          return videoId ? (
+                            <YouTubePlayer
+                              videoId={videoId}
+                              title={currentLesson.title}
+                              className="w-full h-full"
+                              opts={{
+                                width: '100%',
+                                height: '100%',
+                                playerVars: {
+                                  autoplay: 0,
+                                  modestbranding: 1,
+                                  rel: 0,
+                                  showinfo: 0,
+                                  iv_load_policy: 3,
+                                  fs: 1,
+                                  cc_load_policy: 0,
+                                  controls: 1,
+                                },
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white">
+                              <p>Invalid YouTube URL</p>
+                            </div>
+                          );
+                        })()
                       ) : (
                         <video
                           src={currentLesson.videoUrl}

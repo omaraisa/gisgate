@@ -1,6 +1,7 @@
 'use client';
 
 import YouTube, { YouTubeProps } from 'react-youtube';
+import { useState } from 'react';
 
 interface YouTubePlayerProps {
   videoId: string;
@@ -27,6 +28,8 @@ export default function YouTubePlayer({
   onEnd,
   onStateChange,
 }: YouTubePlayerProps) {
+  const [hasError, setHasError] = useState(false);
+
   // Default options for responsive video player
   const defaultOpts: YouTubeProps['opts'] = {
     height: '390',
@@ -46,13 +49,45 @@ export default function YouTubePlayer({
 
   const finalOpts = { ...defaultOpts, ...opts };
 
+  const handleError = (event: any) => {
+    console.error('YouTube player error:', event.data);
+    setHasError(true);
+    if (onError) {
+      onError(event);
+    }
+  };
+
+  if (hasError) {
+    return (
+      <div className={`youtube-player-error ${className} bg-gray-900 border border-gray-700 rounded-lg p-8 flex flex-col items-center justify-center text-white`}>
+        <div className="text-center">
+          <h3 className="text-xl font-semibold mb-2">فيديو غير متاح</h3>
+          <p className="text-gray-400 mb-4">
+            هذا الفيديو غير متاح للتضمين أو تم تعطيله من قبل صاحبه.
+          </p>
+          <p className="text-sm text-gray-500">
+            يمكنك مشاهدة الفيديو مباشرة على يوتيوب:
+          </p>
+          <a
+            href={`https://www.youtube.com/watch?v=${videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          >
+            شاهد على يوتيوب
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`youtube-player ${className}`}>
       <YouTube
         videoId={videoId}
         opts={finalOpts}
         onReady={onReady}
-        onError={onError}
+        onError={handleError}
         onPlay={onPlay}
         onPause={onPause}
         onEnd={onEnd}
