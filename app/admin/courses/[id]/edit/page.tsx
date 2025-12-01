@@ -794,28 +794,82 @@ export default function CourseEditor({ params }: CourseEditorProps) {
                     </div>
                     <div className="space-y-2">
                       {lessonForm.attachments?.map((attachment, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <input
-                            type="text"
-                            placeholder="عنوان المرفق"
-                            value={attachment.title}
-                            onChange={(e) => updateAttachment(index, 'title', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                          <input
-                            type="url"
-                            placeholder="رابط المرفق"
-                            value={attachment.url}
-                            onChange={(e) => updateAttachment(index, 'url', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeAttachment(index)}
-                            className="text-red-600 hover:text-red-800 px-2"
-                          >
-                            ×
-                          </button>
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder="عنوان المرفق"
+                              value={attachment.title}
+                              onChange={(e) => updateAttachment(index, 'title', e.target.value)}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeAttachment(index)}
+                              className="text-red-600 hover:text-red-800 px-2 py-1 border border-red-300 rounded"
+                            >
+                              حذف
+                            </button>
+                          </div>
+                          
+                          {/* File Upload */}
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="file"
+                              accept="*/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  try {
+                                    const formData = new FormData()
+                                    formData.append('file', file)
+
+                                    const response = await fetch('/api/admin/upload-file', {
+                                      method: 'POST',
+                                      body: formData
+                                    })
+
+                                    if (response.ok) {
+                                      const data = await response.json()
+                                      updateAttachment(index, 'url', data.fileUrl)
+                                      if (!attachment.title) {
+                                        updateAttachment(index, 'title', file.name)
+                                      }
+                                    } else {
+                                      const error = await response.json()
+                                      alert(`خطأ في رفع الملف: ${error.error}`)
+                                    }
+                                  } catch (error) {
+                                    console.error('Error uploading file:', error)
+                                    alert('حدث خطأ أثناء رفع الملف')
+                                  }
+                                }
+                              }}
+                              className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                          </div>
+                          
+                          {/* URL Display/Edit */}
+                          {attachment.url && (
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="url"
+                                placeholder="رابط المرفق"
+                                value={attachment.url}
+                                onChange={(e) => updateAttachment(index, 'url', e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                readOnly
+                              />
+                              <a
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                عرض
+                              </a>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

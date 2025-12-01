@@ -47,12 +47,14 @@ export async function POST(request: NextRequest) {
     const fileName = `${randomId}.${fileExtension}`
     const objectKey = `${year}/${month}/${fileName}`
 
-    // Ensure bucket exists
+    // Ensure bucket exists and has public read policy
     try {
-      await minioClient.bucketExists(BUCKET_NAME)
-    } catch {
-      await minioClient.makeBucket(BUCKET_NAME)
-      // Set public read policy for downloads
+      const bucketExists = await minioClient.bucketExists(BUCKET_NAME)
+      if (!bucketExists) {
+        await minioClient.makeBucket(BUCKET_NAME)
+      }
+
+      // Always set public read policy (whether bucket is new or existing)
       const policy = {
         Version: '2012-10-17',
         Statement: [{
@@ -63,6 +65,13 @@ export async function POST(request: NextRequest) {
         }]
       }
       await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
+    } catch (bucketError) {
+      console.error('Error with bucket operations:', bucketError)
+      const errorMessage = bucketError instanceof Error ? bucketError.message : 'Unknown bucket error'
+      return NextResponse.json(
+        { error: `Bucket operation failed: ${errorMessage}` },
+        { status: 500 }
+      )
     }
 
     // Convert file to buffer and upload to MinIO

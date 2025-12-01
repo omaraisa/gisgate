@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
 interface Lesson {
   id: string
@@ -18,6 +19,7 @@ interface Lesson {
 }
 
 export default function AdminLessonsPage() {
+  const { token } = useAuthStore()
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
@@ -25,13 +27,27 @@ export default function AdminLessonsPage() {
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
 
+  const getAuthHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    return headers
+  }
+
   useEffect(() => {
-    fetchLessons()
-  }, [])
+    if (token) {
+      fetchLessons()
+    }
+  }, [token])
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('/api/admin/lessons')
+      const response = await fetch('/api/admin/lessons', {
+        headers: getAuthHeaders()
+      })
       const data = await response.json()
       setLessons(data)
     } catch (error) {
@@ -45,7 +61,7 @@ export default function AdminLessonsPage() {
     try {
       const response = await fetch('/api/admin/lessons', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id, status })
       })
 
@@ -67,7 +83,7 @@ export default function AdminLessonsPage() {
     try {
       const response = await fetch('/api/admin/lessons', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ id })
       })
 
@@ -95,7 +111,7 @@ export default function AdminLessonsPage() {
 
         const response = await fetch('/api/admin/lessons/bulk', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ ids: lessonIds })
         })
 
@@ -107,7 +123,7 @@ export default function AdminLessonsPage() {
         // Bulk status change
         const response = await fetch('/api/admin/lessons/bulk', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ ids: lessonIds, status: bulkAction })
         })
 
