@@ -260,7 +260,7 @@ export default function AdminCoursesPage() {
                     />
                   </th>
                   <th className="p-4 text-right font-medium text-gray-900">العنوان</th>
-                  <th className="p-4 text-right font-medium text-gray-900">المستوى</th>
+                  <th className="p-4 text-right font-medium text-gray-900">الفئة</th>
                   <th className="p-4 text-right font-medium text-gray-900">السعر</th>
                   <th className="p-4 text-right font-medium text-gray-900">الحالة</th>
                   <th className="p-4 text-right font-medium text-gray-900">الدروس</th>

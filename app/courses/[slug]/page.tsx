@@ -561,7 +561,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
 
                 <div className="space-y-3 text-white/80">
                   <div className="flex justify-between">
-                    <span>المستوى:</span>
+                    <span>الفئة:</span>
                     <span className="font-semibold">
                       {course.level === 'BEGINNER' ? 'مبتدئ' :
                        course.level === 'INTERMEDIATE' ? 'متوسط' : 'متقدم'}

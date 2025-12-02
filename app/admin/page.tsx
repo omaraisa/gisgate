@@ -531,7 +531,7 @@ export default function AdminPage() {
                   <th className="p-4 text-right font-medium text-gray-900">العنوان</th>
                   {contentType === 'courses' && (
                     <>
-                      <th className="p-4 text-right font-medium text-gray-900">المستوى</th>
+                      <th className="p-4 text-right font-medium text-gray-900">الفئة</th>
                       <th className="p-4 text-right font-medium text-gray-900">السعر</th>
                     </>
                   )}
