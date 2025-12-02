@@ -20,7 +20,8 @@ export interface Course {
   authorName?: string;
   authorNameEnglish?: string;
   totalLessons: number;
-  duration?: string;
+  durationValue?: number;
+  durationUnit?: string;
   language?: string;
   publishedAt?: string;
   createdAt: string;

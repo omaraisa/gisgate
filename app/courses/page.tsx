@@ -10,15 +10,21 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import AddToCartButton from '../components/AddToCartButton';
 import { Course } from '@/lib/stores/course-store';
 
-interface CoursesResponse {
-  courses: Course[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+const getDurationUnitInArabic = (unit: string): string => {
+  const unitMap: Record<string, string> = {
+    'hours': 'ساعات',
+    'hour': 'ساعة',
+    'weeks': 'أسابيع',
+    'week': 'أسبوع',
+    'days': 'أيام',
+    'day': 'يوم',
+    'minutes': 'دقائق',
+    'minute': 'دقيقة',
+    'months': 'أشهر',
+    'month': 'شهر'
   };
-}
+  return unitMap[unit.toLowerCase()] || unit;
+};
 
 interface MotionCardProps {
   children: ReactNode;
@@ -63,6 +69,16 @@ const FloatingCard = ({ children, className = "" }: FloatingCardProps) => {
     </motion.div>
   );
 };
+
+interface CoursesResponse {
+  courses: Course[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 export default function CoursesPage() {
   const [data, setData] = useState<CoursesResponse | null>(null);
@@ -333,7 +349,7 @@ export default function CoursesPage() {
 
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            <span>{course.duration || 'غير محدد'}</span>
+                            <span>{course.durationValue && course.durationUnit ? `${course.durationValue} ${getDurationUnitInArabic(course.durationUnit)}` : 'غير محدد'}</span>
                           </div>
                         </div>
                       </div>
