@@ -13,7 +13,7 @@ function parseCSV(filePath: string): LessonData[] {
   const lines = content.trim().split('\n');
 
   return lines.map((line, index) => {
-    const [videoUrl, title] = line.split(',');
+    const [title, videoUrl] = line.split(',');
     return {
       title: title.trim(),
       videoUrl: videoUrl.trim(),
@@ -65,8 +65,8 @@ async function createLessons(courseId: string, lessons: LessonData[]) {
 
 // Main function
 async function main() {
-  const courseId = 'eb9882cf-a4ea-4d42-91e6-2d906410f449';
-  const csvPath = path.join(process.cwd(), 'app', 'Essential GIS Skills.csv');
+  const courseId = '6757ede5-f975-4d74-954a-c1af8c606395';
+  const csvPath = path.join(process.cwd(), 'scripts', 'AI ArcPY.csv');
 
   console.log('Reading CSV file...');
   const lessons = parseCSV(csvPath);

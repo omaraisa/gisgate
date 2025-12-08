@@ -202,7 +202,14 @@ export async function GET(request: NextRequest) {
     const enrolledCourses = enrollments.map((enrollment: EnrollmentWithDetails) => {
       const completedLessons = enrollment.lessonProgress.filter((lp) => lp.isCompleted).length;
       const totalLessons = enrollment.course.totalLessons || enrollment.lessonProgress.length;
-      const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+      
+      // Use stored progress if no lesson progress records exist (for migrated data)
+      let progressPercentage: number;
+      if (enrollment.lessonProgress.length === 0 && enrollment.progress !== undefined) {
+        progressPercentage = enrollment.progress;
+      } else {
+        progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+      }
 
       return {
         id: enrollment.course.id,
