@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Edit, Trash2, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Star, Copy } from 'lucide-react';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
 import { CertificateField } from '@/lib/certificate-service';
@@ -109,6 +109,36 @@ export default function CertificateTemplatesPage() {
       }
     } catch {
       alert('فشل في تحديث القالب');
+    }
+  };
+
+  const duplicateTemplate = async (template: CertificateTemplate) => {
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await fetch('/api/admin/certificates/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: `${template.name} (نسخة)`,
+          language: template.language,
+          backgroundImage: template.backgroundImage,
+          fields: template.fields,
+          isActive: false, // New template starts as inactive
+          isDefault: false // New template is not default
+        })
+      });
+
+      if (response.ok) {
+        await fetchTemplates();
+        alert('تم نسخ القالب بنجاح');
+      } else {
+        throw new Error('Failed to duplicate template');
+      }
+    } catch {
+      alert('فشل في نسخ القالب');
     }
   };
 
@@ -274,6 +304,14 @@ export default function CertificateTemplatesPage() {
                       <Edit className="w-4 h-4" />
                       تحرير
                     </Link>
+                    
+                    <button
+                      onClick={() => duplicateTemplate(template)}
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                      title="نسخ القالب"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
                     
                     <button
                       onClick={() => toggleDefault(template.id, template.isDefault)}
