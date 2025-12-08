@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 import QRCode from 'qrcode';
 
@@ -81,6 +81,11 @@ export default function FabricCertificateCanvas({
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    // Fix Fabric.js textBaseline validation - set globally before creating canvas
+    if (fabric.Text && fabric.Text.prototype) {
+      (fabric.Text.prototype as any).textBaseline = 'top';
+    }
+
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: CANVAS_DISPLAY_WIDTH,
       height: CANVAS_DISPLAY_HEIGHT,
@@ -124,8 +129,12 @@ export default function FabricCertificateCanvas({
           };
 
           if (target.type === 'textbox' || target.type === 'text') {
-            const textObj = target as fabric.Text;
+            const textObj = target as fabric.Textbox;
             updates.fontSize = (textObj.fontSize || 16) / actualScale;
+            // Capture the width when textbox is resized
+            if (textObj.width) {
+              updates.maxWidth = textObj.width / actualScale;
+            }
           }
 
           if (target.data?.fieldType === 'QR_CODE') {
@@ -197,6 +206,10 @@ export default function FabricCertificateCanvas({
 
     const canvas = fabricCanvasRef.current;
     
+    // Preserve the current active selection
+    const activeObject = canvas.getActiveObject();
+    const activeFieldId = activeObject?.data?.fieldId;
+    
     // Remove existing field objects (but keep background)
     const objects = canvas.getObjects().filter((obj: fabric.Object) => obj.data?.fieldId || obj.data?.parentId);
     objects.forEach((obj: fabric.Object) => canvas.remove(obj));
@@ -219,7 +232,7 @@ export default function FabricCertificateCanvas({
           if (qrDataUrl) {
             // Create QR code as image
             fabric.Image.fromURL(qrDataUrl, (qrImg: fabric.Image) => {
-              if (qrImg) {
+              if (qrImg && canvas) {
                 qrImg.set({
                   left: field.x * actualScale,
                   top: field.y * actualScale,
@@ -228,6 +241,9 @@ export default function FabricCertificateCanvas({
                   angle: field.rotation || 0,
                   selectable: !readOnly, // Lock in read-only mode
                   evented: !readOnly, // Disable events in read-only mode
+                  hasControls: true,
+                  hasBorders: true,
+                  lockScalingFlip: true,
                   data: { fieldId: field.id, fieldType: 'QR_CODE' }
                 });
                 canvas.add(qrImg);
@@ -247,6 +263,9 @@ export default function FabricCertificateCanvas({
               angle: field.rotation || 0,
               selectable: !readOnly, // Lock in read-only mode
               evented: !readOnly, // Disable events in read-only mode
+              hasControls: true,
+              hasBorders: true,
+              lockScalingFlip: true,
               data: { fieldId: field.id, fieldType: 'QR_CODE' }
             });
 
@@ -302,16 +321,38 @@ export default function FabricCertificateCanvas({
       }
     });
 
-    // Select the currently selected field
+    // Restore the active selection after re-rendering fields
+    if (activeFieldId) {
+      // Use setTimeout to ensure QR codes have loaded asynchronously first
+      setTimeout(() => {
+        const targetObject = canvas.getObjects().find((obj: fabric.Object) => obj.data?.fieldId === activeFieldId);
+        if (targetObject) {
+          canvas.setActiveObject(targetObject);
+          canvas.renderAll();
+        }
+      }, 50);
+    } else {
+      canvas.renderAll();
+    }
+  }, [fields, zoom, isCanvasReady, displayScale, readOnly]);
+
+  // Handle selection changes separately to avoid re-rendering all fields
+  useEffect(() => {
+    if (!fabricCanvasRef.current || !isCanvasReady) return;
+    
+    const canvas = fabricCanvasRef.current;
+    
     if (selectedFieldId) {
       const targetObject = canvas.getObjects().find((obj: fabric.Object) => obj.data?.fieldId === selectedFieldId);
       if (targetObject) {
         canvas.setActiveObject(targetObject);
+        canvas.renderAll();
       }
+    } else {
+      canvas.discardActiveObject();
+      canvas.renderAll();
     }
-
-    canvas.renderAll();
-  }, [fields, selectedFieldId, zoom, isCanvasReady, getFieldDisplayText, displayScale, readOnly]);
+  }, [selectedFieldId, isCanvasReady]);
 
   // Export canvas as image for PDF generation
   const exportCanvasImage = () => {

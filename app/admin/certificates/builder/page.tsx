@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -263,10 +263,10 @@ export default function CertificateBuilderPage() {
     }
   };
 
-  const getFieldDisplayText = (field: CertificateField) => {
+  const getFieldDisplayText = useCallback((field: CertificateField) => {
     const fieldType = FIELD_TYPES.find(ft => ft.type === field.type);
     return fieldType?.defaultText || field.type;
-  };
+  }, []);
 
   const exportAsPDF = async () => {
     if (!template.backgroundImage) {
