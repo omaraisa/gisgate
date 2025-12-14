@@ -50,10 +50,21 @@ export async function GET(
       );
     }
 
+    // Calculate certificates count including virtual certificates for completed enrollments
+    const certificatesCount = userWithDetails.certificates.length + 
+      userWithDetails.enrollments.filter(enrollment => 
+        enrollment.isCompleted && enrollment.certificates.length === 0
+      ).length;
+
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = userWithDetails; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-    return NextResponse.json({ user: safeUser });
+    return NextResponse.json({ 
+      user: {
+        ...safeUser,
+        certificatesCount // Add calculated certificates count
+      }
+    });
 
   } catch (error) {
     console.error('Get user error:', error);

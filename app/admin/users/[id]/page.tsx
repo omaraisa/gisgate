@@ -80,6 +80,7 @@ interface UserDetails {
   wordpressId?: number;
   enrollments: Enrollment[];
   certificates: Certificate[];
+  certificatesCount?: number; // Add calculated certificates count
   payments: Payment[];
 }
 
@@ -285,7 +286,7 @@ export default function UserDetailsPage() {
                   <Award className="w-5 h-5 text-green-600" />
                   <span className="text-sm font-medium text-green-900">الشهادات</span>
                 </div>
-                <p className="text-2xl font-bold text-green-600 mt-1">{user.certificates.length}</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">{user.certificatesCount || user.certificates.length}</p>
               </div>
 
               <div className="bg-purple-50 p-4 rounded-lg">
@@ -338,7 +339,7 @@ export default function UserDetailsPage() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                الشهادات ({user.certificates.length})
+                الشهادات ({user.certificatesCount || user.certificates.length})
               </button>
               <button
                 onClick={() => setActiveTab('payments')}
@@ -491,6 +492,57 @@ export default function UserDetailsPage() {
             {activeTab === 'certificates' && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">الشهادات المحصلة</h3>
+                {(() => {
+                  const completedEnrollments = user.enrollments.filter(e => e.isCompleted || e.progress >= 100);
+                  return completedEnrollments.length === 0 ? (
+                    <p className="text-gray-500">لا توجد شهادات</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {completedEnrollments.map((enrollment) => (
+                        <div key={enrollment.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <Link
+                                href={`/courses/${enrollment.course.slug}`}
+                                className="text-lg font-semibold text-blue-600 hover:text-blue-800"
+                                target="_blank"
+                              >
+                                {enrollment.course.title}
+                              </Link>
+                              {enrollment.course.titleEnglish && (
+                                <p className="text-sm text-gray-600">{enrollment.course.titleEnglish}</p>
+                              )}
+                              <div className="mt-2 space-y-1">
+                                <p className="text-sm text-gray-600">
+                                  تاريخ التسجيل: {new Date(enrollment.enrolledAt).toLocaleDateString('ar-SA')}
+                                </p>
+                                {enrollment.completedAt && (
+                                  <p className="text-sm text-gray-600">
+                                    تاريخ الإكمال: {new Date(enrollment.completedAt).toLocaleDateString('ar-SA')}
+                                  </p>
+                                )}
+                                <p className="text-sm text-green-600 font-semibold">
+                                  التقدم: {enrollment.progress}% - مكتمل ✓
+                                </p>
+                                {enrollment.certificates.length > 0 && (
+                                  <p className="text-sm text-green-600">
+                                    رقم الشهادة: {enrollment.certificates[0].certificateId}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {activeTab === 'oldcertificates' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">الشهادات المحصلة (قديم)</h3>
                 {user.certificates.length === 0 ? (
                   <p className="text-gray-500">لا توجد شهادات</p>
                 ) : (

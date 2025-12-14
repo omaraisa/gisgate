@@ -253,7 +253,10 @@ export async function GET(request: NextRequest) {
 
     // Calculate learning statistics
     const totalEnrolledCourses = enrollments.length;
-    const completedCourses = enrollments.filter((e: EnrollmentWithDetails) => e.isCompleted).length;
+    // Count completed courses and certificates from enrolledCourses (which has calculated progress)
+    const completedCourses = enrolledCourses.filter((course) => course.isCompleted || course.progress.percentage >= 100).length;
+    const certificatesEarned = completedCourses; // One certificate per completed course
+    
     const totalLessonsCompleted = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
       return total + enrollment.lessonProgress.filter((lp) => lp.isCompleted).length;
     }, 0);
@@ -262,9 +265,6 @@ export async function GET(request: NextRequest) {
     }, 0);
     const totalWatchTime = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
       return total + enrollment.lessonProgress.reduce((sum: number, lp) => sum + lp.watchedTime, 0);
-    }, 0);
-    const certificatesEarned = enrollments.reduce((total: number, enrollment: EnrollmentWithDetails) => {
-      return total + enrollment.certificates.length;
     }, 0);
     // Don't return sensitive information
     const { password, emailVerificationToken, passwordResetToken, ...safeUser } = fullUser; // eslint-disable-line @typescript-eslint/no-unused-vars

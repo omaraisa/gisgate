@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       where.isActive = false;
     }
 
-    const [users, total] = await Promise.all([
+    const [usersData, total] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -59,10 +59,27 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           wordpressId: true,
+          enrollments: {
+            select: {
+              id: true,
+              isCompleted: true,
+              progress: true,
+              course: {
+                select: {
+                  id: true,
+                },
+              },
+              lessonProgress: {
+                select: {
+                  id: true,
+                  isCompleted: true,
+                },
+              },
+            },
+          },
           _count: {
             select: {
               enrollments: true,
-              certificates: true,
             },
           },
         },
@@ -72,6 +89,42 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.count({ where }),
     ]);
+
+    // Calculate completed courses (certificates earned) for each user
+    const users = usersData.map(user => {
+      const completedEnrollments = user.enrollments.filter(enrollment => {
+        // Check if marked as completed
+        if (enrollment.isCompleted) {
+          return true;
+        }
+        // Or if progress is 100%
+        if (enrollment.progress >= 100) {
+          return true;
+        }
+        return false;
+      });
+
+      return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullNameArabic: user.fullNameArabic,
+        fullNameEnglish: user.fullNameEnglish,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        wordpressId: user.wordpressId,
+        _count: {
+          enrollments: user._count.enrollments,
+          certificates: completedEnrollments.length,
+        },
+      };
+    });
 
     return NextResponse.json({
       users,
