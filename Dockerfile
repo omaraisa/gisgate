@@ -1,10 +1,20 @@
-# Use Node.js 20 Alpine for smaller image size
-FROM node:20-alpine AS base
+# Use Node.js 20 slim for better compatibility with native modules
+FROM node:20-slim AS base
 
 # Dependencies stage - install only production dependencies
 FROM base AS deps
-# Install Python, build tools, and canvas dependencies (pixman, cairo, etc.)
-RUN apk add --no-cache libc6-compat python3 py3-pip build-base pkgconfig pixman-dev cairo-dev jpeg-dev giflib-dev librsvg-dev pango-dev
+# Install Python, build tools, and canvas dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    build-essential \
+    pkg-config \
+    libpixman-1-dev \
+    libcairo2-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    libpango1.0-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy package files and install dependencies
@@ -14,7 +24,7 @@ RUN npm ci --legacy-peer-deps && npm cache clean --force
 # Builder stage - build the application
 FROM base AS builder
 # Install Python for canvas compilation
-RUN apk add --no-cache python3
+RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy installed dependencies from deps stage (not from host!)
