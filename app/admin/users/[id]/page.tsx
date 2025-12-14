@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { UserRole, PaymentStatus } from '@prisma/client';
 import Link from 'next/link';
@@ -92,11 +92,7 @@ export default function UserDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'enrollments' | 'certificates' | 'payments'>('overview');
 
-  useEffect(() => {
-    fetchUserDetails();
-  }, [userId]);
-
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const token = useAuthStore.getState().token;
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -116,7 +112,11 @@ export default function UserDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [userId, fetchUserDetails]);
 
   const handleRoleChange = async (newRole: UserRole) => {
     if (!user) return;

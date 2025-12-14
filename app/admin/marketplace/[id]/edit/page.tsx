@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ArticleStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -97,11 +97,7 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [activeTab, setActiveTab] = useState<'basic' | 'files' | 'seo'>('basic')
 
-  useEffect(() => {
-    fetchSolution()
-  }, [solutionId])
-
-  const fetchSolution = async () => {
+  const fetchSolution = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/marketplace/${solutionId}`)
       if (response.ok) {
@@ -115,7 +111,11 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [solutionId])
+
+  useEffect(() => {
+    fetchSolution()
+  }, [solutionId, fetchSolution])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

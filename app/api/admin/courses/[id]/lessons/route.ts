@@ -153,7 +153,7 @@ export async function PATCH(
       );
     }
 
-    const updateData: any = {};
+    const updateData: { status?: string; publishedAt?: Date | null } = {};
     if (status) {
       updateData.status = status;
       updateData.publishedAt = status === 'PUBLISHED' ? new Date() : null;

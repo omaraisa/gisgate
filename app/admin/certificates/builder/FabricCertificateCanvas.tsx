@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import QRCode from 'qrcode';
 
@@ -83,7 +83,7 @@ export default function FabricCertificateCanvas({
 
     // Fix Fabric.js textBaseline validation - set globally before creating canvas
     if (fabric.Text && fabric.Text.prototype) {
-      (fabric.Text.prototype as any).textBaseline = 'top';
+      (fabric.Text.prototype as unknown as { textBaseline: string }).textBaseline = 'top';
     }
 
     const canvas = new fabric.Canvas(canvasRef.current, {

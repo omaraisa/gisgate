@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import FabricCertificateCanvas from '@/app/admin/certificates/builder/FabricCertificateCanvas';
 import { generateCertificateFromCanvas } from '@/lib/pdf-generator';
@@ -96,11 +96,7 @@ export default function CertificateViewPage() {
   const language = searchParams.get('lang') || 'ar';
   const t = translations[language as keyof typeof translations] || translations.ar;
 
-  useEffect(() => {
-    loadCertificateData();
-  }, [certificateId, language]);
-
-  const loadCertificateData = async () => {
+  const loadCertificateData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/certificates/${certificateId}/download?lang=${language}`);
@@ -118,7 +114,11 @@ export default function CertificateViewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [certificateId, language]);
+
+  useEffect(() => {
+    loadCertificateData();
+  }, [certificateId, language, loadCertificateData]);
 
   const getFieldDisplayText = (field: CertificateField) => {
     if (!data) return '';

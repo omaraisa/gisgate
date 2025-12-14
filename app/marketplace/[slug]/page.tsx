@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ArrowLeft, Download, Package, Star, DollarSign, Code, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '@/app/components/Footer';
@@ -93,15 +93,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
     initializeParams();
   }, [params]);
 
-  useEffect(() => {
-    if (!slug) return;
-
-    fetchSolution();
-    // Check authentication using the auth store - this will properly handle token
-    checkAuth();
-  }, [slug, checkAuth]);
-
-  const fetchSolution = async () => {
+  const fetchSolution = useCallback(async () => {
     try {
       const response = await fetch(`/api/marketplace/${slug}`);
       if (!response.ok) {
@@ -114,7 +106,15 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    fetchSolution();
+    // Check authentication using the auth store - this will properly handle token
+    checkAuth();
+  }, [slug, checkAuth, fetchSolution]);
 
   const handleDownload = async () => {
     if (!solution?.fileUrl) return;

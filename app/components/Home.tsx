@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, ReactNode, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { TypeAnimation } from 'react-type-animation';
 import { Globe, Zap, Users, BookOpen, Sparkles, ArrowRight, Play, FileText } from 'lucide-react';
 import Footer from './Footer';
@@ -674,10 +675,11 @@ export default function Home() {
                       <a href={`/marketplace/${solution.slug}`}>
                         {solution.featuredImage ? (
                           <div className="relative h-48 overflow-hidden">
-                            <img 
+                            <Image 
                               src={solution.featuredImage} 
                               alt={solution.title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                             <div className="absolute top-4 right-4">
                               {solution.isFree ? (

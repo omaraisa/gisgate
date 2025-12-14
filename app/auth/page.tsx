@@ -60,7 +60,7 @@ export default function AuthPage() {
     };
 
     verifyAuth();
-  }, []);
+  }, [isAuthenticated, user, checkAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

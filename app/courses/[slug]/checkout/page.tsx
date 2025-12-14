@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -135,9 +136,11 @@ export default function CheckoutPage() {
 
               {course.imageUrl && (
                 <div className="mb-4">
-                  <img
+                  <Image
                     src={course.imageUrl}
                     alt={course.title}
+                    width={400}
+                    height={192}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                 </div>

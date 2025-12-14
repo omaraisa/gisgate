@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     let imported = 0;
     let skipped = 0;
-    let errors = [];
+    const errors = [];
 
     if (importType === 'wordpress') {
       // WordPress import logic with exact mapping as specified

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, Calendar, MessageSquare } from 'lucide-react';
 import { RatingDisplay, RatingBreakdown } from './StarRating';
@@ -39,11 +39,7 @@ export default function ReviewsDisplay({
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
 
-  useEffect(() => {
-    fetchReviews();
-  }, [solutionSlug]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const response = await fetch(`/api/marketplace/${solutionSlug}/reviews`);
       
@@ -59,7 +55,11 @@ export default function ReviewsDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [solutionSlug]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [solutionSlug, fetchReviews]);
 
   const sortedReviews = [...reviews].sort((a, b) => {
     switch (sortBy) {

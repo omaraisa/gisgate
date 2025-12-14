@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
@@ -27,7 +27,7 @@ export default function AdminLessonsPage() {
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
 
-  const getAuthHeaders = (): Record<string, string> => {
+  const getAuthHeaders = useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
@@ -35,15 +35,9 @@ export default function AdminLessonsPage() {
       headers['Authorization'] = `Bearer ${token}`
     }
     return headers
-  }
-
-  useEffect(() => {
-    if (token) {
-      fetchLessons()
-    }
   }, [token])
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/lessons', {
         headers: getAuthHeaders()
@@ -55,7 +49,13 @@ export default function AdminLessonsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getAuthHeaders])
+
+  useEffect(() => {
+    if (token) {
+      fetchLessons()
+    }
+  }, [token, fetchLessons])
 
   const handleStatusChange = async (id: string, status: string) => {
     try {

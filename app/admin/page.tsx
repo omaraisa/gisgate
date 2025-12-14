@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -58,9 +58,9 @@ export default function AdminPage() {
       fetchLessons()
       fetchCourses()
     }
-  }, [token])
+  }, [token, fetchArticles, fetchLessons, fetchCourses])
 
-  const getAuthHeaders = (): Record<string, string> => {
+  const getAuthHeaders = useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
@@ -68,9 +68,9 @@ export default function AdminPage() {
       headers['Authorization'] = `Bearer ${token}`
     }
     return headers
-  }
+  }, [token])
 
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/articles', {
         headers: getAuthHeaders()
@@ -84,9 +84,9 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error fetching articles:', error)
     }
-  }
+  }, [getAuthHeaders])
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/lessons', {
         headers: getAuthHeaders()
@@ -102,9 +102,9 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [getAuthHeaders])
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/courses', {
         headers: getAuthHeaders()
@@ -118,7 +118,7 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error fetching courses:', error)
     }
-  }
+  }, [getAuthHeaders])
 
   const handleStatusChange = async (id: string, status: ArticleStatus) => {
     try {

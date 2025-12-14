@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { ArrowLeft, Users, Play, CheckCircle, Lock, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '../../components/Footer';
@@ -454,9 +455,11 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
             >
               {course.featuredImage && (
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img
+                  <Image
                     src={course.featuredImage}
                     alt={course.title}
+                    width={800}
+                    height={384}
                     className="w-full h-96 object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>

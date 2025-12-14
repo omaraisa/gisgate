@@ -128,9 +128,9 @@ export default function ImportUsersPage() {
               ID,user_login,user_email,user_registered,display_name
             </code>
             <div className="space-y-1 text-xs">
-              <p><strong>All fields required for WordPress import</strong></p>
+              <p><strong>&quot;All fields required for WordPress import&quot;</strong></p>
               <p><strong>user_registered:</strong> Format: YYYY-MM-DD HH:MM:SS or MM/DD/YYYY HH:MM</p>
-              <p><strong>Note:</strong> All users get default password "password123" and must change it after first login</p>
+              <p><strong>Note:</strong> All users get default password &quot;password123&quot; and must change it after first login</p>
             </div>
           </>
         )}

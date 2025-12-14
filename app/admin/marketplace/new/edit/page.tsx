@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { ArticleStatus } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -466,10 +467,11 @@ export default function SolutionEditor() {
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                       {solution.featuredImage ? (
                         <div className="relative">
-                          <img
+                          <Image
                             src={solution.featuredImage}
                             alt="Featured"
-                            className="w-full h-48 object-cover rounded-lg"
+                            fill
+                            className="object-cover rounded-lg"
                           />
                           <button
                             type="button"

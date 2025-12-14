@@ -49,7 +49,7 @@ export default function YouTubePlayer({
 
   const finalOpts = { ...defaultOpts, ...opts };
 
-  const handleError = (event: any) => {
+  const handleError = (event: { data: unknown }) => {
     console.error('YouTube player error:', event.data);
     setHasError(true);
     if (onError) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useInView } from 'framer-motion';
-import { useRef, ReactNode, useEffect, useState } from 'react';
+import { useRef, ReactNode, useEffect, useState, useCallback } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Package, Download, DollarSign, Search } from 'lucide-react';
 import Link from 'next/link';
@@ -118,11 +118,7 @@ export default function MarketplacePage() {
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  useEffect(() => {
-    fetchSolutions();
-  }, [selectedType, priceFilter, sortBy, searchQuery]);
-
-  async function fetchSolutions() {
+  const fetchSolutions = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -147,7 +143,11 @@ export default function MarketplacePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedType, priceFilter, sortBy, searchQuery]);
+
+  useEffect(() => {
+    fetchSolutions();
+  }, [selectedType, priceFilter, sortBy, searchQuery, fetchSolutions]);
 
   const getSolutionTypeLabel = (type: string) => {
     return SOLUTION_TYPES.find(t => t.value === type)?.label || type;

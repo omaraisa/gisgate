@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import { CheckCircle, XCircle, Calendar, Clock, User, BookOpen, Download, ArrowLeft } from 'lucide-react';
@@ -29,13 +29,7 @@ export default function CertificateVerifyPage() {
   const [verification, setVerification] = useState<CertificateVerification | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (certificateId) {
-      verifyTertificate();
-    }
-  }, [certificateId]);
-
-  const verifyTertificate = async () => {
+  const verifyTertificate = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/certificates/verify/${certificateId}`);
@@ -49,7 +43,13 @@ export default function CertificateVerifyPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [certificateId]);
+
+  useEffect(() => {
+    if (certificateId) {
+      verifyTertificate();
+    }
+  }, [certificateId, verifyTertificate]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-SA', {
