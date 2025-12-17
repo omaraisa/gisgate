@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState, useCallback } from 'react';
 import { ArrowLeft, Download, Package, Star, DollarSign, Code, Globe, Calendar, Eye, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Footer from '@/app/components/Footer';
 import AnimatedBackground from '@/app/components/AnimatedBackground';
 import ReviewForm from '@/app/components/ReviewForm';
@@ -119,13 +120,51 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
   const handleDownload = async () => {
     if (!solution?.fileUrl) return;
 
+    // Check if user is authenticated for paid solutions
+    if (!solution.isFree && !isAuthenticated) {
+      alert('يرجى تسجيل الدخول لتحميل الحلول المدفوعة');
+      return;
+    }
+
+    // Check if user has purchased the solution (for paid solutions)
+    if (!solution.isFree && user) {
+      try {
+        const token = localStorage.getItem('token') || document.cookie.split('; ').find(row => row.startsWith('auth-token-client='))?.split('=')[1];
+        
+        if (!token) {
+          alert('يرجى تسجيل الدخول مرة أخرى');
+          return;
+        }
+
+        const purchaseResponse = await fetch(`/api/marketplace/check-purchase/${solution.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!purchaseResponse.ok) {
+          throw new Error('Failed to verify purchase');
+        }
+        
+        const purchaseData = await purchaseResponse.json();
+        if (!purchaseData.hasPurchased) {
+          alert('يجب عليك شراء هذا الحل أولاً قبل التحميل');
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking purchase:', err);
+        alert('حدث خطأ أثناء التحقق من عملية الشراء');
+        return;
+      }
+    }
+
     setDownloading(true);
     try {
       // Track download
       await fetch('/api/marketplace/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ solutionId: solution.id })
+        body: JSON.stringify({ solutionId: solution.id, userId: user?.id })
       });
 
       // Open download link
@@ -285,14 +324,20 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
             {/* Left Column - Image and Quick Actions */}
             <div>
               {solution.featuredImage ? (
-                <motion.img
+                <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6 }}
-                  src={solution.featuredImage}
-                  alt={solution.title}
-                  className="w-full h-96 object-cover rounded-2xl shadow-2xl mb-6"
-                />
+                >
+                  <Image
+                    src={solution.featuredImage}
+                    alt={solution.title}
+                    width={800}
+                    height={600}
+                    className="w-full h-96 object-cover rounded-2xl shadow-2xl"
+                    priority
+                  />
+                </motion.div>
               ) : (
                 <div className="w-full h-96 bg-gradient-to-br from-orange-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center mb-6">
                   <Package className="w-32 h-32 text-white/40" />

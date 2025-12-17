@@ -1,13 +1,18 @@
 import nodemailer from 'nodemailer';
 
-// Email configuration - using placeholders for secrets
+// Validate email configuration
+if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.error('WARNING: Email configuration is incomplete. Set SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.');
+}
+
+// Email configuration
 const EMAIL_CONFIG = {
-  host: process.env.SMTP_HOST || 'PLACEHOLDER_SMTP_HOST',
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER || 'PLACEHOLDER_SMTP_USER',
-    pass: process.env.SMTP_PASS || 'PLACEHOLDER_SMTP_PASS',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
   },
 };
 
