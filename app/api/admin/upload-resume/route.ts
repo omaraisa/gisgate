@@ -1,25 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 
-// Validate required environment variables
-if (!process.env.SERVER_IP) {
-  throw new Error('SERVER_IP environment variable is required')
-}
-
-// MinIO configuration
-const minioClient = new Minio.Client({
-  endPoint: process.env.SERVER_IP,
-  port: 9000,
-  useSSL: false,
-  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || 'miniomar',
-  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || '123wasd#@!WDSA'
-})
-
 const BUCKET_NAME = 'files' // Dedicated bucket for resume files
 const RESUME_FILENAME = 'omar-elhadi.pdf'
 
+// Lazy MinIO client initialization
+let minioClient: Minio.Client | null = null;
+
+function getMinioClient(): Minio.Client {
+  if (!minioClient) {
+    const endpoint = process.env.SERVER_IP || 'dev.gis-gate.com';
+    // Remove protocol if present
+    const cleanEndpoint = endpoint.replace(/^https?:\/\//, '');
+    
+    minioClient = new Minio.Client({
+      endPoint: cleanEndpoint,
+      port: 9000,
+      useSSL: true,
+      accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || '',
+      secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || ''
+    });
+  }
+  return minioClient;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const minioClient = getMinioClient();
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
 

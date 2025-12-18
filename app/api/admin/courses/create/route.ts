@@ -3,21 +3,27 @@ import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus, CourseLevel } from '@prisma/client'
 import * as Minio from 'minio'
 
-// Validate required environment variables
-if (!process.env.SERVER_IP) {
-  throw new Error('SERVER_IP environment variable is required')
-}
-
-// MinIO configuration
-const minioClient = new Minio.Client({
-  endPoint: process.env.SERVER_IP,
-  port: 9000,
-  useSSL: false,
-  accessKey: 'miniomar',
-  secretKey: '123wasd#@!WDSA'
-})
-
 const BUCKET_NAME = 'images'
+
+// Lazy MinIO client initialization
+let minioClient: Minio.Client | null = null;
+
+function getMinioClient(): Minio.Client {
+  if (!minioClient) {
+    const endpoint = process.env.SERVER_IP || 'dev.gis-gate.com';
+    // Remove protocol if present
+    const cleanEndpoint = endpoint.replace(/^https?:\/\//, '');
+    
+    minioClient = new Minio.Client({
+      endPoint: cleanEndpoint,
+      port: 9000,
+      useSSL: true,
+      accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || '',
+      secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || ''
+    });
+  }
+  return minioClient;
+}
 
 interface LessonData {
   title: string;
@@ -223,6 +229,7 @@ export async function POST(request: NextRequest) {
 
 // Helper function to upload image to MinIO
 async function uploadImageToMinIO(file: File): Promise<string> {
+  const minioClient = getMinioClient();
   // Validate file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
@@ -269,7 +276,8 @@ async function uploadImageToMinIO(file: File): Promise<string> {
     'Content-Type': file.type
   })
 
-  const imageUrl = `http://${process.env.SERVER_IP}:9000/${BUCKET_NAME}/${objectKey}`
+  const endpoint = (process.env.SERVER_IP || 'dev.gis-gate.com').replace(/^https?:\/\//, '');
+  return `https://${endpoint}:9000/${BUCKET_NAME}/${objectKey}`
   return imageUrl
 }
 
