@@ -58,7 +58,7 @@ export default function PayPalButton({
             // Double-check authentication before creating order
             const currentToken = useAuthStore.getState().token;
             if (!currentToken) {
-              throw new Error('Authentication required. Please log in again.');
+              throw new Error('المصادقة مطلوبة. يرجى تسجيل الدخول مرة أخرى.');
             }
 
             console.log('PayPal Button - Creating order with token:', currentToken.substring(0, 20) + '...');
@@ -66,18 +66,18 @@ export default function PayPalButton({
             if (isCartCheckout) {
               // Handle cart checkout - create order for all cart items
               if (items.length === 0) {
-                throw new Error('Cart is empty');
+                throw new Error('العربة فارغة');
               }
               console.log('PayPal Button - Cart items:', items);
               const cartOrderId = await createOrder(items);
               if (!cartOrderId) {
-                throw new Error('Failed to create cart payment order');
+                throw new Error('فشل في إنشاء طلب الدفع للعربة');
               }
               return cartOrderId;
             } else {
               // Handle single course purchase - call API directly
               if (!courseId || !amount) {
-                throw new Error('Course ID and amount are required');
+                throw new Error('معرف الدورة والمبلغ مطلوبان');
               }
               console.log('PayPal Button - Creating single course order');
               
@@ -92,7 +92,7 @@ export default function PayPalButton({
 
               if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to create payment order');
+                throw new Error(error.error || 'فشل في إنشاء طلب الدفع');
               }
 
               const data = await response.json();

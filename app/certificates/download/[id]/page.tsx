@@ -66,7 +66,7 @@ export default function CertificateDownloadPage() {
       const response = await fetch(`/api/certificates/${certificateId}/download?lang=${language}`);
       
       if (!response.ok) {
-        throw new Error('Failed to load certificate data');
+        throw new Error('فشل في تحميل بيانات الشهادة');
       }
 
       const result = await response.json();
@@ -76,7 +76,7 @@ export default function CertificateDownloadPage() {
       // Don't auto-download - let user preview first
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'خطأ غير معروف');
     } finally {
       setLoading(false);
     }
