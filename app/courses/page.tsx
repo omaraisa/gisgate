@@ -3,7 +3,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef, ReactNode, useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
-import { Eye, Clock } from 'lucide-react';
+import { Eye, Clock, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '../components/Footer';
 import AnimatedBackground from '../components/AnimatedBackground';
@@ -84,11 +84,12 @@ export default function CoursesPage() {
   const [data, setData] = useState<CoursesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function fetchCourses() {
       try {
-        const response = await fetch('/api/courses?status=PUBLISHED&limit=20');
+        const response = await fetch(`/api/courses?status=PUBLISHED&limit=20&page=${currentPage}`);
         if (!response.ok) {
           throw new Error('Failed to fetch courses');
         }
@@ -102,7 +103,7 @@ export default function CoursesPage() {
     }
 
     fetchCourses();
-  }, []);
+  }, [currentPage]);
 
   if (loading) {
     return (
@@ -377,8 +378,20 @@ export default function CoursesPage() {
                 transition={{ duration: 0.6 }}
                 className="text-center py-20"
               >
-                <h2 className="text-2xl font-bold text-white mb-4">لا توجد دورات حالياً</h2>
-                <p className="text-white/70">سيتم إضافة الدورات قريباً</p>
+                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen className="w-12 h-12 text-secondary-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-4">لا توجد دورات متاحة حالياً</h2>
+                <p className="text-white/70 mb-6 max-w-md mx-auto">
+                  نحن نعمل على إضافة دورات تدريبية جديدة في نظم المعلومات الجغرافية.
+                  تابعونا للحصول على آخر التحديثات.
+                </p>
+                <Link
+                  href="/"
+                  className="inline-flex items-center px-6 py-3 bg-secondary-400 text-primary-700 rounded-lg hover:bg-secondary-500 transition-colors font-medium"
+                >
+                  العودة للرئيسية
+                </Link>
               </motion.div>
             )}
 
@@ -392,6 +405,33 @@ export default function CoursesPage() {
                 >
                   عرض {data.courses.length} من أصل {data.pagination.total} دورة
                 </motion.button>
+              </MotionCard>
+            )}
+
+            {/* Pagination */}
+            {data && data.pagination.totalPages > 1 && (
+              <MotionCard className="flex justify-center items-center gap-4 mt-12">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  السابق
+                </button>
+                
+                <span className="text-white">
+                  صفحة {currentPage} من {data.pagination.totalPages}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(data.pagination.totalPages, prev + 1))}
+                  disabled={currentPage === data.pagination.totalPages}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  التالي
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
               </MotionCard>
             )}
           </div>

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
 import { remark } from 'remark';
 import html from 'remark-html';
@@ -108,6 +108,20 @@ export default function VideoPage({ params }: { params: Promise<{ slug: string }
       {/* Header */}
       <header className="bg-gray-50 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4" aria-label="Breadcrumb">
+            <Link href="/" className="flex items-center hover:text-secondary-400 transition-colors">
+              <Home className="w-4 h-4 mr-1" />
+              الرئيسية
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <Link href="/lessons" className="hover:text-secondary-400 transition-colors">
+              الدروس
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-gray-900 font-medium">{video.title}</span>
+          </nav>
+
           <Link
             href="/lessons"
             className="inline-flex items-center gap-2 text-gray-700 hover:text-secondary-400 transition-colors"

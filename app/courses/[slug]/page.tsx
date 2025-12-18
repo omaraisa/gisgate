@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Users, Play, CheckCircle, Lock, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, Play, CheckCircle, Lock, Calendar, ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
 import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
@@ -283,6 +283,20 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       {/* Header */}
       <section className="relative z-10 pt-20 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-sm text-white/70 mb-6" aria-label="Breadcrumb">
+            <Link href="/" className="flex items-center hover:text-secondary-400 transition-colors">
+              <Home className="w-4 h-4 mr-1" />
+              الرئيسية
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <Link href="/courses" className="hover:text-secondary-400 transition-colors">
+              الدورات
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-white font-medium">{course.title}</span>
+          </nav>
+
           <Link
             href="/courses"
             className="inline-flex items-center gap-2 text-secondary-400 hover:text-secondary-300 transition-colors mb-8"

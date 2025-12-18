@@ -22,11 +22,9 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = registerSchema.parse(body);
 
-    // Check if user already exists
-    const existingUser = await AuthService.getUserByEmail(validatedData.email);
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'An account with this email already exists. Try logging in instead or use a different email address.' },
         { status: 409 }
       );
     }
@@ -36,7 +34,7 @@ export async function POST(request: NextRequest) {
       const existingUsername = await AuthService.getUserByEmail(validatedData.username);
       if (existingUsername) {
         return NextResponse.json(
-          { error: 'Username is already taken' },
+          { error: 'This username is already taken. Please choose a different one.' },
           { status: 409 }
         );
       }
@@ -100,13 +98,13 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.issues },
+        { error: 'Please check your input and try again. All required fields must be filled correctly.' },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Something went wrong on our end. Please try again later or contact support if the problem persists.' },
       { status: 500 }
     );
   }

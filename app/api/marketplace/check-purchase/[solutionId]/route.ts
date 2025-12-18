@@ -15,7 +15,7 @@ export async function GET(
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'Unauthorized', hasPurchased: false },
+        { error: 'Authentication required. Please log in to continue.', hasPurchased: false },
         { status: 401 }
       );
     }
@@ -25,7 +25,7 @@ export async function GET(
 
     if (!payload) {
       return NextResponse.json(
-        { error: 'Invalid token', hasPurchased: false },
+        { error: 'Your session has expired. Please log in again.', hasPurchased: false },
         { status: 401 }
       );
     }
@@ -44,7 +44,7 @@ export async function GET(
   } catch (error) {
     console.error('Error checking purchase:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Something went wrong on our end. Please try again later.' },
       { status: 500 }
     );
   }

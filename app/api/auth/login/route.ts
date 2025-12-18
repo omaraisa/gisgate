@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'The email or password you entered is incorrect. Please check and try again.' },
         { status: 401 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Something went wrong on our end. Please try again later or contact support if the problem persists.' },
       { status: 500 }
     );
   }

@@ -7,6 +7,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -112,10 +113,14 @@ export default function AuthPage() {
       if (data.token && data.user) {
         login(data.token, data.user);
         
-        // Force immediate redirect using window.location for hard navigation
-        // This ensures middleware runs and processes the new cookie
-        const redirectPath = data.user.role === 'ADMIN' ? '/admin' : '/';
-        window.location.href = redirectPath;
+        // Show success message
+        setSuccess(isLogin ? 'تم تسجيل الدخول بنجاح! جاري التوجيه...' : 'تم إنشاء الحساب بنجاح! جاري التوجيه...');
+        
+        // Delay redirect to show success message
+        setTimeout(() => {
+          const redirectPath = data.user.role === 'ADMIN' ? '/admin' : '/';
+          window.location.href = redirectPath;
+        }, 2000);
         return;
       }
 
@@ -162,6 +167,12 @@ export default function AuthPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
               {error}
+            </div>
+          )}
+          
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+              {success}
             </div>
           )}
 

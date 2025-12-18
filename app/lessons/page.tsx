@@ -375,8 +375,20 @@ export default function LessonsPage() {
             transition={{ duration: 0.6 }}
             className="text-center py-20"
           >
-            <h2 className="text-2xl font-bold text-white mb-4">لا توجد دروس حالياً</h2>
-            <p className="text-white/70">سيتم إضافة الدروس قريباً</p>
+            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Play className="w-12 h-12 text-secondary-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">لا توجد دروس متاحة حالياً</h2>
+            <p className="text-white/70 mb-6 max-w-md mx-auto">
+              نحن نعمل على إضافة دروس تعليمية جديدة في نظم المعلومات الجغرافية.
+              تابعونا للحصول على آخر التحديثات.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center px-6 py-3 bg-secondary-400 text-primary-700 rounded-lg hover:bg-secondary-500 transition-colors font-medium"
+            >
+              العودة للرئيسية
+            </Link>
           </motion.div>
         )}
 

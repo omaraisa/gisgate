@@ -5,12 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { Search } from 'lucide-react';
 import CartIcon from './CartIcon';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const pathname = usePathname();
 
@@ -30,6 +32,13 @@ export default function Header() {
     await logout();
     setIsUserMenuOpen(false);
     router.push('/');
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   // Close mobile menu when clicking outside
@@ -108,6 +117,25 @@ export default function Header() {
                   );
                 })}
               </nav>
+
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="flex items-center">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="البحث..."
+                    className="w-48 lg:w-64 px-4 py-2 pr-10 text-sm bg-white/10 border border-white/20 rounded-md text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-secondary-400 focus:border-transparent backdrop-blur-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
 
               {/* User Authentication Section */}
               {isAuthenticated && user ? (

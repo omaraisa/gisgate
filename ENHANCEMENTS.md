@@ -1,7 +1,8 @@
 # GIS Gate Enhancement Backlog
 
 This backlog contains prioritized, atomic enhancements for the GIS Gate platform. Each task is designed to be small, independent, low-risk, and suitable for parallel execution by autonomous agents.
-
+# Note: Any agent that work on this application should not mess with the certificate builder and canvas settings they have been configured hardly and easy to broke so just don't touch its core.
+ 
 ## Essential Features Completion
 
 ### [ ] Configure Email SMTP Settings
@@ -34,42 +35,42 @@ This backlog contains prioritized, atomic enhancements for the GIS Gate platform
 
 ## User Experience (UX) Improvements
 
-### [ ] Improve Error Messages Clarity
+### [x] Improve Error Messages Clarity
 **Description:** Update error messages to be more user-friendly and actionable.  
 **Goal:** Help users understand and resolve issues quickly.  
 **Area:** UX  
 **Impact:** Low  
 **Risk Level:** Low  
 
-### [ ] Add Success Confirmations
+### [x] Add Success Confirmations
 **Description:** Display success messages after successful actions like registration or purchase.  
 **Goal:** Provide positive feedback for completed tasks.  
 **Area:** UX  
 **Impact:** Low  
 **Risk Level:** Low  
 
-### [ ] Implement Breadcrumb Navigation
+### [x] Implement Breadcrumb Navigation
 **Description:** Add breadcrumb navigation to course and lesson pages.  
 **Goal:** Improve navigation and user orientation within the platform.  
 **Area:** Navigation  
 **Impact:** Low  
 **Risk Level:** Low  
 
-### [ ] Add Search Functionality
+### [x] Add Search Functionality
 **Description:** Implement basic search for articles, courses, and marketplace items.  
 **Goal:** Help users find content quickly.  
 **Area:** UX  
 **Impact:** Low  
 **Risk Level:** Low  
 
-### [ ] Improve Empty States
+### [x] Improve Empty States
 **Description:** Design and implement informative empty states for lists and collections.  
 **Goal:** Guide users when no content is available.  
 **Area:** UX  
 **Impact:** Low  
 **Risk Level:** Low  
 
-### [ ] Add Pagination to Lists
+### [x] Add Pagination to Lists
 **Description:** Implement pagination for long lists like articles and marketplace items.  
 **Goal:** Improve performance and usability for large datasets.  
 **Area:** UX  
