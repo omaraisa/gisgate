@@ -54,24 +54,17 @@ export async function POST(request: NextRequest) {
     const fileName = `${randomId}.${fileExtension}`
     const objectKey = `${year}/${month}/${fileName}`
 
-    // Ensure bucket exists and has public read policy
+      // Ensure bucket exists
     try {
       const bucketExists = await minioClient.bucketExists(BUCKET_NAME)
       if (!bucketExists) {
         await minioClient.makeBucket(BUCKET_NAME)
       }
 
-      // Always set public read policy (whether bucket is new or existing)
-      const policy = {
-        Version: '2012-10-17',
-        Statement: [{
-          Effect: 'Allow',
-          Principal: { 'AWS': '*' },
-          Action: ['s3:GetObject'],
-          Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`]
-        }]
-      }
-      await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
+      // NOTE: We do NOT set a public read policy here anymore.
+      // The 'solutions' bucket should be private to ensure secure downloads via signed URLs.
+      // If the bucket was previously public, you should run 'scripts/secure-solutions-bucket.ts' to fix it.
+      
     } catch (bucketError) {
       console.error('Error with bucket operations:', bucketError)
       const errorMessage = bucketError instanceof Error ? bucketError.message : 'Unknown bucket error'

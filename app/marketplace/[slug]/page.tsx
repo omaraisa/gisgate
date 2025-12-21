@@ -126,51 +126,37 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
       return;
     }
 
-    // Check if user has purchased the solution (for paid solutions)
-    if (!solution.isFree && user) {
-      try {
-        const token = localStorage.getItem('token') || document.cookie.split('; ').find(row => row.startsWith('auth-token-client='))?.split('=')[1];
-        
-        if (!token) {
-          alert('يرجى تسجيل الدخول مرة أخرى');
-          return;
-        }
-
-        const purchaseResponse = await fetch(`/api/marketplace/check-purchase/${solution.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!purchaseResponse.ok) {
-          throw new Error('Failed to verify purchase');
-        }
-        
-        const purchaseData = await purchaseResponse.json();
-        if (!purchaseData.hasPurchased) {
-          alert('يجب عليك شراء هذا الحل أولاً قبل التحميل');
-          return;
-        }
-      } catch (err) {
-        console.error('Error checking purchase:', err);
-        alert('حدث خطأ أثناء التحقق من عملية الشراء');
-        return;
-      }
-    }
-
     setDownloading(true);
     try {
-      // Track download
-      await fetch('/api/marketplace/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ solutionId: solution.id, userId: user?.id })
+      const token = localStorage.getItem('token') || document.cookie.split('; ').find(row => row.startsWith('auth-token-client='))?.split('=')[1];
+      
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Call secure download endpoint
+      const response = await fetch(`/api/marketplace/secure-download/${solution.id}`, {
+        headers
       });
 
-      // Open download link
-      window.open(solution.fileUrl, '_blank');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get download link');
+      }
+
+      const data = await response.json();
+      
+      if (data.url) {
+        // Open the secure, presigned URL
+        window.location.href = data.url;
+      } else {
+        throw new Error('Invalid download URL received');
+      }
+
     } catch (err) {
       console.error('Download error:', err);
+      alert(err instanceof Error ? err.message : 'حدث خطأ أثناء التحميل');
     } finally {
       setDownloading(false);
     }

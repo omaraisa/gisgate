@@ -66,5 +66,5 @@ This document outlines a strategic roadmap for evolving the GIS Gate platform in
 
 ## Immediate Priorities (Next Sprint)
 
-1.  **Secure Asset Delivery:** Ensure marketplace items cannot be downloaded without valid purchase.
+1.  **[x] Secure Asset Delivery:** Ensure marketplace items cannot be downloaded without valid purchase.
 2.  **Admin Dashboard Analytics:** Give admins visibility into platform health.
