@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
 import { z } from 'zod';
+import { RateLimiters, createRateLimitResponse } from '@/lib/rate-limiter';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -8,6 +9,12 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResult = await RateLimiters.auth(request);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult.retryAfter);
+  }
+
   try {
     const body = await request.json();
 

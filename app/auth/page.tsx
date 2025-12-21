@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import PasswordStrengthIndicator from '@/app/components/PasswordStrengthIndicator';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -213,31 +214,8 @@ export default function AuthPage() {
                 minLength={8}
               />
               {!isLogin && formData.password && (
-                <div className="mt-2 text-xs space-y-1">
-                  <div className={`flex items-center ${
-                    passwordValidation.minLength ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    <span className="mr-2">{passwordValidation.minLength ? '✓' : '✗'}</span>
-                    8 أحرف على الأقل
-                  </div>
-                  <div className={`flex items-center ${
-                    passwordValidation.hasLowerCase ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    <span className="mr-2">{passwordValidation.hasLowerCase ? '✓' : '✗'}</span>
-                    حرف صغير واحد على الأقل (a-z)
-                  </div>
-                  <div className={`flex items-center ${
-                    passwordValidation.hasUpperCase ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    <span className="mr-2">{passwordValidation.hasUpperCase ? '✓' : '✗'}</span>
-                    حرف كبير واحد على الأقل (A-Z)
-                  </div>
-                  <div className={`flex items-center ${
-                    passwordValidation.hasNumber ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    <span className="mr-2">{passwordValidation.hasNumber ? '✓' : '✗'}</span>
-                    رقم واحد على الأقل (0-9)
-                  </div>
+                <div className="mt-3">
+                  <PasswordStrengthIndicator password={formData.password} />
                 </div>
               )}
             </div>
