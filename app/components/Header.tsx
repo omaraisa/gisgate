@@ -73,7 +73,8 @@ export default function Header() {
     { href: '/lessons', label: 'دروس', icon: '🎥' },
     { href: '/courses', label: 'دورات تدريبية', icon: '🎓' },
     { href: '/marketplace', label: 'المتجر', icon: '🛒' },
-    { href: '/about', label: 'من نحن', icon: '👥' },
+    { href: '/leaderboard', label: 'لوحة الشرف', icon: '🏆' },
+    { href: '/contact', label: 'تواصل معنا', icon: '📞' },
   ] as const;
   return (
     <>

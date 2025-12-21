@@ -256,6 +256,7 @@ export function RetryableContent<T>({
 
   React.useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadData, ...deps]);
 
   if (loading) {

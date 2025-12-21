@@ -5,6 +5,7 @@ import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
+import DashboardStats from './components/DashboardStats'
 
 interface ArticleWithStats extends Article {
   imageCount?: number
@@ -38,11 +39,11 @@ interface CourseWithStats {
   enrollmentCount?: number
 }
 
-type ContentType = 'articles' | 'lessons' | 'courses' | 'courses'
+type ContentType = 'dashboard' | 'articles' | 'lessons' | 'courses'
 
 export default function AdminPage() {
   const { token } = useAuthStore()
-  const [contentType, setContentType] = useState<ContentType>('articles')
+  const [contentType, setContentType] = useState<ContentType>('dashboard')
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
   const [courses, setCourses] = useState<CourseWithStats[]>([])
@@ -51,14 +52,12 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
-
-  useEffect(() => {
-    if (token) {
-      fetchArticles()
-      fetchLessons()
-      fetchCourses()
-    }
-  }, [token, fetchArticles, fetchLessons, fetchCourses])
+  
+  const [stats, setStats] = useState({
+    counts: { users: 0, articles: 0, courses: 0, solutions: 0 },
+    revenue: 0,
+    recentActivity: { users: [], purchases: [] }
+  })
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -69,6 +68,20 @@ export default function AdminPage() {
     }
     return headers
   }, [token])
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/stats', {
+        headers: getAuthHeaders()
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    }
+  }, [getAuthHeaders])
 
   const fetchArticles = useCallback(async () => {
     try {
@@ -119,6 +132,15 @@ export default function AdminPage() {
       console.error('Error fetching courses:', error)
     }
   }, [getAuthHeaders])
+
+  useEffect(() => {
+    if (token) {
+      fetchStats()
+      fetchArticles()
+      fetchLessons()
+      fetchCourses()
+    }
+  }, [token, fetchStats, fetchArticles, fetchLessons, fetchCourses])
 
   const handleStatusChange = async (id: string, status: ArticleStatus) => {
     try {
@@ -355,7 +377,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل المقالات...</p>
+          <p className="mt-4 text-gray-600">جاري التحميل...</p>
         </div>
       </div>
     )
@@ -367,18 +389,36 @@ export default function AdminPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            إدارة {contentType === 'articles' ? 'المقالات' : 'الدروس'}
+            {contentType === 'dashboard' ? 'لوحة التحكم' : 
+             contentType === 'articles' ? 'إدارة المقالات' : 
+             contentType === 'lessons' ? 'إدارة الدروس' : 'إدارة الكورسات'}
           </h1>
-          <p className="text-gray-600">
-            إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : courses.length} | 
-            المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
-            المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.DRAFT).length}
-          </p>
+          {contentType !== 'dashboard' && (
+            <p className="text-gray-600">
+              إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : courses.length} | 
+              المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
+              المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.DRAFT).length}
+            </p>
+          )}
         </div>
 
         {/* Content Type Navigation */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex gap-4 mb-4 flex-wrap">
+            <button
+              onClick={() => {
+                setContentType('dashboard')
+                setSelectedItems(new Set())
+                setBulkAction('')
+              }}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                contentType === 'dashboard'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              لوحة التحكم
+            </button>
             <button
               onClick={() => {
                 setContentType('articles')
@@ -447,74 +487,81 @@ export default function AdminPage() {
             </Link>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search */}
-            <div className="flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder={`البحث في ${contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          {contentType === 'dashboard' ? (
+            <DashboardStats stats={stats} />
+          ) : (
+            <>
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                {/* Search */}
+                <div className="flex-1 max-w-md">
+                  <input
+                    type="text"
+                    placeholder={`البحث في ${contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Filter */}
-            <div className="flex gap-2">
-              {(['all', 'PUBLISHED', 'DRAFT'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilter(status)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    filter === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {status === 'all' ? 'الكل' : status === 'PUBLISHED' ? 'منشور' : 'مسودة'}
-                </button>
-              ))}
-            </div>
+                {/* Filter */}
+                <div className="flex gap-2">
+                  {(['all', 'PUBLISHED', 'DRAFT'] as const).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilter(status)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        filter === status
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {status === 'all' ? 'الكل' : status === 'PUBLISHED' ? 'منشور' : 'مسودة'}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Add New */}
-            <Link
-              href={contentType === 'articles' ? '/admin/articles/new' : contentType === 'lessons' ? '/admin/lessons/new' : '/admin/courses/new'}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              إضافة {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'} جديد
-            </Link>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedItems.size > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-blue-900">
-                  تم اختيار {selectedItems.size} {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'}
-                </span>
-                <select
-                  value={bulkAction}
-                  onChange={(e) => setBulkAction(e.target.value)}
-                  className="px-3 py-1 border border-blue-300 rounded-md text-sm"
+                {/* Add New */}
+                <Link
+                  href={contentType === 'articles' ? '/admin/articles/new' : contentType === 'lessons' ? '/admin/lessons/new' : '/admin/courses/new'}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  <option value="">اختر إجراء</option>
-                  <option value="PUBLISHED">نشر</option>
-                  <option value="DRAFT">تحويل لمسودة</option>
-                  <option value="delete">حذف</option>
-                </select>
-                <button
-                  onClick={handleBulkAction}
-                  disabled={!bulkAction}
-                  className="px-4 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-                >
-                  تطبيق
-                </button>
+                  إضافة {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'} جديد
+                </Link>
               </div>
-            </div>
+
+              {/* Bulk Actions */}
+              {selectedItems.size > 0 && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-blue-900">
+                      تم اختيار {selectedItems.size} {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'}
+                    </span>
+                    <select
+                      value={bulkAction}
+                      onChange={(e) => setBulkAction(e.target.value)}
+                      className="px-3 py-1 border border-blue-300 rounded-md text-sm"
+                    >
+                      <option value="">اختر إجراء</option>
+                      <option value="PUBLISHED">نشر</option>
+                      <option value="DRAFT">تحويل لمسودة</option>
+                      <option value="delete">حذف</option>
+                    </select>
+                    <button
+                      onClick={handleBulkAction}
+                      disabled={!bulkAction}
+                      className="px-4 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                    >
+                      تطبيق
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Content Table */}
+        {contentType !== 'dashboard' && (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -679,6 +726,7 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   )
