@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = registerSchema.parse(body);
 
+    // Check if email is already taken
+    const existingUser = await AuthService.getUserByEmail(validatedData.email);
     if (existingUser) {
       return NextResponse.json(
         { error: 'An account with this email already exists. Try logging in instead or use a different email address.' },

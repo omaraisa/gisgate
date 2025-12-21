@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import AuthChecker from "./components/AuthChecker";
+import NetworkStatus from "./components/NetworkStatus";
 
 const kufi = localFont({
   src: "../fonts/kufi.ttf",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <StoreProvider>
             <AuthChecker />
+            <NetworkStatus />
             <Header />
             <Cart />
             <ScrollToTop />

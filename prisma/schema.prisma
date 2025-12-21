@@ -29,7 +29,8 @@ model Article {
   authorId        String?
   authorName      String?
   images          ArticleImage[]
-  author          User?          @relation("UserArticles", fields: [authorId], references: [id])
+  author          User?             @relation("UserArticles", fields: [authorId], references: [id])
+  favorites       FavoriteArticle[] @relation("ArticleFavorites")
 
   @@map("articles")
 }
@@ -62,8 +63,9 @@ model Video {
   order           Int              @default(0)
   progress        LessonProgress[]
   images          VideoImage[]
-  author          User?            @relation("UserVideos", fields: [authorId], references: [id])
-  course          Course?          @relation("CourseLessons", fields: [courseId], references: [id])
+  author          User?             @relation("UserVideos", fields: [authorId], references: [id])
+  course          Course?           @relation("CourseLessons", fields: [courseId], references: [id])
+  favorites       FavoriteLesson[]  @relation("LessonFavorites")
 
   @@map("videos")
 }
@@ -128,6 +130,9 @@ model User {
   solutions                Solution[]         @relation("UserSolutions")
   sessions                 UserSession[]
   videos                   Video[]            @relation("UserVideos")
+  favoriteArticles         FavoriteArticle[]  @relation("UserFavoriteArticles")
+  favoriteCourses          FavoriteCourse[]   @relation("UserFavoriteCourses")
+  favoriteLessons          FavoriteLesson[]   @relation("UserFavoriteLessons")
 
   @@map("users")
 }
@@ -176,6 +181,7 @@ model Course {
   author            User?              @relation("UserCourses", fields: [authorId], references: [id])
   paymentOrders     PaymentOrder[]
   lessons           Video[]            @relation("CourseLessons")
+  favorites         FavoriteCourse[]   @relation("CourseFavorites")
 
   @@map("courses")
 }
@@ -456,4 +462,40 @@ enum SolutionType {
   LIBRARY
   CONFIGURATION
   OTHER
+}
+
+model FavoriteArticle {
+  id        String   @id @default(uuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserFavoriteArticles", fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation("ArticleFavorites", fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@map("favorite_articles")
+}
+
+model FavoriteCourse {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserFavoriteCourses", fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation("CourseFavorites", fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("favorite_courses")
+}
+
+model FavoriteLesson {
+  id        String   @id @default(uuid())
+  userId    String
+  lessonId  String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserFavoriteLessons", fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Video    @relation("LessonFavorites", fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("favorite_lessons")
 }
