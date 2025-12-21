@@ -20,10 +20,14 @@ export async function GET(
         username: true,
         firstName: true,
         lastName: true,
+        fullNameArabic: true,
+        fullNameEnglish: true,
         avatar: true,
         bio: true,
         website: true,
         createdAt: true,
+        showProfile: true,
+        showContactDetails: true,
         certificates: {
           include: {
             enrollment: {
@@ -47,9 +51,9 @@ export async function GET(
       }
     })
 
-    if (!user) {
+    if (!user || user.showProfile === false) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User profile is not public or does not exist' },
         { status: 404 }
       )
     }
@@ -58,12 +62,14 @@ export async function GET(
     const publicProfile = {
       id: user.id,
       username: user.username,
-      name: user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}` 
-        : user.username || 'مستخدم',
+      name: user.fullNameArabic || 
+            (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : null) ||
+            user.fullNameEnglish ||
+            user.username || 
+            'مستخدم',
       avatar: user.avatar,
       bio: user.bio,
-      website: user.website,
+      website: user.showContactDetails ? user.website : null,
       joinedAt: user.createdAt,
       stats: {
         certificates: user.certificates.length,

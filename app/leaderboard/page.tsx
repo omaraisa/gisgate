@@ -8,8 +8,12 @@ import { Trophy, Medal, Award, User } from 'lucide-react'
 interface LeaderboardUser {
   id: string
   name: string
+  username: string | null
   avatar: string | null
   certificateCount: number
+  completionPercentage: number
+  rank: number
+  isTopTier: boolean
 }
 
 export default function LeaderboardPage() {
@@ -70,7 +74,7 @@ export default function LeaderboardPage() {
                   transition={{ delay: index * 0.05 }}
                   className={`p-6 flex items-center gap-6 hover:bg-gray-50 transition-colors ${
                     index < 3 ? 'bg-gradient-to-l from-gray-50 to-white' : ''
-                  }`}
+                  } ${user.isTopTier ? 'border-r-4 border-yellow-500' : ''}`}
                 >
                   {/* Rank */}
                   <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center font-bold text-xl">
@@ -105,9 +109,16 @@ export default function LeaderboardPage() {
 
                   {/* Info */}
                   <div className="flex-grow">
-                    <h3 className="font-bold text-gray-900">{user.name}</h3>
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                      {user.name}
+                      {user.isTopTier && (
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                          ⭐ النخبة
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-sm text-gray-500">
-                      طالب مجتهد
+                      {user.completionPercentage}% إنجاز • طالب مجتهد
                     </p>
                   </div>
 

@@ -18,27 +18,27 @@ This document outlines a strategic roadmap for evolving the GIS Gate platform in
 *Focus: Protecting user data, intellectual property, and platform integrity.*
 
 ### Identity & Access Management (IAM)
-- [ ] **Role-Based Access Control (RBAC):** Implement granular permissions (Admin, Instructor, Student, Marketplace Seller).
+- [x] **Role-Based Access Control (RBAC):** Implement granular permissions (Admin, Instructor, Student, Marketplace Seller).
 <!-- - [ ] **Two-Factor Authentication (2FA):** Add TOTP (Google Authenticator) support for admin and instructor accounts. -->
-- [ ] **Session Management:** Implement secure session invalidation, device tracking, and "force logout" capabilities.
+- [x] **Session Management:** Implement secure session invalidation, device tracking, and "force logout" capabilities.
 <!-- - [ ] **Social Login:** Integrate Google/GitHub/LinkedIn auth providers for frictionless onboarding. -->
 
 ### Content Protection
 - [ ] **Signed URLs for Assets:** Secure course videos and marketplace downloads using signed URLs (e.g., AWS CloudFront/MinIO) to prevent hotlinking and unauthorized sharing.
 
 ### Compliance & Safety
-- [ ] **Content Security Policy (CSP):** Strict CSP headers to prevent XSS and injection attacks.
-- [ ] **Audit Logging:** Comprehensive logging of all administrative actions (who changed what and when).
+- [x] **Content Security Policy (CSP):** Strict CSP headers to prevent XSS and injection attacks.
+- [x] **Audit Logging:** Comprehensive logging of all administrative actions (who changed what and when).
 <!-- - [ ] **GDPR/Privacy Compliance:** Data export and "Right to be Forgotten" automated workflows. -->
 
 ## 2. Advanced Learning Experience (LXP)
 *Focus: Moving beyond static content to interactive, engagement-driven learning.*
 
-- [ ] **Dynamic Learner Rankings:** Introduce a leaderboard that ranks users based on the number of certificates earned. Users who have completed 90% or more of all available courses are placed in the top tier (#1). As new courses are added, rankings automatically adjust, encouraging continuous learning to maintain or improve rank.
+- [x] **Dynamic Learner Rankings:** Introduce a leaderboard that ranks users based on the number of certificates earned. Users who have completed 90% or more of all available courses are placed in the top tier (#1). As new courses are added, rankings automatically adjust, encouraging continuous learning to maintain or improve rank.
 
 ### Community
 - [ ] **Contextual Discussions:** Allow comments/questions per lesson timestamp.
-- [ ] **Student Profiles:** Public profiles showcasing completed courses, certificates, and badges. and make users able to show/hide their contact details.
+- [x] **Student Profiles:** Public profiles showcasing completed courses, certificates, and badges. and make users able to show/hide their contact details.
 
 ## 3. Marketplace & Monetization
 - [ ] **User Solutions Sharing:** Enable users to submit their own solutions to course challenges in a dedicated "Solutions" section. All submissions enter a review state before being published. Build a comprehensive workflow for solution submission, review, and display—mirroring world-class solution-sharing platforms, but all features are currently free. Each user's profile will publicly display the number of solutions they've contributed, with open access for anyone to view user profiles and their published solutions.

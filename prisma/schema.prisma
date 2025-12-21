@@ -118,6 +118,8 @@ model User {
   updatedAt                DateTime           @updatedAt
   fullNameArabic           String?
   fullNameEnglish          String?
+  showProfile              Boolean            @default(true)
+  showContactDetails       Boolean            @default(false)
   articles                 Article[]          @relation("UserArticles")
   certificates             Certificate[]      @relation("UserCertificates")
   enrollments              CourseEnrollment[] @relation("UserEnrollments")
@@ -498,4 +500,22 @@ model FavoriteLesson {
 
   @@unique([userId, lessonId])
   @@map("favorite_lessons")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String
+  resourceId String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

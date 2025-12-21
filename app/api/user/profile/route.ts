@@ -66,6 +66,8 @@ const updateProfileSchema = z.object({
   avatar: z.string().refine((val) => !val || z.string().url().safeParse(val).success, {
     message: "Invalid avatar URL"
   }).optional(),
+  showProfile: z.boolean().optional(),
+  showContactDetails: z.boolean().optional(),
 }).transform((data) => ({
   ...data,
   // Convert empty strings to undefined
