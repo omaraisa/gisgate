@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import DashboardStats from './components/DashboardStats'
+import SolutionsTable from './components/SolutionsTable'
 
 interface ArticleWithStats extends Article {
   imageCount?: number
@@ -39,7 +40,7 @@ interface CourseWithStats {
   enrollmentCount?: number
 }
 
-type ContentType = 'dashboard' | 'articles' | 'lessons' | 'courses'
+type ContentType = 'dashboard' | 'articles' | 'lessons' | 'courses' | 'solutions'
 
 export default function AdminPage() {
   const { token } = useAuthStore()
@@ -47,6 +48,7 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
   const [courses, setCourses] = useState<CourseWithStats[]>([])
+  const [solutions, setSolutions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -144,14 +146,29 @@ export default function AdminPage() {
     }
   }, [getAuthHeaders])
 
+  const fetchSolutions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/solutions', {
+        headers: getAuthHeaders()
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSolutions(data)
+      }
+    } catch (error) {
+      console.error('Error fetching solutions:', error)
+    }
+  }, [getAuthHeaders])
+
   useEffect(() => {
     if (token) {
       fetchStats()
       fetchArticles()
       fetchLessons()
       fetchCourses()
+      fetchSolutions()
     }
-  }, [token, fetchStats, fetchArticles, fetchLessons, fetchCourses])
+  }, [token, fetchStats, fetchArticles, fetchLessons, fetchCourses, fetchSolutions])
 
   const handleStatusChange = async (id: string, status: ArticleStatus) => {
     try {
@@ -282,6 +299,26 @@ export default function AdminPage() {
     }
   }
 
+  const handleSolutionStatusChange = async (id: string, status: ArticleStatus) => {
+    try {
+      const response = await fetch(`/api/admin/solutions/${id}/status`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status })
+      })
+
+      if (response.ok) {
+        setSolutions(prev => 
+          prev.map(solution => 
+            solution.id === id ? { ...solution, status } : solution
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Error updating solution status:', error)
+    }
+  }
+
   const handleBulkAction = async () => {
     if (!bulkAction || selectedItems.size === 0) return
 
@@ -402,13 +439,14 @@ export default function AdminPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {contentType === 'dashboard' ? 'لوحة التحكم' : 
              contentType === 'articles' ? 'إدارة المقالات' : 
-             contentType === 'lessons' ? 'إدارة الدروس' : 'إدارة الكورسات'}
+             contentType === 'lessons' ? 'إدارة الدروس' : 
+             contentType === 'courses' ? 'إدارة الكورسات' : 'إدارة الحلول'}
           </h1>
           {contentType !== 'dashboard' && (
             <p className="text-gray-600">
-              إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : courses.length} | 
-              المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
-              المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.DRAFT).length}
+              إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : contentType === 'courses' ? 'الكورسات' : 'الحلول'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : contentType === 'courses' ? courses.length : solutions.length} | 
+              المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : contentType === 'courses' ? courses : solutions).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
+              المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : contentType === 'courses' ? courses : solutions).filter(item => item.status === ArticleStatus.DRAFT).length}
             </p>
           )}
         </div>
@@ -471,6 +509,20 @@ export default function AdminPage() {
               }`}
             >
               إدارة الكورسات ({courses.length})
+            </button>
+            <button
+              onClick={() => {
+                setContentType('solutions')
+                setSelectedItems(new Set())
+                setBulkAction('')
+              }}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                contentType === 'solutions'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              إدارة الحلول ({solutions.length})
             </button>
             <Link
               href="/admin/users"
@@ -572,7 +624,9 @@ export default function AdminPage() {
         </div>
 
         {/* Content Table */}
-        {contentType !== 'dashboard' && (
+        {contentType === 'solutions' ? (
+          <SolutionsTable solutions={solutions} onStatusChange={handleSolutionStatusChange} />
+        ) : contentType !== 'dashboard' && (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">

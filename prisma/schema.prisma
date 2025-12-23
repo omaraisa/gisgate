@@ -66,6 +66,7 @@ model Video {
   author          User?             @relation("UserVideos", fields: [authorId], references: [id])
   course          Course?           @relation("CourseLessons", fields: [courseId], references: [id])
   favorites       FavoriteLesson[]  @relation("LessonFavorites")
+  solutions       Solution[]        @relation("LessonSolutions")
 
   @@map("videos")
 }
@@ -184,6 +185,7 @@ model Course {
   paymentOrders     PaymentOrder[]
   lessons           Video[]            @relation("CourseLessons")
   favorites         FavoriteCourse[]   @relation("CourseFavorites")
+  solutions         Solution[]         @relation("CourseSolutions")
 
   @@map("courses")
 }
@@ -346,10 +348,14 @@ model Solution {
   reviewCount      Int                @default(0)
   metaTitle        String?
   metaDescription  String?
+  courseId         String?
+  lessonId         String?
   downloads        SolutionDownload[]
   purchases        SolutionPurchase[]
   reviews          SolutionReview[]
   author           User?              @relation("UserSolutions", fields: [authorId], references: [id])
+  course           Course?            @relation("CourseSolutions", fields: [courseId], references: [id])
+  lesson           Video?             @relation("LessonSolutions", fields: [lessonId], references: [id])
 
   @@map("solutions")
 }
@@ -412,8 +418,10 @@ model NewsletterSubscriber {
 
 enum ArticleStatus {
   DRAFT
+  PENDING_REVIEW
   PUBLISHED
   ARCHIVED
+  REJECTED
 }
 
 enum UserRole {

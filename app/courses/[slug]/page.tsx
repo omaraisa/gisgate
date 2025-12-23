@@ -9,6 +9,7 @@ import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
+import SolutionsList from './components/SolutionsList';
 
 interface Course {
   id: string;
@@ -40,6 +41,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'lessons' | 'solutions'>('lessons');
 
   // Use auth store
   const { isAuthenticated } = useAuthStore();
@@ -488,87 +490,126 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
       <section className="relative z-10 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Lessons List */}
+            {/* Lessons List & Solutions */}
             <div className="lg:col-span-2">
-              <h2 className="text-3xl font-bold text-white mb-8">محتوى الدورة</h2>
-
-              <div className="space-y-6">
-            {course.lessons.map((lesson, index) => {
-              const isCompleted = enrollment?.lessonProgress?.find(p => p.lessonId === lesson.id)?.isCompleted;
-              const isLocked = !enrollment && !course.isFree && isAuthenticated;
-
-              if (isLocked) {
-                return (
-                  <motion.div
-                key={lesson.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="p-6 rounded-xl border border-white/20 bg-white/5 cursor-not-allowed backdrop-blur-md transition-all duration-300 mb-4"
-                  >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-500">
-                              <Lock className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-400">
-                                {index + 1}. {lesson.title}
-                              </h3>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  }
-
-                  return (
-                    <Link
-                      key={lesson.id}
-                      href={enrollment ? `/courses/${course.slug}/lessons/${lesson.id}` : '#'}
-                      onClick={(e) => {
-                        if (!enrollment) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer backdrop-blur-md transition-all duration-300"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              isCompleted ? 'bg-green-500' : 'bg-secondary-500'
-                            }`}>
-                              {isCompleted ? (
-                                <CheckCircle className="w-6 h-6 text-white" />
-                              ) : (
-                                <Play className="w-6 h-6 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-white">
-                                {index + 1}. {lesson.title}
-                              </h3>
-                            </div>
-                          </div>
-
-                          {isLocked ? (
-                            <Lock className="w-5 h-5 text-white/40" />
-                          ) : (
-                            <div className="text-secondary-400 hover:text-secondary-300 text-sm font-medium">
-                              مشاهدة الدرس →
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    </Link>
-                  );
-                })}
+              <div className="flex gap-6 mb-8 border-b border-white/10">
+                <button
+                  onClick={() => setActiveTab('lessons')}
+                  className={`pb-4 text-xl font-bold transition-colors relative ${
+                    activeTab === 'lessons' 
+                      ? 'text-white' 
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  محتوى الدورة
+                  {activeTab === 'lessons' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-1 bg-secondary-500 rounded-t-full"
+                    />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('solutions')}
+                  className={`pb-4 text-xl font-bold transition-colors relative ${
+                    activeTab === 'solutions' 
+                      ? 'text-white' 
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  حلول المجتمع
+                  {activeTab === 'solutions' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-1 bg-secondary-500 rounded-t-full"
+                    />
+                  )}
+                </button>
               </div>
+
+              {activeTab === 'lessons' ? (
+                <div className="space-y-6">
+                  {course.lessons.map((lesson, index) => {
+                    const isCompleted = enrollment?.lessonProgress?.find(p => p.lessonId === lesson.id)?.isCompleted;
+                    const isLocked = !enrollment && !course.isFree && isAuthenticated;
+
+                    if (isLocked) {
+                      return (
+                        <motion.div
+                          key={lesson.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="p-6 rounded-xl border border-white/20 bg-white/5 cursor-not-allowed backdrop-blur-md transition-all duration-300 mb-4"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-500">
+                                <Lock className="w-6 h-6 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-400">
+                                  {index + 1}. {lesson.title}
+                                </h3>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={lesson.id}
+                        href={enrollment ? `/courses/${course.slug}/lessons/${lesson.id}` : '#'}
+                        onClick={(e) => {
+                          if (!enrollment) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                          className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer backdrop-blur-md transition-all duration-300"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                isCompleted ? 'bg-green-500' : 'bg-secondary-500'
+                              }`}>
+                                {isCompleted ? (
+                                  <CheckCircle className="w-6 h-6 text-white" />
+                                ) : (
+                                  <Play className="w-6 h-6 text-white" />
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-white">
+                                  {index + 1}. {lesson.title}
+                                </h3>
+                              </div>
+                            </div>
+
+                            {isLocked ? (
+                              <Lock className="w-5 h-5 text-white/40" />
+                            ) : (
+                              <div className="text-secondary-400 hover:text-secondary-300 text-sm font-medium">
+                                مشاهدة الدرس →
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl p-6">
+                  <SolutionsList courseId={course.id} />
+                </div>
+              )}
             </div>
 
             {/* Course Details Sidebar */}

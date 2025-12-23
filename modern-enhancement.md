@@ -41,7 +41,7 @@ This document outlines a strategic roadmap for evolving the GIS Gate platform in
 - [x] **Student Profiles:** Public profiles showcasing completed courses, certificates, and badges. and make users able to show/hide their contact details.
 
 ## 3. Marketplace & Monetization
-- [ ] **User Solutions Sharing:** Enable users to submit their own solutions to course challenges in a dedicated "Solutions" section. All submissions enter a review state before being published. Build a comprehensive workflow for solution submission, review, and display—mirroring world-class solution-sharing platforms, but all features are currently free. Each user's profile will publicly display the number of solutions they've contributed, with open access for anyone to view user profiles and their published solutions.
+- [x] **User Solutions Sharing:** Enable users to submit their own solutions to course challenges in a dedicated "Solutions" section. All submissions enter a review state before being published. Build a comprehensive workflow for solution submission, review, and display—mirroring world-class solution-sharing platforms, but all features are currently free. Each user's profile will publicly display the number of solutions they've contributed, with open access for anyone to view user profiles and their published solutions.
 
 ## 4. Platform Management & Operations
 *Focus: Empowering administrators with data and control.*
