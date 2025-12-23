@@ -52,7 +52,7 @@ This document outlines a strategic roadmap for evolving the GIS Gate platform in
 - [ ] **User Lifecycle Management:** Tools to ban, suspend, or manually verify users.
 
 ### Analytics & Insights
-- [ ] **Business Intelligence Dashboard:** Real-time visits, enrollment, and retention metrics.
+- [x] **Business Intelligence Dashboard:** Real-time visits, enrollment, and retention metrics. (Partially implemented: Enrollments and Completion stats added)
 - [ ] **Search Analytics:** Track what users are searching for to identify content gaps.
 
 ## 5. Performance & Scalability
@@ -67,4 +67,4 @@ This document outlines a strategic roadmap for evolving the GIS Gate platform in
 ## Immediate Priorities (Next Sprint)
 
 1.  **[x] Secure Asset Delivery:** Ensure marketplace items cannot be downloaded without valid purchase.
-2.  **Admin Dashboard Analytics:** Give admins visibility into platform health.
+2.  **[x] Admin Dashboard Analytics:** Give admins visibility into platform health.

@@ -21,14 +21,19 @@ export async function GET(request: NextRequest) {
       articleCount,
       courseCount,
       solutionCount,
+      enrollmentCount,
+      completedEnrollmentCount,
       totalRevenueResult,
       recentUsers,
-      recentPurchases
+      recentPurchases,
+      recentEnrollments
     ] = await Promise.all([
       prisma.user.count(),
       prisma.article.count(),
       prisma.course.count(),
       prisma.solution.count(),
+      prisma.courseEnrollment.count(),
+      prisma.courseEnrollment.count({ where: { isCompleted: true } }),
       prisma.solutionPurchase.aggregate({
         _sum: {
           amount: true
@@ -67,6 +72,24 @@ export async function GET(request: NextRequest) {
             }
           }
         }
+      }),
+      prisma.courseEnrollment.findMany({
+        take: 5,
+        orderBy: { enrolledAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          course: {
+            select: {
+              title: true
+            }
+          }
+        }
       })
     ]);
 
@@ -77,12 +100,15 @@ export async function GET(request: NextRequest) {
         users: userCount,
         articles: articleCount,
         courses: courseCount,
-        solutions: solutionCount
+        solutions: solutionCount,
+        enrollments: enrollmentCount,
+        completedEnrollments: completedEnrollmentCount
       },
       revenue: totalRevenue,
       recentActivity: {
         users: recentUsers,
-        purchases: recentPurchases
+        purchases: recentPurchases,
+        enrollments: recentEnrollments
       }
     });
 

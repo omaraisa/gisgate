@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Users, FileText, BookOpen, Package, DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { Users, FileText, BookOpen, Package, DollarSign, TrendingUp, Clock, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface DashboardStatsProps {
@@ -11,6 +11,8 @@ interface DashboardStatsProps {
       articles: number;
       courses: number;
       solutions: number;
+      enrollments: number;
+      completedEnrollments: number;
     };
     revenue: number;
     recentActivity: {
@@ -33,6 +35,18 @@ interface DashboardStatsProps {
           lastName: string | null;
         };
         solution: {
+          title: string;
+        };
+      }>;
+      enrollments: Array<{
+        id: string;
+        enrolledAt: string;
+        user: {
+          email: string;
+          firstName: string | null;
+          lastName: string | null;
+        };
+        course: {
           title: string;
         };
       }>;
@@ -81,12 +95,26 @@ export function DashboardStats({ stats, loading }: DashboardStatsProps) {
       color: 'text-orange-600',
       bg: 'bg-orange-50',
     },
+    {
+      title: 'التسجيلات',
+      value: stats.counts.enrollments,
+      icon: GraduationCap,
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50',
+    },
+    {
+      title: 'إكمال الدورات',
+      value: stats.counts.completedEnrollments,
+      icon: Package, // Using Package as a placeholder for completion/certificate
+      color: 'text-teal-600',
+      bg: 'bg-teal-50',
+    },
   ];
 
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.title}
@@ -108,7 +136,7 @@ export function DashboardStats({ stats, loading }: DashboardStatsProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Users */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -155,11 +183,53 @@ export function DashboardStats({ stats, loading }: DashboardStatsProps) {
           </div>
         </motion.div>
 
+        {/* Recent Enrollments */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+        >
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-gray-500" />
+              أحدث التسجيلات
+            </h3>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {stats.recentActivity.enrollments.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">لا توجد تسجيلات حديثة</div>
+            ) : (
+              stats.recentActivity.enrollments.map((enrollment) => (
+                <div key={enrollment.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{enrollment.course.title}</p>
+                      <p className="text-xs text-gray-500">
+                        {enrollment.user.firstName ? `${enrollment.user.firstName} ${enrollment.user.lastName || ''}` : enrollment.user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400 mt-1 flex items-center justify-end gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(enrollment.enrolledAt).toLocaleDateString('ar-SA')}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
         {/* Recent Purchases */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         >
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">

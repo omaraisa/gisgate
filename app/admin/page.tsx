@@ -54,9 +54,20 @@ export default function AdminPage() {
   const [bulkAction, setBulkAction] = useState('')
   
   const [stats, setStats] = useState({
-    counts: { users: 0, articles: 0, courses: 0, solutions: 0 },
+    counts: { 
+      users: 0, 
+      articles: 0, 
+      courses: 0, 
+      solutions: 0,
+      enrollments: 0,
+      completedEnrollments: 0
+    },
     revenue: 0,
-    recentActivity: { users: [], purchases: [] }
+    recentActivity: { 
+      users: [], 
+      purchases: [],
+      enrollments: []
+    }
   })
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
