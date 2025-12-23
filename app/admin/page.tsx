@@ -40,6 +40,24 @@ interface CourseWithStats {
   enrollmentCount?: number
 }
 
+interface Solution {
+  id: string;
+  title: string;
+  slug: string;
+  status: ArticleStatus;
+  createdAt: string;
+  sourceCodeUrl?: string;
+  demoUrl?: string;
+  author: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  };
+  course: {
+    title: string;
+  } | null;
+}
+
 type ContentType = 'dashboard' | 'articles' | 'lessons' | 'courses' | 'solutions'
 
 export default function AdminPage() {
@@ -48,7 +66,7 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
   const [courses, setCourses] = useState<CourseWithStats[]>([])
-  const [solutions, setSolutions] = useState<any[]>([])
+  const [solutions, setSolutions] = useState<Solution[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
