@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import { UserRole, PrismaClient } from '@prisma/client';
+import { successResponse, handleApiError } from '@/lib/api-utils';
 
 const prisma = new PrismaClient();
 
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({
+    return successResponse({
       users,
       pagination: {
         page,
@@ -137,20 +138,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Get users error:', error);
-
-    if (error instanceof Error) {
-      if (error.message === 'No token provided' || error.message === 'Admin access required') {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 401 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

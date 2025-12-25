@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { successResponse, handleApiError } from '@/lib/api-utils';
 
 // GET /api/courses - Get all published courses
 export async function GET(request: NextRequest) {
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       lessons: course.lessons
     }));
 
-    return NextResponse.json({
+    return successResponse({
       courses: formattedCourses,
       pagination: {
         total,
@@ -87,7 +88,6 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching courses:', error);
-    return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 });
+    return handleApiError(error);
   }
 }

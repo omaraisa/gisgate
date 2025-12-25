@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus } from '@prisma/client'
 import { requireAdmin } from '@/lib/api-auth'
+import { successResponse, handleApiError } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,13 +36,9 @@ export async function GET(request: NextRequest) {
       enrollments: undefined
     }))
 
-    return NextResponse.json(coursesWithStats)
+    return successResponse(coursesWithStats)
   } catch (error) {
-    console.error('Error fetching courses:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch courses' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 

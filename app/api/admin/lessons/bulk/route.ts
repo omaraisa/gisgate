@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const updatedLessons = await prisma.video.updateMany({
+    const updatedLessons = await prisma.lesson.updateMany({
       where: {
         id: { in: ids }
       },
@@ -62,7 +62,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete lessons (images will be cascade deleted)
-    const deletedLessons = await prisma.video.deleteMany({
+    const deletedLessons = await prisma.lesson.deleteMany({
       where: {
         id: { in: ids }
       }

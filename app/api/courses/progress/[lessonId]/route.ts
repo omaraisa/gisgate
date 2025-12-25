@@ -86,8 +86,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ le
     const { watchedTime, isCompleted } = await request.json();
 
     // Check if lesson exists and user is enrolled in its course
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lesson = await (prisma as any).video.findUnique({
+    const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       select: {
         id: true,
@@ -161,7 +160,7 @@ async function updateCourseProgress(enrollmentId: string, courseId: string, pris
   }
 
   // Get total lessons in course
-  const totalLessons = await prisma.video.count({
+  const totalLessons = await prisma.lesson.count({
     where: { courseId: courseId }
   });
 

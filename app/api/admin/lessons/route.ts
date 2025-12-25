@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Require admin authentication
     await requireAdmin(request);
 
-    const lessons = await prisma.video.findMany({
+    const lessons = await prisma.lesson.findMany({
       where: {
         courseId: null // Only standalone lessons
       },
@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const updatedLesson = await prisma.video.update({
+    const updatedLesson = await prisma.lesson.update({
       where: { id },
       data: {
         status: status,
@@ -124,7 +124,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete lesson (images will be cascade deleted)
-    await prisma.video.delete({
+    await prisma.lesson.delete({
       where: { id }
     })
 

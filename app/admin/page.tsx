@@ -5,7 +5,7 @@ import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
-import DashboardStats from './components/DashboardStats'
+import { DashboardStats } from './components/DashboardStats'
 import SolutionsTable from './components/SolutionsTable'
 
 interface ArticleWithStats extends Article {

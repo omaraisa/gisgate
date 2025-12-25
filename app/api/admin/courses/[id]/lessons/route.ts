@@ -34,7 +34,7 @@ export async function GET(
 
     const courseId = params.id;
 
-    const lessons = await prisma.video.findMany({
+    const lessons = await prisma.lesson.findMany({
       where: {
         courseId: courseId
       },
@@ -99,7 +99,7 @@ export async function POST(
       );
     }
 
-    const lesson = await prisma.video.create({
+    const lesson = await prisma.lesson.create({
       data: {
         title,
         slug,
@@ -162,7 +162,7 @@ export async function PATCH(
       updateData.order = order;
     }
 
-    const updatedLesson = await prisma.video.update({
+    const updatedLesson = await prisma.lesson.update({
       where: { 
         id: lessonId,
         courseId: courseId // Ensure it belongs to this course
@@ -199,7 +199,7 @@ export async function DELETE(
     }
 
     // Delete lesson
-    await prisma.video.delete({
+    await prisma.lesson.delete({
       where: { 
         id: lessonId,
         courseId: courseId // Ensure it belongs to this course

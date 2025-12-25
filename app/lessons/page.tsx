@@ -87,8 +87,10 @@ export default function LessonsPage() {
         if (!response.ok) {
           throw new Error('Failed to fetch lessons');
         }
-        const lessonsData = await response.json();
-        setData(lessonsData);
+        const result = await response.json();
+        if (result.success) {
+          setData(result.data);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load lessons');
       } finally {

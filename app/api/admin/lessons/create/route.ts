@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
       // Ensure slug is unique
       while (true) {
-        const existingLesson = await prisma.video.findUnique({
+        const existingLesson = await prisma.lesson.findUnique({
           where: { slug: slugCandidate }
         });
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       finalSlug = slugCandidate;
     } else {
       // Check if provided slug is unique
-      const existingLesson = await prisma.video.findUnique({
+      const existingLesson = await prisma.lesson.findUnique({
         where: { slug: finalSlug }
       });
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const newLesson = await prisma.video.create({
+    const newLesson = await prisma.lesson.create({
       data: {
         title,
         slug: finalSlug,

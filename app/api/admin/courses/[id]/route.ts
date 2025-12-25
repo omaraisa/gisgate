@@ -108,7 +108,7 @@ export async function PUT(
     // Handle lessons
     if (data.lessons) {
       // Get existing lessons
-      const existingLessons = await prisma.video.findMany({
+      const existingLessons = await prisma.lesson.findMany({
         where: { courseId: resolvedParams.id },
         select: { id: true }
       })
@@ -118,7 +118,7 @@ export async function PUT(
       // Delete lessons that are no longer in the list
       const lessonsToDelete = existingLessonIds.filter(id => !newLessonIds.includes(id))
       if (lessonsToDelete.length > 0) {
-        await prisma.video.deleteMany({
+        await prisma.lesson.deleteMany({
           where: { id: { in: lessonsToDelete } }
         })
       }
@@ -149,7 +149,7 @@ export async function PUT(
           // Only update slug if it's different and doesn't conflict
           if (lessonData.slug && lessonData.slug !== '') {
             // Check if slug is already taken by another lesson
-            const existingLessonWithSlug = await prisma.video.findFirst({
+            const existingLessonWithSlug = await prisma.lesson.findFirst({
               where: {
                 slug: lessonData.slug,
                 id: { not: lessonData.id } // Exclude current lesson
@@ -162,7 +162,7 @@ export async function PUT(
             // If slug conflicts, keep the existing slug
           }
 
-          await prisma.video.update({
+          await prisma.lesson.update({
             where: { id: lessonData.id },
             data: updateData
           })
@@ -170,19 +170,19 @@ export async function PUT(
           // Handle attachments for existing lesson
           if (lessonData.attachments) {
             // Delete existing attachments
-            await prisma.videoImage.deleteMany({
-              where: { videoId: lessonData.id }
+            await prisma.lessonImage.deleteMany({
+              where: { lessonId: lessonData.id }
             })
 
             // Create new attachments
             for (const attachment of lessonData.attachments) {
               if (attachment.url) {
-                await prisma.videoImage.create({
+                await prisma.lessonImage.create({
                   data: {
                     url: attachment.url,
                     alt: attachment.title || null,
                     caption: attachment.title || null,
-                    videoId: lessonData.id,
+                    lessonId: lessonData.id,
                   }
                 })
               }
@@ -195,7 +195,7 @@ export async function PUT(
 
           // Ensure slug is unique globally
           while (true) {
-            const existingLesson = await prisma.video.findFirst({
+            const existingLesson = await prisma.lesson.findFirst({
               where: {
                 slug: slug,
               },
@@ -208,7 +208,7 @@ export async function PUT(
             counter++;
           }
 
-          const newLesson = await prisma.video.create({
+          const newLesson = await prisma.lesson.create({
             data: {
               title: lessonData.title,
               slug: slug,
@@ -226,12 +226,12 @@ export async function PUT(
           if (lessonData.attachments && lessonData.attachments.length > 0) {
             for (const attachment of lessonData.attachments) {
               if (attachment.url) {
-                await prisma.videoImage.create({
+                await prisma.lessonImage.create({
                   data: {
                     url: attachment.url,
                     alt: attachment.title || null,
                     caption: attachment.title || null,
-                    videoId: newLesson.id,
+                    lessonId: newLesson.id,
                   }
                 })
               }

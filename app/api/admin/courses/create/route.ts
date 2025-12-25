@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
         // Ensure slug is unique globally (not just within course)
         while (true) {
-          const existingLesson = await prisma.video.findFirst({
+          const existingLesson = await prisma.lesson.findFirst({
             where: {
               slug: slug,
             },
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const lesson = await prisma.video.create({
+        const lesson = await prisma.lesson.create({
           data: {
             title: lessonData.title.trim(),
             slug: slug,
@@ -202,12 +202,12 @@ export async function POST(request: NextRequest) {
         if (lessonData.attachments && lessonData.attachments.length > 0) {
           for (const attachment of lessonData.attachments) {
             if (attachment.url) {
-              await prisma.videoImage.create({
+              await prisma.lessonImage.create({
                 data: {
                   url: attachment.url,
                   alt: attachment.title || null,
                   caption: attachment.title || null,
-                  videoId: lesson.id,
+                  lessonId: lesson.id,
                 }
               })
             }

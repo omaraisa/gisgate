@@ -320,7 +320,7 @@ export class CertificateService {
     }
 
     // Check if course is actually completed by counting completed lessons
-    const totalLessons = await prisma.video.count({
+    const totalLessons = await prisma.lesson.count({
       where: { courseId: enrollment.courseId }
     });
 

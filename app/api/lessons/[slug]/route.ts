@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { slug } = await params;
 
-    const video = await prisma.video.findUnique({
+    const lesson = await prisma.lesson.findUnique({
       where: { slug },
       include: {
         images: true,
@@ -22,31 +22,31 @@ export async function GET(
       }
     });
 
-    if (!video) {
-      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    if (!lesson) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
     }
 
     // Format the response
-    const formattedVideo = {
-      id: video.id,
-      title: video.title,
-      slug: video.slug,
-      content: video.content,
-      excerpt: video.excerpt,
-      featuredImage: video.featuredImage,
-      category: video.category,
-      tags: video.tags,
-      publishedAt: video.publishedAt?.toISOString(),
-      viewCount: video.viewCount,
-      videoUrl: video.videoUrl,
-      duration: video.duration,
-      authorName: video.authorName || video.author?.fullNameArabic || video.author?.fullNameEnglish || 'مجهول',
-      images: video.images
+    const formattedLesson = {
+      id: lesson.id,
+      title: lesson.title,
+      slug: lesson.slug,
+      content: lesson.content,
+      excerpt: lesson.excerpt,
+      featuredImage: lesson.featuredImage,
+      category: lesson.category,
+      tags: lesson.tags,
+      publishedAt: lesson.publishedAt?.toISOString(),
+      viewCount: lesson.viewCount,
+      videoUrl: lesson.videoUrl,
+      duration: lesson.duration,
+      authorName: lesson.authorName || lesson.author?.fullNameArabic || lesson.author?.fullNameEnglish || 'مجهول',
+      images: lesson.images
     };
 
-    return NextResponse.json(formattedVideo);
+    return NextResponse.json(formattedLesson);
   } catch (error) {
-    console.error('Error fetching video:', error);
+    console.error('Error fetching lesson:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

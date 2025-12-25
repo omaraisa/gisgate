@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { successResponse, handleApiError } from '@/lib/api-utils';
 
 // GET /api/lessons - Get all lessons
 export async function GET(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const lessons = await prisma.video.findMany({
+    const lessons = await prisma.lesson.findMany({
       where,
       include: {
         images: true,
@@ -49,10 +50,10 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    const total = await prisma.video.count({ where });
+    const total = await prisma.lesson.count({ where });
 
     // Format the response to match the expected structure
-    const formattedLessons = lessons.map((lesson: Prisma.VideoGetPayload<{ include: { author: { select: { fullNameArabic: true, fullNameEnglish: true, email: true } } } }>) => ({
+    const formattedLessons = lessons.map((lesson: Prisma.LessonGetPayload<{ include: { author: { select: { fullNameArabic: true, fullNameEnglish: true, email: true } } } }>) => ({
       id: lesson.id,
       title: lesson.title,
       slug: lesson.slug,
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       duration: lesson.duration
     }));
 
-    return NextResponse.json({
+    return successResponse({
       lessons: formattedLessons,
       pagination: {
         total,
@@ -76,7 +77,6 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
-    return NextResponse.json({ error: 'Failed to fetch lessons' }, { status: 500 });
+    return handleApiError(error);
   }
 }

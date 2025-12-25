@@ -38,8 +38,10 @@ export default function AdminCoursesPage() {
   const fetchCourses = async () => {
     try {
       const response = await fetch('/api/admin/courses')
-      const data = await response.json()
-      setCourses(data)
+      const result = await response.json()
+      if (result.success) {
+        setCourses(result.data)
+      }
     } catch (error) {
       console.error('Error fetching courses:', error)
     } finally {

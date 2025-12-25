@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params
-    const lesson = await prisma.video.findUnique({
+    const lesson = await prisma.lesson.findUnique({
       where: { id: resolvedParams.id },
     })
 
@@ -49,7 +49,7 @@ export async function PUT(
 
     // Check if slug is unique (excluding current lesson)
     if (slug) {
-      const existingLesson = await prisma.video.findFirst({
+      const existingLesson = await prisma.lesson.findFirst({
         where: {
           slug: slug,
           id: { not: resolvedParams.id }
@@ -61,7 +61,7 @@ export async function PUT(
       }
     }
 
-    const updatedLesson = await prisma.video.update({
+    const updatedLesson = await prisma.lesson.update({
       where: { id: resolvedParams.id },
       data: {
         title,
@@ -95,7 +95,7 @@ export async function DELETE(
   try {
     const resolvedParams = await params
 
-    await prisma.video.delete({
+    await prisma.lesson.delete({
       where: { id: resolvedParams.id }
     })
 

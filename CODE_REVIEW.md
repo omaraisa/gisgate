@@ -98,17 +98,35 @@ This document serves as a central repository for analyzing the current state of 
 
 ---
 
+## 7. Recent Improvements (Completed)
+
+- **Security Hardening:**
+    - Implemented HSTS, CSP, and Clickjacking protection in `middleware.ts`.
+    - Fixed `PaymentOrder` deletion logic to `Restrict` to prevent accidental loss of financial records.
+- **Architectural Refactoring:**
+    - Renamed `Video` model to `Lesson` and `VideoImage` to `LessonImage` globally to align with LMS domain terminology.
+    - Converted `app/courses/page.tsx` to a Server Component for improved SEO and performance.
+    - Introduced `lib/api-utils.ts` for standardized API responses and error handling.
+- **Build & Quality:**
+    - Fixed several ESLint errors and import issues blocking the production build.
+    - Regenerated Prisma client to sync with schema changes.
+    - Fixed build-time prerendering error by making `/courses` dynamic.
+    - Standardized API error handling for core routes (`courses`, `lessons`, `admin/courses`).
+    - Fixed `JsonValue` import error in `lib/audit-logger.ts`.
+    - Fixed `ZodError` property access in `lib/api-utils.ts`.
+    - **Build Success:** The application now builds successfully (`npm run build`).
+
 ## Action Plan (Prioritized)
 
 1.  **Immediate Fixes (Security & Integrity)**
-    - [ ] **Critical:** Fix `PaymentOrder` cascade delete in `schema.prisma` (prevent financial data loss).
-    - [ ] Add Security Headers in `middleware.ts` (CSP, HSTS, etc.).
+    - [x] **Critical:** Fix `PaymentOrder` cascade delete in `schema.prisma` (prevent financial data loss).
+    - [x] Add Security Headers in `middleware.ts` (CSP, HSTS, etc.).
     - [ ] Install and configure Vitest for unit testing.
 
 2.  **Refactoring (Architecture)**
-    - [ ] Convert `app/courses/page.tsx` to Server Component for SEO.
-    - [ ] Rename `Video` model to `Lesson` in Prisma schema.
-    - [ ] Standardize API error handling.
+    - [x] Convert `app/courses/page.tsx` to Server Component for SEO.
+    - [x] Rename `Video` model to `Lesson` in Prisma schema (Global refactor complete).
+    - [x] Standardize API error handling across all routes (Core routes complete).
 
 3.  **Feature Expansion**
     - [ ] Implement Notifications system.

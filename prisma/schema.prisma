@@ -35,7 +35,7 @@ model Article {
   @@map("articles")
 }
 
-model Video {
+model Lesson {
   id              String           @id @default(uuid())
   title           String
   slug            String           @unique
@@ -62,13 +62,13 @@ model Video {
   courseId        String?
   order           Int              @default(0)
   progress        LessonProgress[]
-  images          VideoImage[]
-  author          User?             @relation("UserVideos", fields: [authorId], references: [id])
+  images          LessonImage[]
+  author          User?             @relation("UserLessons", fields: [authorId], references: [id])
   course          Course?           @relation("CourseLessons", fields: [courseId], references: [id])
   favorites       FavoriteLesson[]  @relation("LessonFavorites")
   solutions       Solution[]        @relation("LessonSolutions")
 
-  @@map("videos")
+  @@map("lessons")
 }
 
 model ArticleImage {
@@ -82,15 +82,15 @@ model ArticleImage {
   @@map("article_images")
 }
 
-model VideoImage {
-  id      String  @id @default(uuid())
-  url     String
-  alt     String?
-  caption String?
-  videoId String
-  video   Video   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+model LessonImage {
+  id       String @id @default(uuid())
+  url      String
+  alt      String?
+  caption  String?
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@map("video_images")
+  @@map("lesson_images")
 }
 
 model User {
@@ -132,7 +132,7 @@ model User {
   solutionReviews          SolutionReview[]   @relation("UserReviews")
   solutions                Solution[]         @relation("UserSolutions")
   sessions                 UserSession[]
-  videos                   Video[]            @relation("UserVideos")
+  lessons                  Lesson[]           @relation("UserLessons")
   favoriteArticles         FavoriteArticle[]  @relation("UserFavoriteArticles")
   favoriteCourses          FavoriteCourse[]   @relation("UserFavoriteCourses")
   favoriteLessons          FavoriteLesson[]   @relation("UserFavoriteLessons")
@@ -183,7 +183,7 @@ model Course {
   enrollments       CourseEnrollment[]
   author            User?              @relation("UserCourses", fields: [authorId], references: [id])
   paymentOrders     PaymentOrder[]
-  lessons           Video[]            @relation("CourseLessons")
+  lessons           Lesson[]           @relation("CourseLessons")
   favorites         FavoriteCourse[]   @relation("CourseFavorites")
   solutions         Solution[]         @relation("CourseSolutions")
 
@@ -217,7 +217,7 @@ model LessonProgress {
   completedAt   DateTime?
   lastWatchedAt DateTime         @default(now())
   enrollment    CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  lesson        Video            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson        Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user          User             @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
@@ -355,7 +355,7 @@ model Solution {
   reviews          SolutionReview[]
   author           User?              @relation("UserSolutions", fields: [authorId], references: [id])
   course           Course?            @relation("CourseSolutions", fields: [courseId], references: [id])
-  lesson           Video?             @relation("LessonSolutions", fields: [lessonId], references: [id])
+  lesson           Lesson?            @relation("LessonSolutions", fields: [lessonId], references: [id])
 
   @@map("solutions")
 }
@@ -503,8 +503,8 @@ model FavoriteLesson {
   userId    String
   lessonId  String
   createdAt DateTime @default(now())
+  lesson    Lesson   @relation("LessonFavorites", fields: [lessonId], references: [id], onDelete: Cascade)
   user      User     @relation("UserFavoriteLessons", fields: [userId], references: [id], onDelete: Cascade)
-  lesson    Video    @relation("LessonFavorites", fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("favorite_lessons")
