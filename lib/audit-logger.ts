@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, JsonValue } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ export class AuditLogger {
           action: data.action,
           resource: data.resource,
           resourceId: data.resourceId,
-          details: data.details || {},
+          details: (data.details || {}) as JsonValue,
           ipAddress: data.ipAddress,
           userAgent: data.userAgent,
         },
