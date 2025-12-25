@@ -7,13 +7,15 @@ export interface AuthenticatedRequest extends NextRequest {
 }
 
 export function withAuth(
-  handler: (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => Promise<NextResponse>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (request: AuthenticatedRequest, context: any) => Promise<NextResponse>,
   options: {
     requireAuth?: boolean;
     requireAdmin?: boolean;
   } = {}
 ) {
-  return async (request: NextRequest, context?: { params?: Promise<Record<string, string>> }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async (request: NextRequest, context: any) => {
     try {
       const authHeader = request.headers.get('authorization');
 

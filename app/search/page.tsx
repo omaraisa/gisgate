@@ -23,7 +23,7 @@ function SearchResults() {
   useEffect(() => {
     if (query) {
       // Simulate search - in real implementation, call API
-      const mockResults: SearchResult[] = [
+      const mockResults: SearchResult[] = ([
         {
           id: '1',
           title: 'مقدمة في نظم المعلومات الجغرافية',
@@ -48,7 +48,7 @@ function SearchResults() {
           url: '/marketplace/advanced-maps',
           category: 'خرائط'
         }
-      ].filter(item =>
+      ] as SearchResult[]).filter(item =>
         item.title.toLowerCase().includes(query.toLowerCase()) ||
         item.excerpt?.toLowerCase().includes(query.toLowerCase())
       );

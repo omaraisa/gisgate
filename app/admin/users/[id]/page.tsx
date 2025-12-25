@@ -540,40 +540,7 @@ export default function UserDetailsPage() {
               </div>
             )}
 
-            {activeTab === 'oldcertificates' && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">الشهادات المحصلة (قديم)</h3>
-                {user.certificates.length === 0 ? (
-                  <p className="text-gray-500">لا توجد شهادات</p>
-                ) : (
-                  <div className="space-y-4">
-                    {user.certificates.map((certificate) => (
-                      <div key={certificate.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <p className="font-semibold">{certificate.enrollment.course.title}</p>
-                            <p className="text-sm text-gray-600">معرف الشهادة: {certificate.certificateId}</p>
-                            <p className="text-sm text-gray-600">
-                              القالب: {certificate.template ? `${certificate.template.name} (${certificate.template.language === 'ar' ? 'عربي' : 'إنجليزي'})` : 'غير محدد'}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              تاريخ الإصدار: {new Date(certificate.createdAt).toLocaleDateString('ar-SA')}
-                            </p>
-                          </div>
-                          <Link
-                            href={`/certificates/${certificate.certificateId}`}
-                            target="_blank"
-                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                          >
-                            عرض الشهادة
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {activeTab === 'payments' && (
               <div>

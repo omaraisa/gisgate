@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { requireAdmin } from '@/lib/api-auth'
+import { ArticleStatus } from '@prisma/client'
 
 interface LessonWithStats {
   id: string;
@@ -26,8 +27,9 @@ interface LessonWithStats {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);
@@ -77,8 +79,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);
@@ -137,8 +140,9 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);
@@ -153,9 +157,9 @@ export async function PATCH(
       );
     }
 
-    const updateData: { status?: string; publishedAt?: Date | null } = {};
+    const updateData: { status?: ArticleStatus; publishedAt?: Date | null; order?: number } = {};
     if (status) {
-      updateData.status = status;
+      updateData.status = status as ArticleStatus;
       updateData.publishedAt = status === 'PUBLISHED' ? new Date() : null;
     }
     if (order !== undefined) {
@@ -182,8 +186,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);

@@ -5,8 +5,9 @@ import { ArticleStatus } from '@prisma/client'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  props: { params: Promise<{ id: string; lessonId: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);
@@ -40,8 +41,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  props: { params: Promise<{ id: string; lessonId: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);
@@ -117,8 +119,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  props: { params: Promise<{ id: string; lessonId: string }> }
 ) {
+  const params = await props.params;
   try {
     // Require admin authentication
     await requireAdmin(request);

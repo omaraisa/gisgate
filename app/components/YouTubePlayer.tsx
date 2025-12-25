@@ -1,6 +1,6 @@
 'use client';
 
-import YouTube, { YouTubeProps } from 'react-youtube';
+import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
 import { useState } from 'react';
 
 interface YouTubePlayerProps {
@@ -49,7 +49,7 @@ export default function YouTubePlayer({
 
   const finalOpts = { ...defaultOpts, ...opts };
 
-  const handleError = (event: { data: unknown }) => {
+  const handleError = (event: YouTubeEvent) => {
     console.error('YouTube player error:', event.data);
     setHasError(true);
     if (onError) {

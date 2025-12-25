@@ -3,15 +3,24 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  props: { params: Promise<{ courseId: string }> }
+  props: { params: Promise<{ slug: string }> }
 ) {
   try {
     const params = await props.params;
-    const { courseId } = params;
+    const { slug } = params;
     
+    const course = await prisma.course.findUnique({
+      where: { slug },
+      select: { id: true }
+    });
+
+    if (!course) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+
     const solutions = await prisma.solution.findMany({
       where: {
-        courseId,
+        courseId: course.id,
         status: 'PUBLISHED', // Only show published solutions
       },
       include: {

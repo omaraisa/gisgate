@@ -295,7 +295,7 @@ export class AuthService {
     return prisma.user.findUnique({ where: { id } });
   }
 
-  static async getUserWithDetails(id: string): Promise<User | null> {
+  static async getUserWithDetails(id: string) {
     return prisma.user.findUnique({
       where: { id },
       include: {

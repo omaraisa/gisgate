@@ -278,7 +278,6 @@ async function uploadImageToMinIO(file: File): Promise<string> {
 
   const endpoint = (process.env.SERVER_IP || 'dev.gis-gate.com').replace(/^https?:\/\//, '');
   return `https://${endpoint}:9000/${BUCKET_NAME}/${objectKey}`
-  return imageUrl
 }
 
 // Helper function to generate slug from title

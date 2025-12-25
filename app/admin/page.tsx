@@ -569,7 +569,7 @@ export default function AdminPage() {
           </div>
 
           {contentType === 'dashboard' ? (
-            <DashboardStats stats={stats} />
+            <DashboardStats stats={stats} loading={loading} />
           ) : (
             <>
               <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
