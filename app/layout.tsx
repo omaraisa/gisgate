@@ -9,6 +9,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import AuthChecker from "./components/AuthChecker";
+import { Toaster } from "sonner";
 
 const kufi = localFont({
   src: "../fonts/kufi.ttf",
@@ -43,6 +44,7 @@ export default function RootLayout({
             <ScrollToTop />
             {children}
             <ScrollToTopButton />
+            <Toaster position="top-center" richColors />
           </StoreProvider>
         </ErrorBoundary>
       </body>

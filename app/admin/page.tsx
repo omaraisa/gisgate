@@ -2,10 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
+import { toast } from 'sonner'
 
+// Components
+import AdminHeader from './components/AdminHeader'
+import StatsOverview from './components/StatsOverview'
+import FilterBar from './components/FilterBar'
+import ContentTable from './components/ContentTable'
+
+// Interfaces
 interface ArticleWithStats extends Article {
   imageCount?: number
 }
@@ -38,27 +45,31 @@ interface CourseWithStats {
   enrollmentCount?: number
 }
 
-type ContentType = 'articles' | 'lessons' | 'courses' | 'courses'
+type ContentType = 'articles' | 'lessons' | 'courses'
+type ViewMode = 'dashboard' | 'content'
 
 export default function AdminPage() {
   const { token } = useAuthStore()
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard')
   const [contentType, setContentType] = useState<ContentType>('articles')
+
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
   const [courses, setCourses] = useState<CourseWithStats[]>([])
+
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
-  const [bulkAction, setBulkAction] = useState('')
 
-  useEffect(() => {
-    if (token) {
-      fetchArticles()
-      fetchLessons()
-      fetchCourses()
-    }
-  }, [token, fetchArticles, fetchLessons, fetchCourses])
+  // Calculate Stats
+  const stats = {
+    articlesCount: articles.length,
+    lessonsCount: lessons.length,
+    coursesCount: courses.length,
+    publishedCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'PUBLISHED').length,
+    draftCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'DRAFT').length,
+  }
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -70,259 +81,120 @@ export default function AdminPage() {
     return headers
   }, [token])
 
-  const fetchArticles = useCallback(async () => {
+  const fetchAllData = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
     try {
-      const response = await fetch('/api/admin/articles', {
-        headers: getAuthHeaders()
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setArticles(data)
-      } else {
-        console.error('Failed to fetch articles:', response.statusText)
-      }
-    } catch (error) {
-      console.error('Error fetching articles:', error)
-    }
-  }, [getAuthHeaders])
+      const [articlesRes, lessonsRes, coursesRes] = await Promise.all([
+        fetch('/api/admin/articles', { headers: getAuthHeaders() }),
+        fetch('/api/admin/lessons', { headers: getAuthHeaders() }),
+        fetch('/api/admin/courses', { headers: getAuthHeaders() })
+      ]);
 
-  const fetchLessons = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/lessons', {
-        headers: getAuthHeaders()
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setLessons(data)
-      } else {
-        console.error('Failed to fetch lessons:', response.statusText)
-      }
+      if (articlesRes.ok) setArticles(await articlesRes.json());
+      if (lessonsRes.ok) setLessons(await lessonsRes.json());
+      if (coursesRes.ok) setCourses(await coursesRes.json());
+
     } catch (error) {
-      console.error('Error fetching lessons:', error)
+      console.error("Error fetching data:", error);
+      toast.error("حدث خطأ أثناء تحميل البيانات");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [getAuthHeaders])
+  }, [token, getAuthHeaders]);
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      const response = await fetch('/api/admin/courses', {
-        headers: getAuthHeaders()
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setCourses(data)
-      } else {
-        console.error('Failed to fetch courses:', response.statusText)
-      }
-    } catch (error) {
-      console.error('Error fetching courses:', error)
-    }
-  }, [getAuthHeaders])
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
+  // Handlers
   const handleStatusChange = async (id: string, status: ArticleStatus) => {
+    const endpoint = contentType === 'articles' ? 'articles' : contentType === 'lessons' ? 'lessons' : 'courses';
     try {
-      const response = await fetch('/api/admin/articles', {
+      const response = await fetch(`/api/admin/${endpoint}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ id, status })
       })
 
       if (response.ok) {
-        setArticles(prev => 
-          prev.map(article => 
-            article.id === id ? { ...article, status } : article
-          )
-        )
+        toast.success("تم تحديث الحالة بنجاح");
+        if (contentType === 'articles') {
+          setArticles(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+        } else if (contentType === 'lessons') {
+          setLessons(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+        } else {
+          setCourses(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+        }
+      } else {
+        throw new Error('Failed to update status');
       }
     } catch (error) {
-      console.error('Error updating article status:', error)
+      toast.error("فشل تحديث الحالة");
+      console.error(error);
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا المقال؟')) return
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700">
+        <h3 className="font-bold mb-2">تأكيد الحذف</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t);
+              await performDelete(id);
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            حذف
+          </button>
+        </div>
+      </div>
+    ));
+  }
 
+  const performDelete = async (id: string) => {
+    const endpoint = contentType === 'articles' ? 'articles' : contentType === 'lessons' ? 'lessons' : 'courses';
     try {
-      const response = await fetch('/api/admin/articles', {
+      const response = await fetch(`/api/admin/${endpoint}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
         body: JSON.stringify({ id })
       })
 
       if (response.ok) {
-        setArticles(prev => prev.filter(article => article.id !== id))
-        setSelectedItems(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(id)
-          return newSet
-        })
-      }
-    } catch (error) {
-      console.error('Error deleting article:', error)
-    }
-  }
-
-  const handleLessonStatusChange = async (id: string, status: ArticleStatus) => {
-    try {
-      const response = await fetch('/api/admin/lessons', {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ id, status })
-      })
-
-      if (response.ok) {
-        setLessons(prev => 
-          prev.map(lesson => 
-            lesson.id === id ? { ...lesson, status } : lesson
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error updating lesson status:', error)
-    }
-  }
-
-  const handleLessonDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الدرس؟')) return
-
-    try {
-      const response = await fetch('/api/admin/lessons', {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ id })
-      })
-
-      if (response.ok) {
-        setLessons(prev => prev.filter(lesson => lesson.id !== id))
-        setSelectedItems(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(id)
-          return newSet
-        })
-      }
-    } catch (error) {
-      console.error('Error deleting lesson:', error)
-    }
-  }
-
-  const handleCourseStatusChange = async (id: string, status: ArticleStatus) => {
-    try {
-      const response = await fetch('/api/admin/courses', {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ id, status })
-      })
-
-      if (response.ok) {
-        setCourses(prev => 
-          prev.map(course => 
-            course.id === id ? { ...course, status } : course
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error updating course status:', error)
-    }
-  }
-
-  const handleCourseDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الكورس؟')) return
-
-    try {
-      const response = await fetch('/api/admin/courses', {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ id })
-      })
-
-      if (response.ok) {
-        setCourses(prev => prev.filter(course => course.id !== id))
-        setSelectedItems(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(id)
-          return newSet
-        })
-      }
-    } catch (error) {
-      console.error('Error deleting course:', error)
-    }
-  }
-
-  const handleBulkAction = async () => {
-    if (!bulkAction || selectedItems.size === 0) return
-
-    const itemIds = Array.from(selectedItems)
-    
-    try {
-      const apiEndpoint = contentType === 'articles' ? '/api/admin/articles/bulk' : contentType === 'lessons' ? '/api/admin/lessons/bulk' : '/api/admin/courses/bulk'
-      
-      if (bulkAction === 'delete') {
-        const itemType = contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'
-        if (!confirm(`هل أنت متأكد من حذف ${itemIds.length} ${itemType}؟`)) return
-        
-        const response = await fetch(apiEndpoint, {
-          method: 'DELETE',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ ids: itemIds })
-        })
-
-        if (response.ok) {
-          if (contentType === 'articles') {
-            setArticles(prev => prev.filter(item => !selectedItems.has(item.id)))
-          } else if (contentType === 'lessons') {
-            setLessons(prev => prev.filter(item => !selectedItems.has(item.id)))
-          } else {
-            setCourses(prev => prev.filter(item => !selectedItems.has(item.id)))
-          }
-          setSelectedItems(new Set())
+        toast.success("تم الحذف بنجاح");
+        if (contentType === 'articles') {
+          setArticles(prev => prev.filter(item => item.id !== id));
+        } else if (contentType === 'lessons') {
+          setLessons(prev => prev.filter(item => item.id !== id));
+        } else {
+          setCourses(prev => prev.filter(item => item.id !== id));
         }
+        setSelectedItems(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(id)
+          return newSet
+        })
       } else {
-        // Bulk status change
-        const response = await fetch(apiEndpoint, {
-          method: 'PATCH',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ ids: itemIds, status: bulkAction })
-        })
-
-        if (response.ok) {
-          if (contentType === 'articles') {
-            setArticles(prev => 
-              prev.map(item => 
-                selectedItems.has(item.id) 
-                  ? { ...item, status: bulkAction as ArticleStatus }
-                  : item
-              )
-            )
-          } else if (contentType === 'lessons') {
-            setLessons(prev => 
-              prev.map(item => 
-                selectedItems.has(item.id) 
-                  ? { ...item, status: bulkAction as ArticleStatus }
-                  : item
-              )
-            )
-          } else {
-            setCourses(prev => 
-              prev.map(item => 
-                selectedItems.has(item.id) 
-                  ? { ...item, status: bulkAction as ArticleStatus }
-                  : item
-              )
-            )
-          }
-          setSelectedItems(new Set())
-        }
+        throw new Error('Failed to delete');
       }
     } catch (error) {
-      console.error('Error performing bulk action:', error)
+      toast.error("فشل الحذف");
+      console.error(error);
     }
-
-    setBulkAction('')
   }
 
   const toggleSelectAll = () => {
-    const currentItems = contentType === 'articles' ? filteredArticles : contentType === 'lessons' ? filteredLessons : filteredCourses
+    const currentItems = getCurrentItems();
     if (selectedItems.size === currentItems.length) {
       setSelectedItems(new Set())
     } else {
@@ -330,355 +202,107 @@ export default function AdminPage() {
     }
   }
 
-  const filteredArticles = articles.filter(article => {
-    const matchesFilter = filter === 'all' || article.status === filter
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.content.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesFilter && matchesSearch
-  })
+  const toggleSelectItem = (id: string, checked: boolean) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev)
+      if (checked) newSet.add(id)
+      else newSet.delete(id)
+      return newSet
+    })
+  }
 
-  const filteredLessons = lessons.filter(lesson => {
-    const matchesFilter = filter === 'all' || lesson.status === filter
-    const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesFilter && matchesSearch
-  })
-
-  const filteredCourses = courses.filter(course => {
-    const matchesFilter = filter === 'all' || course.status === filter
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    return matchesFilter && matchesSearch
-  })
+  const getCurrentItems = () => {
+    const items = contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses;
+    return items.filter(item => {
+      const matchesFilter = filter === 'all' || item.status === filter
+      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (contentType === 'courses' && (item as CourseWithStats).description?.toLowerCase().includes(searchTerm.toLowerCase()))
+      return matchesFilter && matchesSearch
+    });
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل المقالات...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            إدارة {contentType === 'articles' ? 'المقالات' : 'الدروس'}
-          </h1>
-          <p className="text-gray-600">
-            إجمالي {contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}: {contentType === 'articles' ? articles.length : contentType === 'lessons' ? lessons.length : courses.length} | 
-            المنشور: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.PUBLISHED).length} | 
-            المسودة: {(contentType === 'articles' ? articles : contentType === 'lessons' ? lessons : courses).filter(item => item.status === ArticleStatus.DRAFT).length}
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8" dir="rtl">
+      <div className="max-w-7xl mx-auto">
+        <AdminHeader
+          title={viewMode === 'dashboard' ? 'لوحة القيادة' : 'إدارة المحتوى'}
+          subtitle="نظرة عامة على أداء المنصة والمحتوى"
+        />
+
+        {/* Navigation Tabs */}
+        <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-2">
+          <button
+            onClick={() => setViewMode('dashboard')}
+            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            لوحة القيادة
+            {viewMode === 'dashboard' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+          </button>
+          <button
+            onClick={() => setViewMode('content')}
+            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'content' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            المحتوى
+            {viewMode === 'content' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+          </button>
         </div>
 
-        {/* Content Type Navigation */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex gap-4 mb-4 flex-wrap">
-            <button
-              onClick={() => {
-                setContentType('articles')
-                setSelectedItems(new Set())
-                setBulkAction('')
-              }}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                contentType === 'articles'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+        <AnimatePresence mode="wait">
+          {viewMode === 'dashboard' ? (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
             >
-              إدارة المقالات ({articles.length})
-            </button>
-            <button
-              onClick={() => {
-                setContentType('lessons')
-                setSelectedItems(new Set())
-                setBulkAction('')
-              }}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                contentType === 'lessons'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              <StatsOverview stats={stats} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
             >
-              إدارة الدروس ({lessons.length})
-            </button>
-            <button
-              onClick={() => {
-                setContentType('courses')
-                setSelectedItems(new Set())
-                setBulkAction('')
-              }}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                contentType === 'courses'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              إدارة الكورسات ({courses.length})
-            </button>
-            <Link
-              href="/admin/users"
-              className="px-6 py-2 rounded-lg font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-            >
-              إدارة المستخدمين
-            </Link>
-            <Link
-              href="/admin/marketplace"
-              className="px-6 py-2 rounded-lg font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
-            >
-              إدارة المتجر
-            </Link>
-            <Link
-              href="/admin/certificates"
-              className="px-6 py-2 rounded-lg font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-            >
-              إدارة الشهادات
-            </Link>
-            <Link
-              href="/admin/resume"
-              className="px-6 py-2 rounded-lg font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-            >
-              رفع السيرة الذاتية
-            </Link>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search */}
-            <div className="flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder={`البحث في ${contentType === 'articles' ? 'المقالات' : contentType === 'lessons' ? 'الدروس' : 'الكورسات'}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Filter */}
-            <div className="flex gap-2">
-              {(['all', 'PUBLISHED', 'DRAFT'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilter(status)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    filter === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {status === 'all' ? 'الكل' : status === 'PUBLISHED' ? 'منشور' : 'مسودة'}
-                </button>
-              ))}
-            </div>
-
-            {/* Add New */}
-            <Link
-              href={contentType === 'articles' ? '/admin/articles/new' : contentType === 'lessons' ? '/admin/lessons/new' : '/admin/courses/new'}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              إضافة {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'} جديد
-            </Link>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedItems.size > 0 && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-blue-900">
-                  تم اختيار {selectedItems.size} {contentType === 'articles' ? 'مقال' : contentType === 'lessons' ? 'درس' : 'كورس'}
-                </span>
-                <select
-                  value={bulkAction}
-                  onChange={(e) => setBulkAction(e.target.value)}
-                  className="px-3 py-1 border border-blue-300 rounded-md text-sm"
-                >
-                  <option value="">اختر إجراء</option>
-                  <option value="PUBLISHED">نشر</option>
-                  <option value="DRAFT">تحويل لمسودة</option>
-                  <option value="delete">حذف</option>
-                </select>
-                <button
-                  onClick={handleBulkAction}
-                  disabled={!bulkAction}
-                  className="px-4 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-                >
-                  تطبيق
-                </button>
+              {/* Content Type Selectors */}
+              <div className="flex gap-4 mb-6">
+                <button onClick={() => setContentType('articles')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'articles' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>المقالات</button>
+                <button onClick={() => setContentType('lessons')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'lessons' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>الدروس</button>
+                <button onClick={() => setContentType('courses')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'courses' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>الكورسات</button>
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Content Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="p-4 text-right">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.size === (contentType === 'articles' ? filteredArticles.length : contentType === 'lessons' ? filteredLessons.length : filteredCourses.length) && (contentType === 'articles' ? filteredArticles.length : contentType === 'lessons' ? filteredLessons.length : filteredCourses.length) > 0}
-                      onChange={toggleSelectAll}
-                      className="rounded border-gray-300"
-                    />
-                  </th>
-                  <th className="p-4 text-right font-medium text-gray-900">العنوان</th>
-                  {contentType === 'courses' && (
-                    <>
-                      <th className="p-4 text-right font-medium text-gray-900">الفئة</th>
-                      <th className="p-4 text-right font-medium text-gray-900">السعر</th>
-                    </>
-                  )}
-                  <th className="p-4 text-right font-medium text-gray-900">تاريخ النشر</th>
-                  <th className="p-4 text-right font-medium text-gray-900">الحالة</th>
-                  {contentType === 'articles' && <th className="p-4 text-right font-medium text-gray-900">الصور</th>}
-                  {contentType === 'courses' && (
-                    <>
-                      <th className="p-4 text-right font-medium text-gray-900">الدروس</th>
-                      <th className="p-4 text-right font-medium text-gray-900">المسجلين</th>
-                    </>
-                  )}
-                  <th className="p-4 text-right font-medium text-gray-900">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(contentType === 'articles' ? filteredArticles : contentType === 'lessons' ? filteredLessons : filteredCourses).map((item, index) => (
-                  <motion.tr
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="border-b hover:bg-gray-50"
-                  >
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.has(item.id)}
-                        onChange={(e) => {
-                          const newSet = new Set(selectedItems)
-                          if (e.target.checked) {
-                            newSet.add(item.id)
-                          } else {
-                            newSet.delete(item.id)
-                          }
-                          setSelectedItems(newSet)
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <Link
-                          href={`/admin/${contentType}/${item.id}/edit`}
-                          className="font-medium text-blue-600 hover:text-blue-800 line-clamp-2"
-                        >
-                          {item.title}
-                        </Link>
-                        <div className="text-sm text-gray-500 mt-1">
-                          <Link
-                            href={`/${contentType}/${item.slug}`}
-                            target="_blank"
-                            className="hover:text-blue-600"
-                          >
-                            عرض {contentType === 'articles' ? 'المقال' : contentType === 'lessons' ? 'الدرس' : 'الكورس'} ↗
-                          </Link>
-                        </div>
-                      </div>
-                    </td>
-                    {contentType === 'courses' && (
-                      <>
-                        <td className="p-4 text-gray-600">
-                          {(item as CourseWithStats).level === 'BEGINNER' ? 'مبتدئ' :
-                           (item as CourseWithStats).level === 'INTERMEDIATE' ? 'متوسط' : 'متقدم'}
-                        </td>
-                        <td className="p-4 text-gray-600">
-                          {(item as CourseWithStats).isFree ? 'مجاني' : `${(item as CourseWithStats).price} ${(item as CourseWithStats).currency || 'USD'}`}
-                        </td>
-                      </>
-                    )}
-                    <td className="p-4 text-gray-600">
-                      {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('en-US') : 'غير منشور'}
-                    </td>
-                    <td className="p-4">
-                      <select
-                        value={item.status}
-                        onChange={(e) => {
-                          const newStatus = e.target.value as ArticleStatus
-                          if (contentType === 'articles') {
-                            handleStatusChange(item.id, newStatus)
-                          } else if (contentType === 'lessons') {
-                            handleLessonStatusChange(item.id, newStatus)
-                          } else {
-                            handleCourseStatusChange(item.id, newStatus)
-                          }
-                        }}
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          item.status === ArticleStatus.PUBLISHED
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        <option value={ArticleStatus.PUBLISHED}>منشور</option>
-                        <option value={ArticleStatus.DRAFT}>مسودة</option>
-                      </select>
-                    </td>
-                    {contentType === 'articles' && (
-                      <td className="p-4 text-gray-600 text-center">
-                        {(item as ArticleWithStats).imageCount || 0}
-                      </td>
-                    )}
-                    {contentType === 'courses' && (
-                      <>
-                        <td className="p-4 text-gray-600 text-center">
-                          {(item as CourseWithStats).lessonCount || 0}
-                        </td>
-                        <td className="p-4 text-gray-600 text-center">
-                          {(item as CourseWithStats).enrollmentCount || 0}
-                        </td>
-                      </>
-                    )}
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/admin/${contentType}/${item.id}/edit`}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          تحرير
-                        </Link>
-                        <button
-                          onClick={() => {
-                            if (contentType === 'articles') {
-                              handleDelete(item.id)
-                            } else if (contentType === 'lessons') {
-                              handleLessonDelete(item.id)
-                            } else {
-                              handleCourseDelete(item.id)
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              <FilterBar
+                contentType={contentType}
+                filter={filter}
+                setFilter={setFilter}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+              />
 
-          {(contentType === 'articles' ? filteredArticles : filteredLessons).length === 0 && (
-            <div className="p-12 text-center text-gray-500">
-              <p>لا توجد {contentType === 'articles' ? 'مقالات' : 'دروس'} مطابقة للبحث</p>
-            </div>
+              <ContentTable
+                items={getCurrentItems()}
+                contentType={contentType}
+                selectedItems={selectedItems}
+                toggleSelectAll={toggleSelectAll}
+                toggleSelectItem={toggleSelectItem}
+                handleStatusChange={handleStatusChange}
+                handleDelete={handleDelete}
+              />
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   )
