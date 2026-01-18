@@ -55,7 +55,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "bcryptjs": "^3.0.3",
-    "canvas": "^3.2.0",
+    "@napi-rs/canvas": "^0.1.58",
     "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "fabric": "^5.4.0",

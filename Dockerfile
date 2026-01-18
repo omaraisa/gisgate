@@ -3,8 +3,8 @@ FROM node:20-alpine AS base
 
 # Dependencies stage - install only production dependencies
 FROM base AS deps
-# Install Python, build tools, and canvas dependencies (pixman, cairo, etc.)
-RUN apk add --no-cache libc6-compat python3 py3-pip build-base pkgconfig pixman-dev cairo-dev jpeg-dev giflib-dev librsvg-dev pango-dev
+# Install build tools only (no canvas-specific deps needed for @napi-rs/canvas)
+RUN apk add --no-cache libc6-compat python3 build-base
 WORKDIR /app
 
 # Copy package files and install dependencies
@@ -13,8 +13,8 @@ RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Builder stage - build the application
 FROM base AS builder
-# Install Python, build tools, and canvas dependencies for building
-RUN apk add --no-cache libc6-compat python3 py3-pip build-base pkgconfig pixman-dev cairo-dev jpeg-dev giflib-dev librsvg-dev pango-dev
+# Install build tools only
+RUN apk add --no-cache libc6-compat python3 build-base
 WORKDIR /app
 
 # Copy installed dependencies from deps stage (not from host!)
@@ -36,8 +36,8 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-# Install curl for healthcheck and canvas runtime dependencies
-RUN apk add --no-cache curl pixman cairo jpeg giflib librsvg pango
+# Install curl for healthcheck only
+RUN apk add --no-cache curl
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
