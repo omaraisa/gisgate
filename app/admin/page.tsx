@@ -5,6 +5,7 @@ import { Article, ArticleStatus, CourseLevel } from '@prisma/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 // Components
 import AdminHeader from './components/AdminHeader'
@@ -234,28 +235,90 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8" dir="rtl">
+    <div className="min-h-screen bg-gray-900 px-4 py-8" dir="rtl">
       <div className="max-w-7xl mx-auto">
         <AdminHeader
           title={viewMode === 'dashboard' ? 'لوحة القيادة' : 'إدارة المحتوى'}
           subtitle="نظرة عامة على أداء المنصة والمحتوى"
         />
 
+        {/* Admin Navigation Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+          <Link
+            href="/admin"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-newspaper text-2xl text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-medium">إدارة المقالات</span>
+            <span className="text-xs text-gray-500">({articles.length})</span>
+          </Link>
+
+          <Link
+            href="/admin"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-book-open text-2xl text-green-600 dark:text-green-400" />
+            <span className="text-sm font-medium">إدارة الدروس</span>
+            <span className="text-xs text-gray-500">({lessons.length})</span>
+          </Link>
+
+          <Link
+            href="/admin"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-graduation-cap text-2xl text-purple-600 dark:text-purple-400" />
+            <span className="text-sm font-medium">إدارة الكورسات</span>
+            <span className="text-xs text-gray-500">({courses.length})</span>
+          </Link>
+
+          <Link
+            href="/admin/users"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-users text-2xl text-orange-600 dark:text-orange-400" />
+            <span className="text-sm font-medium">إدارة المستخدمين</span>
+          </Link>
+
+          <Link
+            href="/admin/marketplace"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-store text-2xl text-pink-600 dark:text-pink-400" />
+            <span className="text-sm font-medium">إدارة المتجر</span>
+          </Link>
+
+          <Link
+            href="/admin/certificates"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-certificate text-2xl text-yellow-600 dark:text-yellow-400" />
+            <span className="text-sm font-medium">إدارة الشهادات</span>
+          </Link>
+
+          <Link
+            href="/admin/resumes"
+            className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
+          >
+            <i className="fas fa-file-alt text-2xl text-red-600 dark:text-red-400" />
+            <span className="text-sm font-medium">رفع السيرة الذاتية</span>
+          </Link>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-2">
           <button
             onClick={() => setViewMode('dashboard')}
-            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'dashboard' ? 'text-blue-400' : 'text-gray-400 hover:text-gray-200'}`}
           >
             لوحة القيادة
-            {viewMode === 'dashboard' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+            {viewMode === 'dashboard' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />}
           </button>
           <button
             onClick={() => setViewMode('content')}
-            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'content' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`pb-2 px-4 text-lg font-medium transition-colors relative ${viewMode === 'content' ? 'text-blue-400' : 'text-gray-400 hover:text-gray-200'}`}
           >
             المحتوى
-            {viewMode === 'content' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+            {viewMode === 'content' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />}
           </button>
         </div>
 
@@ -278,9 +341,9 @@ export default function AdminPage() {
             >
               {/* Content Type Selectors */}
               <div className="flex gap-4 mb-6">
-                <button onClick={() => setContentType('articles')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'articles' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>المقالات</button>
-                <button onClick={() => setContentType('lessons')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'lessons' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>الدروس</button>
-                <button onClick={() => setContentType('courses')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'courses' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600'}`}>الكورسات</button>
+                <button onClick={() => setContentType('articles')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'articles' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>المقالات</button>
+                <button onClick={() => setContentType('lessons')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'lessons' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الدروس</button>
+                <button onClick={() => setContentType('courses')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'courses' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الكورسات</button>
               </div>
 
               <FilterBar
