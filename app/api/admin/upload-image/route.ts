@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
         buffer = Buffer.from(arrayBuffer)
         mimeType = response.headers.get('content-type') || 'image/jpeg'
         originalName = imageUrlToDownload!.split('/').pop() || 'image.jpg'
-      } catch (err: any) {
-        return NextResponse.json({ error: 'Failed to download image from URL', details: err.message }, { status: 500 })
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+        return NextResponse.json({ error: 'Failed to download image from URL', details: errorMessage }, { status: 500 })
       }
     }
 
@@ -91,11 +92,12 @@ export async function POST(request: NextRequest) {
         }]
       }
       await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
-    } catch (bucketError: any) {
+    } catch (bucketError) {
+      const errorMessage = bucketError instanceof Error ? bucketError.message : 'Unknown error'
       console.error('Bucket Error:', bucketError)
       return NextResponse.json({
         error: 'MinIO Storage Connection Failed',
-        details: bucketError.message
+        details: errorMessage
       }, { status: 500 })
     }
 
@@ -104,11 +106,12 @@ export async function POST(request: NextRequest) {
       await minioClient.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
         'Content-Type': mimeType
       })
-    } catch (uploadError: any) {
+    } catch (uploadError) {
+      const errorMessage = uploadError instanceof Error ? uploadError.message : 'Unknown error'
       console.error('Upload Error:', uploadError)
       return NextResponse.json({
         error: 'File Upload Failed',
-        details: uploadError.message
+        details: errorMessage
       }, { status: 500 })
     }
 
@@ -125,11 +128,12 @@ export async function POST(request: NextRequest) {
       fileName: originalName
     })
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('Unexpected Upload Error:', error)
     return NextResponse.json({
       error: 'Unexpected server error during upload',
-      details: error.message
+      details: errorMessage
     }, { status: 500 })
   }
 }
