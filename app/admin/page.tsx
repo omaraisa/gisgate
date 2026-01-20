@@ -12,6 +12,7 @@ import AdminHeader from './components/AdminHeader'
 import StatsOverview from './components/StatsOverview'
 import FilterBar from './components/FilterBar'
 import ContentTable from './components/ContentTable'
+import BulkActionPanel from './components/BulkActionPanel'
 
 // Interfaces
 interface ArticleWithStats extends Article {
@@ -53,6 +54,10 @@ export default function AdminPage() {
   const { token } = useAuthStore()
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard')
   const [contentType, setContentType] = useState<ContentType>('articles')
+  const setContentTypeAndClear = (type: ContentType) => {
+    setContentType(type)
+    setSelectedItems(new Set())
+  }
 
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
@@ -190,6 +195,96 @@ export default function AdminPage() {
       }
     } catch (error) {
       toast.error("فشل الحذف");
+      console.error(error);
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 font-sans" dir="rtl">
+        <h3 className="font-bold mb-2 text-right">تأكيد الحذف الجماعي</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4 text-right">
+          هل أنت متأكد من حذف {selectedItems.size} عنصر؟ لا يمكن التراجع عن هذا الإجراء.
+        </p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t);
+              await performBulkDelete();
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            حذف ({selectedItems.size})
+          </button>
+        </div>
+      </div>
+    ));
+  }
+
+  const performBulkDelete = async () => {
+    const ids = Array.from(selectedItems);
+    const endpoint = contentType === 'articles' ? 'articles' : contentType === 'lessons' ? 'lessons' : 'courses';
+    
+    try {
+      const response = await fetch(`/api/admin/${endpoint}/bulk`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ids })
+      })
+
+      if (response.ok) {
+        toast.success(`تم حذف ${ids.length} عنصر بنجاح`);
+        if (contentType === 'articles') {
+          setArticles(prev => prev.filter(item => !selectedItems.has(item.id)));
+        } else if (contentType === 'lessons') {
+          setLessons(prev => prev.filter(item => !selectedItems.has(item.id)));
+        } else {
+          setCourses(prev => prev.filter(item => !selectedItems.has(item.id)));
+        }
+        setSelectedItems(new Set());
+      } else {
+        throw new Error('Failed to bulk delete');
+      }
+    } catch (error) {
+      toast.error("فشل الحذف الجماعي");
+      console.error(error);
+    }
+  }
+
+  const handleBulkStatusChange = async (status: ArticleStatus) => {
+    const ids = Array.from(selectedItems);
+    const endpoint = contentType === 'articles' ? 'articles' : contentType === 'lessons' ? 'lessons' : 'courses';
+    
+    try {
+      const response = await fetch(`/api/admin/${endpoint}/bulk`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ids, status })
+      })
+
+      if (response.ok) {
+        toast.success(`تم تحديث حالة ${ids.length} عنصر بنجاح`);
+        if (contentType === 'articles') {
+          setArticles(prev => prev.map(item => selectedItems.has(item.id) ? { ...item, status } : item));
+        } else if (contentType === 'lessons') {
+          setLessons(prev => prev.map(item => selectedItems.has(item.id) ? { ...item, status } : item));
+        } else {
+          setCourses(prev => prev.map(item => selectedItems.has(item.id) ? { ...item, status } : item));
+        }
+        setSelectedItems(new Set());
+      } else {
+        throw new Error('Failed to bulk update status');
+      }
+    } catch (error) {
+      toast.error("فشل التحديث الجماعي");
       console.error(error);
     }
   }
@@ -341,9 +436,9 @@ export default function AdminPage() {
             >
               {/* Content Type Selectors */}
               <div className="flex gap-4 mb-6">
-                <button onClick={() => setContentType('articles')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'articles' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>المقالات</button>
-                <button onClick={() => setContentType('lessons')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'lessons' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الدروس</button>
-                <button onClick={() => setContentType('courses')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'courses' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الكورسات</button>
+                <button onClick={() => setContentTypeAndClear('articles')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'articles' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>المقالات</button>
+                <button onClick={() => setContentTypeAndClear('lessons')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'lessons' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الدروس</button>
+                <button onClick={() => setContentTypeAndClear('courses')} className={`px-4 py-2 rounded-lg transition-colors ${contentType === 'courses' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>الكورسات</button>
               </div>
 
               <FilterBar
@@ -366,6 +461,13 @@ export default function AdminPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <BulkActionPanel
+          selectedCount={selectedItems.size}
+          onDelete={handleBulkDelete}
+          onStatusChange={handleBulkStatusChange}
+          onClearSelection={() => setSelectedItems(new Set())}
+        />
       </div>
     </div>
   )
