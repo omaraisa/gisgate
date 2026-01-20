@@ -68,6 +68,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
   const [loading, setLoading] = useState(!isNewArticle)
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [isHtmlMode, setIsHtmlMode] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -218,6 +219,64 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  const addImageByUrl = () => {
+    const url = window.prompt('أدخل رابط الصورة (URL):')
+    if (url) {
+      editor?.chain().focus().setImage({ src: url }).run()
+    }
+  }
+
+  const handleContentImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        editor?.chain().focus().setImage({ src: data.imageUrl }).run()
+      } else {
+        const error = await response.json()
+        alert(`خطأ في رفع الصورة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('حدث خطأ أثناء رفع الصورة')
+    } finally {
+      setUploadingImage(false)
+      // Reset input
+      event.target.value = ''
+    }
+  }
+
+  const updateImageLink = () => {
+    if (editor?.isActive('image')) {
+      const currentUrl = editor.getAttributes('image').src
+      const newUrl = window.prompt('تعديل رابط الصورة:', currentUrl)
+      if (newUrl !== null && newUrl !== '') {
+        editor.chain().focus().setImage({ src: newUrl }).run()
+      }
+    } else {
+      alert('يجب تحديد صورة أولاً لتعديل رابطها')
+    }
+  }
+
+  const toggleHtmlMode = () => {
+    if (isHtmlMode) {
+      // Switching from HTML to Rich Text, sync editor
+      editor?.commands.setContent(article.content)
+    }
+    setIsHtmlMode(!isHtmlMode)
   }
 
   const insertYouTubeVideo = async () => {
@@ -380,7 +439,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
               </div>
               
             {/* Enhanced Editor Toolbar */}
-            <div className="mb-4 border border-gray-300 rounded-t-md bg-gray-50">
+            <div className="sticky top-[73px] z-30 mb-0 border border-gray-300 rounded-t-md bg-gray-50 shadow-md transition-all duration-300">
               {/* Main Formatting Row */}
               <div className="flex flex-wrap gap-1 p-3 border-b border-gray-200">
                 {/* Text Formatting */}
@@ -603,6 +662,31 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                   >
                     ❌
                   </button>
+                  
+                  {/* Image Options */}
+                  <div className="flex gap-1 bg-gray-100 p-0.5 rounded border border-gray-200">
+                    <button
+                      type="button"
+                      onClick={addImageByUrl}
+                      className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                      title="إضافة صورة برابط"
+                    >
+                      🖼️ URL
+                    </button>
+                    <label className="px-3 py-2 rounded text-sm bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 cursor-pointer" title="رفع صورة">
+                      📤 رفع
+                      <input type="file" className="hidden" accept="image/*" onChange={handleContentImageUpload} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={updateImageLink}
+                      className={`px-3 py-2 rounded text-sm ${editor?.isActive('image') ? 'bg-orange-500 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                      title="تعديل رابط الصورة المحددة"
+                    >
+                      ✏️ رابط الصورة
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={insertYouTubeVideo}
@@ -654,17 +738,46 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                 >
                   🧹 تنسيق
                 </button>
+
+                {/* HTML Toggle */}
+                <button
+                  type="button"
+                  onClick={toggleHtmlMode}
+                  className={`px-4 py-2 rounded-lg font-bold transition-all ${isHtmlMode ? 'bg-amber-500 text-white shadow-inner' : 'bg-gray-800 text-gray-100 hover:bg-gray-700'}`}
+                  title={isHtmlMode ? 'العودة للمحرر المرئي' : 'عرض الكود (HTML)'}
+                >
+                  {isHtmlMode ? '👁️ عرض المحرر' : '</> HTML'}
+                </button>
               </div>
             </div>
 
               {/* Editor Content */}
-              <div className="border border-gray-300 rounded-b-md min-h-[500px] overflow-y-auto">
-                <div className="p-6 prose prose-sm max-w-none focus:outline-none" style={{ direction: 'rtl' }}>
-                  <EditorContent 
-                    editor={editor} 
-                    className="min-h-[450px] focus:outline-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-r-4 prose-blockquote:border-gray-300 prose-blockquote:pr-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
+              <div className="border border-t-0 border-gray-300 rounded-b-md min-h-[500px] overflow-y-auto relative bg-white">
+                {uploadingImage && (
+                  <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <p className="mt-2 text-sm font-medium text-blue-600">جاري معالجة الصورة...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {isHtmlMode ? (
+                  <textarea
+                    value={article.content}
+                    onChange={(e) => setArticle(prev => ({ ...prev, content: e.target.value }))}
+                    className="w-full min-h-[500px] p-6 font-mono text-sm border-0 focus:ring-0 resize-none bg-gray-900 text-gray-100 selection:bg-blue-500/30"
+                    style={{ direction: 'ltr' }}
+                    placeholder="اكتب كود HTML هنا..."
                   />
-                </div>
+                ) : (
+                  <div className="p-6 prose prose-sm max-w-none focus:outline-none" style={{ direction: 'rtl' }}>
+                    <EditorContent 
+                      editor={editor} 
+                      className="min-h-[450px] focus:outline-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-r-4 prose-blockquote:border-gray-300 prose-blockquote:pr-4 prose-blockquote:italic prose-img:rounded-xl prose-img:shadow-lg prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

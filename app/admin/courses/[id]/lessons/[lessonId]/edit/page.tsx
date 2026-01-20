@@ -71,6 +71,7 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
   const [loading, setLoading] = useState(!isNewLesson)
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [isHtmlMode, setIsHtmlMode] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -224,6 +225,64 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  const addImageByUrl = () => {
+    const url = window.prompt('أدخل رابط الصورة (URL):')
+    if (url) {
+      editor?.chain().focus().setImage({ src: url }).run()
+    }
+  }
+
+  const handleContentImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        editor?.chain().focus().setImage({ src: data.imageUrl }).run()
+      } else {
+        const error = await response.json()
+        alert(`خطأ في رفع الصورة: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('حدث خطأ أثناء رفع الصورة')
+    } finally {
+      setUploadingImage(false)
+      // Reset input
+      event.target.value = ''
+    }
+  }
+
+  const updateImageLink = () => {
+    if (editor?.isActive('image')) {
+      const currentUrl = editor.getAttributes('image').src
+      const newUrl = window.prompt('تعديل رابط الصورة:', currentUrl)
+      if (newUrl !== null && newUrl !== '') {
+        editor.chain().focus().setImage({ src: newUrl }).run()
+      }
+    } else {
+      alert('يجب تحديد صورة أولاً لتعديل رابطها')
+    }
+  }
+
+  const toggleHtmlMode = () => {
+    if (isHtmlMode) {
+      // Switching from HTML to Rich Text, sync editor
+      editor?.commands.setContent(lesson.content)
+    }
+    setIsHtmlMode(!isHtmlMode)
   }
 
   const handleInputChange = (field: keyof ExtendedLesson, value: string | number) => {
@@ -381,16 +440,84 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
 
           {/* Content Editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              محتوى الدرس *
-            </label>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
-              <EditorContent
-                editor={editor}
-                className="min-h-[400px] p-4 prose max-w-none"
-              />
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                محتوى الدرس *
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={toggleHtmlMode}
+                  className={`px-3 py-1 rounded text-xs font-bold transition-all ${isHtmlMode ? 'bg-amber-500 text-white' : 'bg-gray-800 text-gray-100 hover:bg-gray-700'}`}
+                >
+                  {isHtmlMode ? '👁️ عرض المحرر' : '</> HTML'}
+                </button>
+              </div>
             </div>
-            {editor && (
+
+            <div className="border border-gray-300 rounded-lg overflow-hidden bg-white relative">
+              {!isHtmlMode && (
+                <div className="sticky top-[73px] z-20 flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50 shadow-sm transition-all duration-300">
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleBold().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('bold') ? 'bg-gray-200' : ''}`}
+                    title="عريض"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => editor?.chain().focus().toggleItalic().run()}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('italic') ? 'bg-gray-200' : ''}`}
+                    title="مائل"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addImageByUrl}
+                    className="p-2 rounded hover:bg-gray-200"
+                    title="إضافة صورة برابط"
+                  >
+                    🖼️ URL
+                  </button>
+                  <label className="p-2 rounded hover:bg-gray-200 cursor-pointer" title="رفع صورة">
+                    📤 رفع
+                    <input type="file" className="hidden" accept="image/*" onChange={handleContentImageUpload} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={updateImageLink}
+                    className={`p-2 rounded hover:bg-gray-200 ${editor?.isActive('image') ? 'text-orange-600' : ''}`}
+                    title="تعديل رابط الصورة"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              )}
+
+              {isHtmlMode ? (
+                <textarea
+                  value={lesson.content}
+                  onChange={(e) => setLesson(prev => ({ ...prev, content: e.target.value }))}
+                  className="w-full min-h-[400px] p-4 font-mono text-sm border-0 focus:ring-0 resize-none bg-gray-900 text-gray-100"
+                  style={{ direction: 'ltr' }}
+                />
+              ) : (
+                <EditorContent
+                  editor={editor}
+                  className="min-h-[400px] p-4 prose max-w-none focus:outline-none"
+                />
+              )}
+
+              {uploadingImage && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              )}
+            </div>
+            {editor && !isHtmlMode && (
               <div className="mt-2 text-sm text-gray-500">
                 {editor.storage.characterCount.characters()} حرف
               </div>
