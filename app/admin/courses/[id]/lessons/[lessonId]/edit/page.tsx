@@ -285,6 +285,74 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
     setIsHtmlMode(!isHtmlMode)
   }
 
+  const localizeImages = async () => {
+    if (!editor) return;
+
+    const content = editor.getHTML();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = Array.from(doc.querySelectorAll('img'));
+    
+    // Server IP/Domain to check against
+    const serverIp = '204.12.205.110';
+    
+    const externalImages = images.filter(img => {
+      const src = img.getAttribute('src');
+      return src && src.startsWith('http') && !src.includes(serverIp);
+    });
+
+    if (externalImages.length === 0) {
+      alert('لا توجد صور خارجية لمعالجتها');
+      return;
+    }
+
+    if (!confirm(`تم العثور على ${externalImages.length} صور خارجية. هل تريد تحميلها إلى سيرفرك وتحديث الروابط؟`)) {
+      return;
+    }
+
+    setUploadingImage(true);
+    let successCount = 0;
+
+    try {
+      for (const img of externalImages) {
+        const externalUrl = img.getAttribute('src');
+        if (!externalUrl) continue;
+
+        try {
+          const response = await fetch('/api/admin/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: externalUrl })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Replace the URL in the temporary DOM
+            img.setAttribute('src', data.imageUrl);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Failed to localize image: ${externalUrl}`, error);
+        }
+      }
+
+      if (successCount > 0) {
+        // Update the editor with the new content
+        const updatedHtml = doc.body.innerHTML;
+        editor.commands.setContent(updatedHtml);
+        setLesson(prev => ({ ...prev, content: updatedHtml }));
+        alert(`تم بنجاح معالجة وتثبيت ${successCount} صور من أصل ${externalImages.length}`);
+      } else {
+        alert('فشل في معالجة الصور الخارجية');
+      }
+    } catch (error) {
+      console.error('Error in localizeImages:', error);
+      alert('حدث خطأ أثناء معالجة الصور');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleInputChange = (field: keyof ExtendedLesson, value: string | number) => {
     setLesson(prev => ({ ...prev, [field]: value }))
   }
@@ -493,6 +561,14 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
                     title="تعديل رابط الصورة"
                   >
                     ✏️
+                  </button>
+                  <button
+                    type="button"
+                    onClick={localizeImages}
+                    className="p-1 px-2 rounded hover:bg-gray-200 text-blue-600"
+                    title="توطين الصور الخارجية"
+                  >
+                    🛡️
                   </button>
                 </div>
               )}

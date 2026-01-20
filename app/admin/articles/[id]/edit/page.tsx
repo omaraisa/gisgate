@@ -279,6 +279,74 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     setIsHtmlMode(!isHtmlMode)
   }
 
+  const localizeImages = async () => {
+    if (!editor) return;
+
+    const content = editor.getHTML();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    const images = Array.from(doc.querySelectorAll('img'));
+    
+    // Server IP/Domain to check against
+    const serverIp = '204.12.205.110';
+    
+    const externalImages = images.filter(img => {
+      const src = img.getAttribute('src');
+      return src && src.startsWith('http') && !src.includes(serverIp);
+    });
+
+    if (externalImages.length === 0) {
+      alert('لا توجد صور خارجية لمعالجتها');
+      return;
+    }
+
+    if (!confirm(`تم العثور على ${externalImages.length} صور خارجية. هل تريد تحميلها إلى سيرفرك وتحديث الروابط؟`)) {
+      return;
+    }
+
+    setUploadingImage(true);
+    let successCount = 0;
+
+    try {
+      for (const img of externalImages) {
+        const externalUrl = img.getAttribute('src');
+        if (!externalUrl) continue;
+
+        try {
+          const response = await fetch('/api/admin/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: externalUrl })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Replace the URL in the temporary DOM
+            img.setAttribute('src', data.imageUrl);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Failed to localize image: ${externalUrl}`, error);
+        }
+      }
+
+      if (successCount > 0) {
+        // Update the editor with the new content
+        const updatedHtml = doc.body.innerHTML;
+        editor.commands.setContent(updatedHtml);
+        setArticle(prev => ({ ...prev, content: updatedHtml }));
+        alert(`تم بنجاح معالجة وتثبيت ${successCount} صور من أصل ${externalImages.length}`);
+      } else {
+        alert('فشل في معالجة الصور الخارجية');
+      }
+    } catch (error) {
+      console.error('Error in localizeImages:', error);
+      alert('حدث خطأ أثناء معالجة الصور');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const insertYouTubeVideo = async () => {
     let url = ''
 
@@ -684,6 +752,14 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
                       title="تعديل رابط الصورة المحددة"
                     >
                       ✏️ رابط الصورة
+                    </button>
+                    <button
+                      type="button"
+                      onClick={localizeImages}
+                      className="px-3 py-2 rounded text-sm bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                      title="سحب الصور الخارجية للسيرفر المحلي"
+                    >
+                      🛡️ توطين الصور
                     </button>
                   </div>
 

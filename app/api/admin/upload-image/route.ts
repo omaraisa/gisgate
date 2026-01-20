@@ -20,18 +20,50 @@ const BUCKET_NAME = 'images'
 export async function POST(request: NextRequest) {
   try {
     const minioClient = getMinioClient()
+    let file: File | null = null
+    let imageUrlToDownload: string | null = null
 
-    const data = await request.formData()
-    const file: File | null = data.get('image') as unknown as File
-
-    if (!file) {
-      return NextResponse.json({ error: 'No image file provided' }, { status: 400 })
+    // Check if it's form data (file upload) or JSON (URL upload)
+    const contentType = request.headers.get('content-type') || ''
+    
+    if (contentType.includes('multipart/form-data')) {
+      const data = await request.formData()
+      file = data.get('image') as unknown as File
+    } else if (contentType.includes('application/json')) {
+      const body = await request.json()
+      imageUrlToDownload = body.url
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: `Invalid file type: ${file.type}` }, { status: 400 })
+    if (!file && !imageUrlToDownload) {
+      return NextResponse.json({ error: 'No image file or URL provided' }, { status: 400 })
+    }
+
+    let buffer: Buffer
+    let mimeType: string
+    let originalName: string
+
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        return NextResponse.json({ error: `Invalid file type: ${file.type}` }, { status: 400 })
+      }
+      const bytes = await file.arrayBuffer()
+      buffer = Buffer.from(bytes)
+      mimeType = file.type
+      originalName = file.name
+    } else {
+      // Download from URL
+      try {
+        const response = await fetch(imageUrlToDownload!)
+        if (!response.ok) throw new Error('Failed to fetch image')
+        const arrayBuffer = await response.arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+        mimeType = response.headers.get('content-type') || 'image/jpeg'
+        originalName = imageUrlToDownload!.split('/').pop() || 'image.jpg'
+      } catch (err: any) {
+        return NextResponse.json({ error: 'Failed to download image from URL', details: err.message }, { status: 500 })
+      }
     }
 
     // Generate unique filename
@@ -39,7 +71,7 @@ export async function POST(request: NextRequest) {
     const year = now.getFullYear()
     const month = String(now.getMonth() + 1).padStart(2, '0')
     const randomId = Math.random().toString(36).substring(2, 11)
-    const fileExtension = file.name.split('.').pop() || 'jpg'
+    const fileExtension = mimeType.split('/').pop()?.split('+')[0] || 'jpg'
     const fileName = `${randomId}.${fileExtension}`
     const objectKey = `${year}/${month}/${fileName}`
 
@@ -69,11 +101,8 @@ export async function POST(request: NextRequest) {
 
     // 2. Upload to MinIO
     try {
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
       await minioClient.putObject(BUCKET_NAME, objectKey, buffer, buffer.length, {
-        'Content-Type': file.type
+        'Content-Type': mimeType
       })
     } catch (uploadError: any) {
       console.error('Upload Error:', uploadError)
@@ -93,7 +122,7 @@ export async function POST(request: NextRequest) {
       success: true,
       imageUrl,
       objectKey,
-      fileName: file.name
+      fileName: originalName
     })
 
   } catch (error: any) {
