@@ -78,7 +78,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     description: '',
     excerpt: '',
     featuredImage: '',
-    status: ArticleStatus.DRAFT,
+    status: ArticleStatus.PUBLISHED, // سيتم تحديثها من البيانات المجلوبة
     category: '',
     tags: '',
     price: 0,

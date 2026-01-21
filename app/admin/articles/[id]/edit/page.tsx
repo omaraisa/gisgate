@@ -59,7 +59,7 @@ export default function ArticleEditor({ params }: ArticleEditorProps) {
     excerpt: '',
     content: '',
     featuredImage: '',
-    status: ArticleStatus.DRAFT,
+    status: ArticleStatus.PUBLISHED, // سيتم تحديثها من البيانات المجلوبة
     category: '',
     tags: '',
     metaTitle: '',

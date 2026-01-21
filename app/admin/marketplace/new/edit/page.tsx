@@ -81,7 +81,7 @@ export default function SolutionEditor() {
     version: '1.0.0',
     compatibility: '',
     requirements: '',
-    status: ArticleStatus.DRAFT,
+    status: ArticleStatus.PUBLISHED, // الحل الجديد يبدأ كمنشور
     authorName: '',
     metaTitle: '',
     metaDescription: ''

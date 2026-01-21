@@ -85,7 +85,7 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
     version: '1.0.0',
     compatibility: '',
     requirements: '',
-    status: ArticleStatus.DRAFT,
+    status: ArticleStatus.PUBLISHED, // سيتم تحديثها من البيانات المجلوبة
     authorName: '',
     metaTitle: '',
     metaDescription: ''
@@ -620,7 +620,7 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
                   <div className="grid grid-cols-1 gap-4 border-t border-gray-200 pt-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        رابط التجربة (Demo URL)
+                        رابط التجربة (Demo URL) أو فيديو
                       </label>
                       <input
                         type="url"

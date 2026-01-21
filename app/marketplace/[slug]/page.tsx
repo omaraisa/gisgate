@@ -323,7 +323,7 @@ export default function SolutionPage({ params }: { params: Promise<{ slug: strin
                     className="bg-white/5 hover:bg-white/10 border border-white/20 text-white px-4 py-3 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2"
                   >
                     <Globe className="w-4 h-4" />
-                    تجربة
+                    معاينة
                   </a>
                 )}
                 {solution.sourceCodeUrl && (

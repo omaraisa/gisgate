@@ -58,7 +58,7 @@ export default function CourseLessonEditor({ params }: CourseLessonEditorProps) 
     excerpt: '',
     content: '',
     featuredImage: '',
-    status: ArticleStatus.DRAFT,
+    status: ArticleStatus.PUBLISHED, // سيتم تحديثها من البيانات المجلوبة
     category: '',
     tags: '',
     metaTitle: '',
