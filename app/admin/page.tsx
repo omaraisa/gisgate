@@ -47,6 +47,49 @@ interface CourseWithStats {
   enrollmentCount?: number
 }
 
+interface UserStats {
+  users: {
+    total: number;
+    active: number;
+    newLast30Days: number;
+    activeLast7Days: number;
+  };
+  enrollments: {
+    total: number;
+    active: number;
+    completed: number;
+    completionRate: number;
+    enrollmentsLast30Days: number;
+    avgProgress: number;
+  };
+  certificates: {
+    total: number;
+    issuedLast30Days: number;
+  };
+  downloads: {
+    total: number;
+    last30Days: number;
+  };
+  revenue: {
+    total: number;
+    last30Days: number;
+  };
+  lessons: {
+    totalProgress: number;
+    completed: number;
+  };
+  popularCourses: Array<{
+    id: string;
+    title: string;
+    enrollments: number;
+  }>;
+  charts: {
+    userActivity: Array<{ date: Date; count: number }>;
+    enrollmentActivity: Array<{ date: Date; count: number }>;
+    completionActivity: Array<{ date: Date; count: number }>;
+  };
+}
+
 type ContentType = 'articles' | 'lessons' | 'courses'
 type ViewMode = 'dashboard' | 'content'
 
@@ -62,20 +105,22 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleWithStats[]>([])
   const [lessons, setLessons] = useState<LessonWithStats[]>([])
   const [courses, setCourses] = useState<CourseWithStats[]>([])
+  const [userStats, setUserStats] = useState<UserStats | null>(null)
 
   const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PUBLISHED' | 'DRAFT'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
 
-  // Calculate Stats
-  const stats = {
-    articlesCount: articles.length,
-    lessonsCount: lessons.length,
-    coursesCount: courses.length,
-    publishedCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'PUBLISHED').length,
-    draftCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'DRAFT').length,
-  }
+  // Keep track of content stats for navigation links (not displayed in dashboard anymore)
+  // const stats = {
+  //   articlesCount: articles.length,
+  //   lessonsCount: lessons.length,
+  //   coursesCount: courses.length,
+  //   publishedCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'PUBLISHED').length,
+  //   draftCount: [...articles, ...lessons, ...courses].filter(i => i.status === 'DRAFT').length,
+  // }
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
     const headers: Record<string, string> = {
@@ -86,6 +131,28 @@ export default function AdminPage() {
     }
     return headers
   }, [token])
+
+  const fetchUserStats = useCallback(async () => {
+    if (!token) return;
+    setStatsLoading(true);
+    try {
+      const response = await fetch('/api/admin/stats', { 
+        headers: getAuthHeaders() 
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserStats(data);
+      } else {
+        console.error('Failed to fetch user stats');
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      toast.error('فشل تحميل إحصائيات المستخدمين');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [token, getAuthHeaders]);
 
   const fetchAllData = useCallback(async () => {
     if (!token) return;
@@ -111,7 +178,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, [fetchAllData]);
+    fetchUserStats();
+  }, [fetchAllData, fetchUserStats]);
 
   // Handlers
   const handleStatusChange = async (id: string, status: ArticleStatus) => {
@@ -319,18 +387,18 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-950 via-green-950 to-teal-950">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full"
         />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-green-950 to-teal-950 px-4 py-8" dir="rtl">
       <div className="max-w-7xl mx-auto">
         <AdminHeader
           title={viewMode === 'dashboard' ? 'لوحة القيادة' : 'إدارة المحتوى'}
@@ -425,7 +493,7 @@ export default function AdminPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <StatsOverview stats={stats} />
+              <StatsOverview userStats={userStats} loading={statsLoading} />
             </motion.div>
           ) : (
             <motion.div

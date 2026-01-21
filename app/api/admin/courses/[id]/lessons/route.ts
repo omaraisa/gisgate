@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { requireAdmin } from '@/lib/api-auth'
+import { ArticleStatus } from '@prisma/client'
 
 interface LessonWithStats {
   id: string;
@@ -153,9 +154,9 @@ export async function PATCH(
       );
     }
 
-    const updateData: { status?: string; publishedAt?: Date | null } = {};
+    const updateData: { status?: ArticleStatus; publishedAt?: Date | null; order?: number } = {};
     if (status) {
-      updateData.status = status;
+      updateData.status = status as ArticleStatus;
       updateData.publishedAt = status === 'PUBLISHED' ? new Date() : null;
     }
     if (order !== undefined) {

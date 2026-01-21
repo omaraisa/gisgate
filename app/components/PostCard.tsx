@@ -9,7 +9,6 @@ interface PostCardProps {
   slug: string;
   publishedAt?: Date | null;
   featuredImage?: string | null;
-  authorName?: string | null;
   category?: string | null;
   type?: 'article' | 'video' | 'course';
 }
@@ -20,7 +19,6 @@ export default function PostCard({
   slug,
   publishedAt,
   featuredImage,
-  authorName,
   category,
   type = 'article'
 }: PostCardProps) {
@@ -82,7 +80,7 @@ export default function PostCard({
           )}
 
           {/* Meta Info */}
-          <div className="flex items-center justify-between text-sm text-white/60">
+          <div className="flex items-center text-sm text-white/60">
             {publishedAt && (
               <span>
                 {new Date(publishedAt).toLocaleDateString('en-US', {
@@ -90,11 +88,6 @@ export default function PostCard({
                   month: 'short',
                   day: 'numeric'
                 })}
-              </span>
-            )}
-            {authorName && (
-              <span className="text-white/70">
-                {authorName}
               </span>
             )}
           </div>

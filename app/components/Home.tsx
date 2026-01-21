@@ -426,7 +426,6 @@ export default function Home() {
                       slug={lesson.slug}
                       publishedAt={lesson.publishedAt ? new Date(lesson.publishedAt) : null}
                       featuredImage={lesson.featuredImage}
-                      authorName={lesson.authorName}
                       category={lesson.category}
                       type="video"
                     />
@@ -506,7 +505,6 @@ export default function Home() {
                       slug={article.slug}
                       publishedAt={article.publishedAt ? new Date(article.publishedAt) : null}
                       featuredImage={article.featuredImage}
-                      authorName={article.authorName}
                       category={article.category}
                       type="article"
                     />
@@ -588,7 +586,6 @@ export default function Home() {
                       slug={course.slug}
                       publishedAt={course.publishedAt ? new Date(course.publishedAt) : null}
                       featuredImage={course.featuredImage}
-                      authorName={course.authorName}
                       category={course.category}
                       type="course"
                     />
