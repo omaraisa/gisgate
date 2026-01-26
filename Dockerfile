@@ -36,30 +36,36 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-# Install curl for healthcheck only
-RUN apk add --no-cache curl
+# SECURITY: Install only essential runtime dependencies
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    && rm -rf /var/cache/apk/*
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# SECURITY: Create non-root user with minimal privileges
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p /app/.next /app/public && \
+    chown -R nextjs:nodejs /app
 
 # Copy ONLY the built application (standalone includes everything needed)
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Set ownership for non-root user
-RUN chown -R nextjs:nodejs /app
-
+# SECURITY: Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+# SECURITY: Use dumb-init to handle signals properly
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
 # The standalone build includes a server.js file
 CMD ["node", "server.js"]
