@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus } from '@prisma/client'
 import * as Minio from 'minio'
+import { requireAdmin } from '@/lib/api-auth'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -9,12 +10,16 @@ if (!process.env.SERVER_IP) {
 }
 
 // MinIO configuration
+if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
+  throw new Error('MinIO credentials not configured')
+}
+
 const minioClient = new Minio.Client({
   endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
-  accessKey: 'miniomar',
-  secretKey: '123wasd#@!WDSA'
+  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
+  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
 })
 
 const BUCKET_NAME = 'images'
@@ -34,6 +39,9 @@ interface ArticleData {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require admin authentication
+    await requireAdmin(request)
+
     const contentType = request.headers.get('content-type') || ''
 
     let articleData: ArticleData = {}
@@ -119,8 +127,20 @@ export async function POST(request: NextRequest) {
       uploadedImages
     }, { status: 201 })
 
-  } catch {
-    console.error('Error creating article')
+  } catch (error) {
+    // Handle authentication errors with proper status codes
+    if (error instanceof Error) {
+      if (error.message.includes('No token provided') || 
+          error.message.includes('Invalid or expired token') ||
+          error.message.includes('User not found or inactive')) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (error.message.includes('Admin access required')) {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      }
+    }
+
+    console.error('Error creating article:', error)
     return NextResponse.json(
       { error: 'Failed to create article' },
       { status: 500 }

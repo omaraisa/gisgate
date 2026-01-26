@@ -459,7 +459,7 @@ export default function AdminPage() {
           </Link>
 
           <Link
-            href="/admin/resumes"
+            href="/admin/resume"
             className="flex flex-col items-center gap-2 p-4 bg-white/40 dark:bg-black/20 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/60 dark:hover:bg-black/30 transition-all hover:scale-105"
           >
             <i className="fas fa-file-alt text-2xl text-red-600 dark:text-red-400" />

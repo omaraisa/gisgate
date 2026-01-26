@@ -141,8 +141,6 @@ const getMinioClient = () => {
     endPoint: endPoint.replace('http://', '').replace('https://', ''),
     port: 9000,
     useSSL: false,
-    accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || 'miniomar',  // REMOVE DEFAULT
-    secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY || '123wasd#@!WDSA'  // REMOVE DEFAULT
   })
 }
 
