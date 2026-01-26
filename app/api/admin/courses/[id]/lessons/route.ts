@@ -27,13 +27,13 @@ interface LessonWithStats {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
+    const { id: courseId } = await params;
 
     const lessons = await prisma.video.findMany({
       where: {
@@ -78,13 +78,13 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
+    const { id: courseId } = await params;
     const body = await request.json();
     const { title, slug, excerpt, content, videoUrl, duration, status, order } = body;
 
@@ -138,13 +138,13 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
+    const { id: courseId } = await params;
     const { lessonId, status, order } = await request.json();
 
     if (!lessonId) {
@@ -183,13 +183,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
+    const { id: courseId } = await params;
     const { lessonId } = await request.json();
 
     if (!lessonId) {

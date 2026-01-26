@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
 
 // GET /api/admin/certificates/templates/[id] - Get specific template
-export const GET = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export const GET = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {
@@ -31,7 +31,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest, context?: { pa
 }, { requireAuth: true, requireAdmin: true });
 
 // PUT /api/admin/certificates/templates/[id] - Update template
-export const PUT = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export const PUT = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {
@@ -65,7 +65,7 @@ export const PUT = withAuth(async (request: AuthenticatedRequest, context?: { pa
 }, { requireAuth: true, requireAdmin: true });
 
 // PATCH /api/admin/certificates/templates/[id] - Partial update template
-export const PATCH = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export const PATCH = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {
@@ -133,7 +133,7 @@ export const PATCH = withAuth(async (request: AuthenticatedRequest, context?: { 
 }, { requireAuth: true, requireAdmin: true });
 
 // DELETE /api/admin/certificates/templates/[id] - Delete template
-export const DELETE = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export const DELETE = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {

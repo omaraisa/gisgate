@@ -56,8 +56,11 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
 }, { requireAuth: true });
 
 // GET /api/admin/certificates - Get all certificates (admin only)
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+export const GET = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
+    // Explicitly handle unused context parameter for Next.js 15 compatibility
+    void context;
+    
     const user = getCurrentUser(request);
     if (!user?.id || user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });

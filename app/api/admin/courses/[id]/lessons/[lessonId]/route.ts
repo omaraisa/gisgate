@@ -5,14 +5,13 @@ import { ArticleStatus } from '@prisma/client'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  { params }: { params: Promise<{ id: string; lessonId: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
-    const lessonId = params.lessonId;
+    const { id: courseId, lessonId } = await params;
 
     const lesson = await prisma.video.findFirst({
       where: {
@@ -40,14 +39,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  { params }: { params: Promise<{ id: string; lessonId: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
-    const lessonId = params.lessonId;
+    const { id: courseId, lessonId } = await params;
     const body = await request.json();
 
     const {
@@ -117,14 +115,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; lessonId: string } }
+  { params }: { params: Promise<{ id: string; lessonId: string }> }
 ) {
   try {
     // Require admin authentication
     await requireAdmin(request);
 
-    const courseId = params.id;
-    const lessonId = params.lessonId;
+    const { id: courseId, lessonId } = await params;
 
     // Delete lesson
     await prisma.video.delete({

@@ -47,19 +47,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file type (only PDF allowed)
-    if (!file.type || file.type !== 'application/pdf') {
+    // SECURITY: Validate file size (max 10MB for resume)
+    const sizeValidation = validateFileSize(file.size, 10 * 1024 * 1024);
+    if (!sizeValidation.valid) {
       return NextResponse.json(
-        { error: 'Only PDF files are allowed' },
+        { error: sizeValidation.error },
         { status: 400 }
       )
     }
 
-    // Validate file size (max 10MB for resume)
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    if (file.size > maxSize) {
+    // Convert file to buffer for magic byte validation
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    // SECURITY: Validate file type using magic bytes (only PDF allowed)
+    const fileValidation = await validatePDFFile(buffer);
+    if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: 'File size too large. Maximum size is 10MB.' },
+        { error: fileValidation.error },
         { status: 400 }
       )
     }
@@ -82,10 +87,7 @@ export async function POST(request: NextRequest) {
       await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy))
     }
 
-    // Convert file to buffer and upload to MinIO
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
+    // Upload to MinIO (buffer already created for validation)
     await minioClient.putObject(BUCKET_NAME, RESUME_FILENAME, buffer, buffer.length, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${RESUME_FILENAME}"`

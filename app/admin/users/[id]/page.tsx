@@ -90,7 +90,7 @@ export default function UserDetailsPage() {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'enrollments' | 'certificates' | 'payments'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'enrollments' | 'certificates' | 'oldcertificates' | 'payments'>('overview');
 
   const fetchUserDetails = useCallback(async () => {
     try {

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { withAuth, getCurrentUser, AuthenticatedRequest } from '@/lib/middleware';
 
 // GET /api/certificates/templates/[courseId] - Get available certificate templates for a course
-export const GET = withAuth(async (request: AuthenticatedRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export const GET = withAuth(async (request: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
   try {
     const user = getCurrentUser(request);
     if (!user?.id) {
