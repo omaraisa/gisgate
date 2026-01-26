@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 
 // Shared MinIO Client Initialization
 const getMinioClient = () => {
@@ -27,6 +28,13 @@ export async function POST(request: NextRequest) {
   try {
     // SECURITY: Require admin authentication
     await requireAdmin(request)
+
+    // SECURITY: Rate limiting - prevent upload abuse
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.UPLOAD_IMAGE);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
 
     const minioClient = getMinioClient()
     let file: File | null = null

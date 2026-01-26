@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
 import { z } from 'zod';
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -9,6 +10,13 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - prevent brute force attacks
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.AUTH_LOGIN);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     const body = await request.json();
 
     // Validate input
