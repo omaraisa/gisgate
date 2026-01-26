@@ -52,8 +52,6 @@ Access the resume upload interface at `/admin/resume` in your admin panel.
 
 Make sure the following environment variables are set:
 - `SERVER_IP`: Your MinIO server IP address
-- `NEXT_PRIVATE_MINIO_ACCESS_KEY`: MinIO access key (defaults to 'miniomar')
-- `NEXT_PRIVATE_MINIO_SECRET_KEY`: MinIO secret key (defaults to '123wasd#@!WDSA')
 
 ## Usage
 

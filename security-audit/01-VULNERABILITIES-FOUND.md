@@ -45,17 +45,14 @@ This document lists all security vulnerabilities found during the comprehensive 
   1. **Default MinIO Credentials** in source code:
      - File: `app/api/admin/upload-image/route.ts`
      - File: `app/api/resume/route.ts`
-     - Hardcoded: `accessKey: 'miniomar'`, `secretKey: '123wasd#@!WDSA'`
   
   2. **Database Password in Deploy Script**:
      - File: `deploy.sh`
      - Line 6: Full PostgreSQL connection string with password in plaintext
-     - Password: `N%21neB3ars%26D0gZ_in_Th%40BusH_1776%21`
   
   3. **SMTP Password in .env** (committed to repo):
      - File: `.env`
      - SMTP password visible in version control
-     - Email password: `kid83j(#*T%JMF__#@*^JF(*#Kfi48`
 
 - **Exploitation**: If attacker gained read access to source code (via file upload, git exposure, etc.), they can access all backend services
 - **Remediation**:
