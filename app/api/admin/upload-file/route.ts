@@ -4,25 +4,28 @@ import { requireAdmin } from '@/lib/api-auth'
 import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 import { validateFileSize } from '@/lib/file-validation'
 
-// Validate required environment variables
-if (!process.env.SERVER_IP) {
-  throw new Error('SERVER_IP environment variable is required')
-}
-
-// MinIO configuration (same as your image upload)
-if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
-  throw new Error('MinIO credentials not configured')
-}
-
-const minioClient = new Minio.Client({
-  endPoint: process.env.SERVER_IP,
-  port: 9000,
-  useSSL: false,
-  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
-  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
-})
-
 const BUCKET_NAME = 'solutions' // Dedicated bucket for marketplace solution files
+
+// Helper function to get MinIO client (lazy initialization)
+function getMinioClient() {
+  // Validate required environment variables
+  if (!process.env.SERVER_IP) {
+    throw new Error('SERVER_IP environment variable is required')
+  }
+
+  // MinIO configuration (same as your image upload)
+  if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
+    throw new Error('MinIO credentials not configured')
+  }
+
+  return new Minio.Client({
+    endPoint: process.env.SERVER_IP,
+    port: 9000,
+    useSSL: false,
+    accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
+    secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +63,8 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop() || 'bin'
     const fileName = `${randomId}.${fileExtension}`
     const objectKey = `${year}/${month}/${fileName}`
+
+    const minioClient = getMinioClient()
 
     // Ensure bucket exists and has public read policy
     try {

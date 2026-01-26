@@ -1,29 +1,33 @@
 import { NextResponse } from 'next/server'
 import * as Minio from 'minio'
 
-// Validate required environment variables
-if (!process.env.SERVER_IP) {
-  throw new Error('SERVER_IP environment variable is required')
-}
-
-// MinIO configuration
-if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
-  throw new Error('MinIO credentials not configured')
-}
-
-const minioClient = new Minio.Client({
-  endPoint: process.env.SERVER_IP,
-  port: 9000,
-  useSSL: false,
-  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
-  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
-})
-
 const BUCKET_NAME = 'files'
 const RESUME_FILENAME = 'omar-elhadi.pdf'
 
+// Helper function to get MinIO client (lazy initialization)
+function getMinioClient() {
+  // Validate required environment variables
+  if (!process.env.SERVER_IP) {
+    throw new Error('SERVER_IP environment variable is required')
+  }
+
+  // MinIO configuration
+  if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
+    throw new Error('MinIO credentials not configured')
+  }
+
+  return new Minio.Client({
+    endPoint: process.env.SERVER_IP,
+    port: 9000,
+    useSSL: false,
+    accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
+    secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
+  })
+}
+
 export async function GET() {
   try {
+    const minioClient = getMinioClient()
     // Get the file from MinIO
     const stream = await minioClient.getObject(BUCKET_NAME, RESUME_FILENAME)
 

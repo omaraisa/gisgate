@@ -5,25 +5,28 @@ import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
 import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 
-// Validate required environment variables
-if (!process.env.SERVER_IP) {
-  throw new Error('SERVER_IP environment variable is required')
-}
-
-// MinIO configuration
-if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
-  throw new Error('MinIO credentials not configured')
-}
-
-const minioClient = new Minio.Client({
-  endPoint: process.env.SERVER_IP,
-  port: 9000,
-  useSSL: false,
-  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
-  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
-})
-
 const BUCKET_NAME = 'images'
+
+// Helper function to get MinIO client (lazy initialization)
+function getMinioClient() {
+  // Validate required environment variables
+  if (!process.env.SERVER_IP) {
+    throw new Error('SERVER_IP environment variable is required')
+  }
+
+  // MinIO configuration
+  if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
+    throw new Error('MinIO credentials not configured')
+  }
+
+  return new Minio.Client({
+    endPoint: process.env.SERVER_IP,
+    port: 9000,
+    useSSL: false,
+    accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
+    secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
+  })
+}
 
 interface LessonData {
   title: string;
@@ -251,6 +254,8 @@ export async function POST(request: NextRequest) {
 
 // Helper function to upload image to MinIO
 async function uploadImageToMinIO(file: File): Promise<string> {
+  const minioClient = getMinioClient()
+  
   // Validate file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
