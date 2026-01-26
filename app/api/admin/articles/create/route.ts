@@ -9,12 +9,16 @@ if (!process.env.SERVER_IP) {
 }
 
 // MinIO configuration
+if (!process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY || !process.env.NEXT_PRIVATE_MINIO_SECRET_KEY) {
+  throw new Error('MinIO credentials not configured')
+}
+
 const minioClient = new Minio.Client({
   endPoint: process.env.SERVER_IP,
   port: 9000,
   useSSL: false,
-  accessKey: 'miniomar',
-  secretKey: '123wasd#@!WDSA'
+  accessKey: process.env.NEXT_PRIVATE_MINIO_ACCESS_KEY,
+  secretKey: process.env.NEXT_PRIVATE_MINIO_SECRET_KEY
 })
 
 const BUCKET_NAME = 'images'
