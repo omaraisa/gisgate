@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
+import { requireAdmin } from '@/lib/api-auth'
 
 // Shared MinIO Client Initialization
 const getMinioClient = () => {
@@ -19,6 +20,9 @@ const BUCKET_NAME = 'images'
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require admin authentication
+    await requireAdmin(request)
+
     const minioClient = getMinioClient()
     let file: File | null = null
     let imageUrlToDownload: string | null = null
@@ -129,6 +133,18 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    // Handle authentication errors with proper status codes
+    if (error instanceof Error) {
+      if (error.message.includes('No token provided') || 
+          error.message.includes('Invalid or expired token') ||
+          error.message.includes('User not found or inactive')) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (error.message.includes('Admin access required')) {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      }
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('Unexpected Upload Error:', error)
     return NextResponse.json({
