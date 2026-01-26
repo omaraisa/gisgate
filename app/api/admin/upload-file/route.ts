@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
 import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
+import { validateFileSize } from '@/lib/file-validation'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -45,13 +46,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (max 250MB for solution files)
-    const maxSize = 250 * 1024 * 1024 // 250MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: 'File size too large. Maximum size is 250MB.' },
-        { status: 400 }
-      )
+    // SECURITY: Validate file size (max 250MB for solution files)
+    const sizeValidation = validateFileSize(file.size, 250);
+    if (!sizeValidation.valid) {
+      return NextResponse.json({ error: sizeValidation.error }, { status: 400 })
     }
 
     // Generate unique filename with year/month structure

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
 import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
+import { validateImageFile, validateFileSize } from '@/lib/file-validation'
 
 // Shared MinIO Client Initialization
 const getMinioClient = () => {
@@ -60,14 +61,25 @@ export async function POST(request: NextRequest) {
     let originalName: string
 
     if (file) {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-      if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json({ error: `Invalid file type: ${file.type}` }, { status: 400 })
+      // SECURITY: Validate file size (max 10MB for images)
+      const sizeValidation = validateFileSize(file.size, 10);
+      if (!sizeValidation.valid) {
+        return NextResponse.json({ error: sizeValidation.error }, { status: 400 })
       }
+
       const bytes = await file.arrayBuffer()
       buffer = Buffer.from(bytes)
-      mimeType = file.type
+
+      // SECURITY: Validate file type using magic bytes, not MIME type
+      const typeValidation = await validateImageFile(buffer);
+      if (!typeValidation.valid) {
+        return NextResponse.json({ 
+          error: typeValidation.error || 'Invalid image file',
+          details: 'File validation failed. Only JPEG, PNG, GIF, and WebP images are allowed.'
+        }, { status: 400 })
+      }
+
+      mimeType = typeValidation.detectedType || file.type
       originalName = file.name
     } else {
       // Download from URL
