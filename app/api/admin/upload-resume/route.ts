@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
 import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
+import { validatePDFFile, validateFileSize } from '@/lib/file-validation'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
