@@ -9,6 +9,7 @@ import Footer from '../../components/Footer';
 import AnimatedBackground from '../../components/AnimatedBackground';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { sanitizeHTML } from '@/lib/sanitize-html';
 
 interface Course {
   id: string;
@@ -596,7 +597,7 @@ export default function CoursePage({ params }: { params: Promise<{ slug: string 
                   <h3 className="text-xl font-bold text-white mb-4">وصف الدورة</h3>
                   <div
                     className="text-white/80 leading-relaxed prose prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: course.description }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(course.description) }}
                   />
                 </div>
               )}

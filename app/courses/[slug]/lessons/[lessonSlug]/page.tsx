@@ -9,6 +9,7 @@ import Footer from '../../../../components/Footer';
 import AnimatedBackground from '../../../../components/AnimatedBackground';
 import YouTubePlayer, { extractYouTubeVideoId, isYouTubeUrl } from '../../../../components/YouTubePlayer';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { sanitizeHTML } from '@/lib/sanitize-html';
 
 interface Lesson {
   id: string;
@@ -468,7 +469,7 @@ export default function CourseLessonPage({ params }: { params: Promise<{ slug: s
                 <h3 className="text-2xl font-bold text-white mb-6">محتوى الدرس</h3>
                 <div
                   className="prose prose-invert max-w-none text-white/90 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentLesson.content) }}
                 />
               </motion.div>
 
