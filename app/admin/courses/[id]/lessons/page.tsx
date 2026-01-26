@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -37,12 +37,7 @@ export default function AdminCourseLessonsPage() {
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState('')
 
-  useEffect(() => {
-    fetchCourse()
-    fetchLessons()
-  }, [courseId])
-
-  const fetchCourse = async () => {
+  const fetchCourse = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/courses/${courseId}`)
       const data = await response.json()
@@ -50,9 +45,9 @@ export default function AdminCourseLessonsPage() {
     } catch (error) {
       console.error('Error fetching course:', error)
     }
-  }
+  }, [courseId])
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/courses/${courseId}/lessons`)
       const data = await response.json()
@@ -62,7 +57,12 @@ export default function AdminCourseLessonsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [courseId])
+
+  useEffect(() => {
+    fetchCourse()
+    fetchLessons()
+  }, [courseId, fetchCourse, fetchLessons])
 
   const handleStatusChange = async (id: string, status: string) => {
     try {

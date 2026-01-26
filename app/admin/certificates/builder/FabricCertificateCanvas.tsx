@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 import QRCode from 'qrcode';
 
@@ -164,7 +164,7 @@ export default function FabricCertificateCanvas({
     return () => {
       canvas.dispose();
     };
-  }, [readOnly]); // Re-initialize when readOnly changes
+  }, [readOnly, onSelectField, onUpdateField, displayScale, zoom]); // Re-initialize when readOnly changes
 
   // Update canvas zoom
   useEffect(() => {
@@ -355,7 +355,7 @@ export default function FabricCertificateCanvas({
   }, [selectedFieldId, isCanvasReady]);
 
   // Export canvas as image for PDF generation
-  const exportCanvasImage = () => {
+  const exportCanvasImage = useCallback(() => {
     if (!fabricCanvasRef.current) return null;
     
     const canvas = fabricCanvasRef.current;
@@ -471,7 +471,7 @@ export default function FabricCertificateCanvas({
     });
     
     return dataURL;
-  };
+  }, [backgroundImage, fields, getFieldDisplayText]);
 
   // Expose export function to parent
   useEffect(() => {

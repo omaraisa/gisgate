@@ -52,7 +52,6 @@ export async function GET(
     }
 
     // Calculate certificates count including virtual certificates for completed enrollments
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const certificatesCount = (userWithDetails.certificates?.length || 0) + 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (userWithDetails.enrollments?.filter((enrollment: any) => 

@@ -259,6 +259,7 @@ export default function CertificateTemplatesPage() {
                 className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300"
               >
                 <div className="relative aspect-[4/3]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={template.backgroundImage}
                     alt={template.name}

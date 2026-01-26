@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ArticleStatus, CourseLevel } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -105,13 +105,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     attachments: []
   })
 
-  useEffect(() => {
-    if (!isNewCourse) {
-      fetchCourse()
-    }
-  }, [isNewCourse, resolvedParams.id])
-
-  const fetchCourse = async () => {
+  const fetchCourse = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/courses/${resolvedParams.id}`)
       if (response.ok) {
@@ -142,7 +136,13 @@ export default function CourseEditor({ params }: CourseEditorProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [resolvedParams.id])
+
+  useEffect(() => {
+    if (!isNewCourse) {
+      fetchCourse()
+    }
+  }, [isNewCourse, resolvedParams.id, fetchCourse])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -581,6 +581,7 @@ export default function CourseEditor({ params }: CourseEditorProps) {
               {/* Current Image Preview */}
               {course.featuredImage && (
                 <div className="relative inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={course.featuredImage}
                     alt="صورة مميزة"

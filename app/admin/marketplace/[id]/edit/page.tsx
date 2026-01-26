@@ -541,6 +541,7 @@ export default function SolutionEditPage({ params }: SolutionEditorProps) {
                     </label>
                     {solution.featuredImage && (
                       <div className="mb-4 relative inline-block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={solution.featuredImage}
                           alt="Featured"
