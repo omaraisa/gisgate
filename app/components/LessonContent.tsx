@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import YouTubePlayer, { extractYouTubeVideoId } from './YouTubePlayer';
+import { sanitizeHTML } from '@/lib/sanitize-html';
 
 interface LessonContentProps {
   content: string;
@@ -153,7 +154,7 @@ export default function LessonContent({ content, className = '' }: LessonContent
         return (
           <div
             key={index}
-            dangerouslySetInnerHTML={{ __html: part.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(part.content) }}
             className="prose-content"
           />
         );
