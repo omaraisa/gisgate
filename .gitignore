@@ -40,7 +40,34 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated files
 /app/generated/prisma
+
+# development and utility scripts
 /scripts
+/deploy
+/deploy*.sh
+/deploy*.js
+/redeploy*.sh
+/redeploy*.ps1
+/check-users.js
+/create-admin.js
+/extract_enrollments.py
+/migration
+/nginx
+
+# investigation and audit files
 /courses investigation data
 /security-audit
+/Investigation log.txt
+
+# documentation (non-production)
+/action_plan.md
+/BLUE_GREEN_DEPLOYMENT.md
+/STAGING_SETUP.md
+/RESUME_UPLOAD_README.md
+/AUDIT-COMPLETE.md
+/SECURITY-IMPLEMENTATION-COMPLETE.md
+
+# environment file copies
+.env*
