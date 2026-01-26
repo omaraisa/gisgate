@@ -130,32 +130,69 @@ export async function GET(request: NextRequest) {
       take: 10,
     });
 
-    // User activity over time (last 30 days)
-    const userActivityByDay = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT DATE("createdAt") as date, COUNT(*) as count
-      FROM users
-      WHERE "createdAt" >= ${thirtyDaysAgo}
-      GROUP BY DATE("createdAt")
-      ORDER BY date ASC
-    `;
+    // User activity over time (last 30 days) - using Prisma groupBy for type safety
+    const usersByDay = await prisma.user.groupBy({
+      by: ['createdAt'],
+      where: {
+        createdAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
 
-    // Enrollment activity over time (last 30 days)
-    const enrollmentActivityByDay = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT DATE("enrolledAt") as date, COUNT(*) as count
-      FROM course_enrollments
-      WHERE "enrolledAt" >= ${thirtyDaysAgo}
-      GROUP BY DATE("enrolledAt")
-      ORDER BY date ASC
-    `;
+    const userActivityByDay = usersByDay.map(day => ({
+      date: new Date(day.createdAt.toISOString().split('T')[0]),
+      count: BigInt(day._count.id),
+    }));
 
-    // Completion activity over time (last 30 days)
-    const completionActivityByDay = await prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
-      SELECT DATE("completedAt") as date, COUNT(*) as count
-      FROM course_enrollments
-      WHERE "completedAt" >= ${thirtyDaysAgo} AND "completedAt" IS NOT NULL
-      GROUP BY DATE("completedAt")
-      ORDER BY date ASC
-    `;
+    // Enrollment activity over time (last 30 days) - using Prisma groupBy
+    const enrollmentsByDay = await prisma.courseEnrollment.groupBy({
+      by: ['enrolledAt'],
+      where: {
+        enrolledAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        enrolledAt: 'asc',
+      },
+    });
+
+    const enrollmentActivityByDay = enrollmentsByDay.map(day => ({
+      date: new Date(day.enrolledAt.toISOString().split('T')[0]),
+      count: BigInt(day._count.id),
+    }));
+
+    // Completion activity over time (last 30 days) - using Prisma groupBy
+    const completionsByDay = await prisma.courseEnrollment.groupBy({
+      by: ['completedAt'],
+      where: {
+        completedAt: {
+          gte: thirtyDaysAgo,
+          not: null,
+        },
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        completedAt: 'asc',
+      },
+    });
+
+    const completionActivityByDay = completionsByDay.map(day => ({
+      date: day.completedAt ? new Date(day.completedAt.toISOString().split('T')[0]) : new Date(),
+      count: BigInt(day._count.id),
+    }));
 
     // Payment stats
     const totalRevenue = await prisma.paymentOrder.aggregate({
