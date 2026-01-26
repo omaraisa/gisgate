@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -27,6 +28,13 @@ export async function POST(request: NextRequest) {
   try {
     // SECURITY: Require admin authentication
     await requireAdmin(request)
+
+    // SECURITY: Rate limiting - prevent upload abuse
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.UPLOAD_FILE);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
 
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File

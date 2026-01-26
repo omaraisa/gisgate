@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
 import { EmailService } from '@/lib/email';
 import { z } from 'zod';
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -17,6 +18,13 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - prevent registration spam
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.AUTH_REGISTER);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
+
     const body = await request.json();
 
     // Validate input

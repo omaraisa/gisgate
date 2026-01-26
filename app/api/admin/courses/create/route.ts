@@ -3,6 +3,7 @@ import { prisma } from '@/app/lib/prisma'
 import { ArticleStatus, CourseLevel } from '@prisma/client'
 import * as Minio from 'minio'
 import { requireAdmin } from '@/lib/api-auth'
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -62,6 +63,13 @@ export async function POST(request: NextRequest) {
   try {
     // SECURITY: Require admin authentication
     await requireAdmin(request)
+
+    // SECURITY: Rate limiting - prevent content spam
+    const identifier = getClientIdentifier(request);
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.ADMIN_CREATE);
+    if (rateLimitResult) {
+      return rateLimitResult;
+    }
 
     const contentType = request.headers.get('content-type') || ''
 
