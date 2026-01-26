@@ -18,6 +18,26 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
     restart: unless-stopped
+    # SECURITY: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # SECURITY: Security options
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100M
+      - /app/.next/cache:noexec,nosuid,size=500M
     # Enable host.docker.internal on Linux
     extra_hosts:
       - "host.docker.internal:host-gateway"
