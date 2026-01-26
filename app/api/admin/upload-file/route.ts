@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Minio from 'minio'
+import { requireAdmin } from '@/lib/api-auth'
 
 // Validate required environment variables
 if (!process.env.SERVER_IP) {
@@ -23,6 +24,9 @@ const BUCKET_NAME = 'solutions' // Dedicated bucket for marketplace solution fil
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require admin authentication
+    await requireAdmin(request)
+
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
 
@@ -108,6 +112,18 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    // Handle authentication errors with proper status codes
+    if (error instanceof Error) {
+      if (error.message.includes('No token provided') || 
+          error.message.includes('Invalid or expired token') ||
+          error.message.includes('User not found or inactive')) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
+      if (error.message.includes('Admin access required')) {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+      }
+    }
+
     console.error('Error uploading file:', error)
     return NextResponse.json(
       { error: 'Failed to upload file' },
